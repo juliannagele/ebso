@@ -7,3 +7,5 @@
   * [Repo](https://github.com/pirapira/eth-isab1elle/)
 
   * [CPP Paper](http://doi.org/10.1145/3167084)
+
+* [Ethereum Virtual Machine (EVM) Awesome List](https://github.com/ethereum/wiki/wiki/Ethereum-Virtual-Machine-(EVM)-Awesome-List)
