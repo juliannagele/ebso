@@ -4,7 +4,7 @@ open Evmenc
 let suite =
   "suite" >:::
   [
-    "encoding for stack is initialized with 0">:: (fun _ ->
+    "formula for stack is initialized with 0">:: (fun _ ->
         let st = mk_state in
         assert_equal
           ~cmp:[%eq: string]
