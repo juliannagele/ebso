@@ -35,9 +35,9 @@ let suite =
         match (Z3.Model.eval m (st.stack <@@> [num 0; bvnum 0 sas]) true) with
         | Some e ->
           assert_equal
-            ~cmp:[%eq: string]
-            ~printer:[%show: string]
-            (Z3.Expr.to_string e) "#x00"
+            ~cmp:Z3.Expr.equal
+            ~printer:Z3.Expr.to_string
+            e (bvnum 0 ses)
         | None -> failwith "could not eval stack"
       );
 
