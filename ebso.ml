@@ -1,3 +1,4 @@
+open Core
 open Evmenc
 
 let zero = [
@@ -16,5 +17,17 @@ let zero_optzd = [
 
 (* Goal: super_optimze zero == zero_optzd *)
 
-let () = ()
+let () =
+  let open Command.Let_syntax in
+  Command.basic ~summary:"ebso: An EVM Bytecode Super Optimizer"
+    [%map_open
+      let file = flag "file" (optional string) ~doc:"f read input from file f"
+      in
+      fun () ->
+        match file with
+        | None -> super_optimize zero
+        | Some f -> super_optimize f
+    ]
+  |> Command.run ~version:"0.1"
+
   (* let p' = super_optimize zero in *)
