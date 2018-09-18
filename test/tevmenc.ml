@@ -37,11 +37,14 @@ let suite =
         let st = mk_state in
         let c = init st in
         let m = solve_model_exn [c] in
+        let sk_size = (Int.pow 2 sas) - 1 in
         assert_equal
-          ~cmp:Z3.Expr.equal
-          ~printer:Z3.Expr.to_string
-          (eval_stack_exn st m 0 0) (bvnum 0 ses)
+          ~cmp:[%eq: Z3.Expr.t list]
+          ~printer:(List.to_string ~f:Z3.Expr.to_string)
+          (List.init sk_size ~f:(fun _ -> bvnum 0 ses))
+          (List.init sk_size ~f:(eval_stack_exn st m 0))
       );
+
 
   ]
 
