@@ -1,0 +1,5 @@
+(library (name ebso)
+         (wrapped false)
+         (libraries core z3)
+         (preprocess (pps ppx_jane ppx_deriving.std))
+)

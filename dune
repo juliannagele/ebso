@@ -1,0 +1,4 @@
+(executable (name ebso)
+            (libraries core z3 ebso)
+            (preprocess (pps ppx_jane ppx_deriving.std))
+)
