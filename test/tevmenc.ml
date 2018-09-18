@@ -29,8 +29,8 @@ let suite =
         assert_equal
           ~cmp:[%eq: string]
           ~printer:[%show: string]
-          (Z3.Expr.to_string (init st))
           "(forall ((n (_ BitVec 4))) (= (stack 0 n) #x00))"
+          (Z3.Expr.to_string (init st))
       );
 
     "model of the initial stack holds 0 for every stack address">:: (fun _ ->
@@ -44,7 +44,6 @@ let suite =
           (List.init sk_size ~f:(fun _ -> bvnum 0 ses))
           (List.init sk_size ~f:(eval_stack_exn st m 0))
       );
-
 
   ]
 
