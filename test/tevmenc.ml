@@ -16,6 +16,11 @@ let solve_model_exn cs =
   | Z3.Solver.UNSATISFIABLE -> failwith "UNSAT"
   | Z3.Solver.UNKNOWN -> failwith (Z3.Solver.get_reason_unknown slvr)
 
+let eval_stack_exn st m i n =
+  match Z3.Model.eval m (st.stack <@@> [num i; bvnum n sas]) true with
+  | Some e -> e
+  | None -> failwith "could not eval stack"
+
 let suite =
   "suite" >:::
   [
@@ -32,13 +37,10 @@ let suite =
         let st = mk_state in
         let c = init st in
         let m = solve_model_exn [c] in
-        match (Z3.Model.eval m (st.stack <@@> [num 0; bvnum 0 sas]) true) with
-        | Some e ->
-          assert_equal
-            ~cmp:Z3.Expr.equal
-            ~printer:Z3.Expr.to_string
-            e (bvnum 0 ses)
-        | None -> failwith "could not eval stack"
+        assert_equal
+          ~cmp:Z3.Expr.equal
+          ~printer:Z3.Expr.to_string
+          (eval_stack_exn st m 0 0) (bvnum 0 ses)
       );
 
   ]
