@@ -24,6 +24,8 @@ let eval_stack_exn st m i n =
 let suite =
   "suite" >:::
   [
+    (* init *)
+
     "formula for stack is initialized with 0">:: (fun _ ->
         let st = mk_state in
         assert_equal
@@ -43,6 +45,23 @@ let suite =
           ~printer:(List.to_string ~f:Z3.Expr.to_string)
           (List.init sk_size ~f:(fun _ -> bvnum 0 ses))
           (List.init sk_size ~f:(eval_stack_exn st m 0))
+      );
+
+    (* add *)
+
+    "formula for add">:: (fun _ ->
+        let st = mk_state in
+        let one = bvnum 1 ses in
+        let st' =
+          let open Z3Ops in
+          (st.stack @@ [num 0; bvnum 0 sas] == one) &&
+          (st.stack @@ [num 0; bvnum 1 sas] == one)
+        in
+        assert_equal
+          ~cmp:[%eq: string]
+          ~printer:[%show: string]
+          ""
+          (Z3.Expr.to_string st')
       );
 
   ]
