@@ -1,11 +1,11 @@
 (executables
- (names tevmenc
- )
+ (names test_evmenc)
  (libraries core ebso oUnit z3)
  (preprocess (pps ppx_jane ppx_deriving.std))
 )
 
 (alias
- (name    runtest)
- (deps    (:x tevmenc.exe))
- (action  (run %{x})))
+ (name runtest)
+ (deps (:x tevmenc.exe))
+ (action (run %{x}))
+)
