@@ -6,6 +6,6 @@
 
 (alias
  (name runtest)
- (deps (:x tevmenc.exe))
+ (deps (:x test_evmenc.exe))
  (action (run %{x}))
 )
