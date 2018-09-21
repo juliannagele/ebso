@@ -6,6 +6,7 @@ let ctxt = ref (mk_context [])
 
 let int_sort = Arithmetic.Integer.mk_sort !ctxt
 let bv_sort = BitVector.mk_sort !ctxt
+let bool_sort = Boolean.mk_sort !ctxt
 
 let num n = Expr.mk_numeral_int !ctxt n int_sort
 let one = num 1
