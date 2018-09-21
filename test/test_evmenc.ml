@@ -31,7 +31,7 @@ let suite =
         assert_equal
           ~cmp:[%eq: string]
           ~printer:[%show: string]
-          "(forall ((n (_ BitVec 4))) (= (stack 0 n) #x00))"
+          "(and (forall ((n (_ BitVec 4))) (= (stack 0 n) #x00)) (= (sc 0) #x0))"
           (Z3.Expr.to_string (init st))
       );
 
