@@ -61,7 +61,7 @@ let enc_push x st j =
   sk' sc == enc_stackarg x &&
   (* all old elements stay the same *)
   forall n ((n < sc) ==> (sk' n == sk n)) &&
-  (* check for stack_overflow *)
+  (* check for stack overflow *)
   (st.exc_halt @@ [j + one] == ~! (nuw sc (bvnum 1 sas) `Add))
 
 let enc_add _ _ = failwith "not implemented"
