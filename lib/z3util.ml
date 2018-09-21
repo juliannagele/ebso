@@ -36,7 +36,11 @@ let disj = function
 
 let (<|>) x y = disj [x; y]
 
-let (~!) x = Z3.BitVector.mk_not !ctxt x
+let (~!) x =
+  match Sort.get_sort_kind (Expr.get_sort x) with
+  | BV_SORT -> BitVector.mk_not !ctxt x
+  | BOOL_SORT -> Boolean.mk_not !ctxt x
+  | _ -> failwith "not implemented for this sort"
 
 let (<@@>) fn x = FuncDecl.apply fn x
 
