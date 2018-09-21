@@ -30,8 +30,10 @@ let suite =
         let st = mk_state in
         assert_equal
           ~cmp:[%eq: string]
-          ~printer:[%show: string]
-          "(and (forall ((n (_ BitVec 4))) (= (stack 0 n) #x00)) (= (sc 0) #x0))"
+          ~printer:Fn.id
+          "(and (forall ((n (_ BitVec 4))) (= (stack 0 n) #x00))
+     (= (sc 0) #x0)
+     (= exc_halt false))"
           (Z3.Expr.to_string (init st))
       );
 
