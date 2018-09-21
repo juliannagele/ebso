@@ -49,7 +49,6 @@ let init st =
 let enc_stackarg x = bvnum x ses
 
 let enc_push x st j =
-  (* TODO: check for stack_overflow *)
   let open Z3Ops in
   let n = bvconst "n" sas in
   (* the stack before and after the PUSH *)
@@ -61,7 +60,9 @@ let enc_push x st j =
   (* that element will be x *)
   sk' sc == enc_stackarg x &&
   (* all old elements stay the same *)
-  forall n ((n < sc) ==> (sk' n == sk n))
+  forall n ((n < sc) ==> (sk' n == sk n)) &&
+  (* check for stack_overflow *)
+  (st.exc_halt @@ [j + one] == ~! (nuw sc (bvnum 1 sas) `Add))
 
 let enc_add _ _ = failwith "not implemented"
 
