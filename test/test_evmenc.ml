@@ -49,19 +49,43 @@ let suite =
 
     (* add *)
 
-    "formula for add">:: (fun _ ->
+    (* "formula for add">:: (fun _ ->
+     *     let st = mk_state in
+     *     let one = bvnum 1 ses in
+     *     let st' =
+     *       let open Z3Ops in
+     *       (st.stack @@ [num 0; bvnum 0 sas] == one) &&
+     *       (st.stack @@ [num 0; bvnum 1 sas] == one)
+     *     in
+     *     assert_equal
+     *       ~cmp:[%eq: string]
+     *       ~printer:[%show: string]
+     *       ""
+     *       (Z3.Expr.to_string st')
+     *   ); *)
+
+    (* push *)
+    "formula for push">:: (fun _ ->
         let st = mk_state in
-        let one = bvnum 1 ses in
-        let st' =
-          let open Z3Ops in
-          (st.stack @@ [num 0; bvnum 0 sas] == one) &&
-          (st.stack @@ [num 0; bvnum 1 sas] == one)
-        in
         assert_equal
           ~cmp:[%eq: string]
-          ~printer:[%show: string]
-          ""
-          (Z3.Expr.to_string st')
+          ~printer:Fn.id
+          "(let ((a!1 (= (stack (+ 3 1) (sc (+ 3 1))) #x05))
+      (a!2 (forall ((n (_ BitVec 4)))
+             (=> (bvsle n (sc 3)) (= (stack (+ 3 1) n) (stack 3 n))))))
+  (and (= (sc (+ 3 1)) (bvadd (sc 3) #x1)) a!1 a!2))"
+          (Z3.Expr.to_string (enc_push 5 st (num 3)))
+      );
+
+    "top of the stack is the pushed element after a PUSH">:: (fun _ ->
+        let st = mk_state in
+        let c = init st <&> enc_push 5 st (num 0) in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          (bvnum 5 ses)
+          (eval_stack_exn st m 1 1)
       );
 
   ]
