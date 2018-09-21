@@ -49,20 +49,21 @@ let suite =
 
     (* add *)
 
-    (* "formula for add">:: (fun _ ->
-     *     let st = mk_state in
-     *     let one = bvnum 1 ses in
-     *     let st' =
-     *       let open Z3Ops in
-     *       (st.stack @@ [num 0; bvnum 0 sas] == one) &&
-     *       (st.stack @@ [num 0; bvnum 1 sas] == one)
-     *     in
-     *     assert_equal
-     *       ~cmp:[%eq: string]
-     *       ~printer:[%show: string]
-     *       ""
-     *       (Z3.Expr.to_string st')
-     *   ); *)
+    "add the two topmost elements of stack">:: (fun _ ->
+        let st = mk_state in
+        let c =
+          init st <&>
+          enc_push 4 st (num 0) <&>
+          enc_push 5 st (num 1) <&>
+          enc_add st (num 2)
+        in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          (bvnum 9 ses)
+          (eval_stack_exn st m 3 0)
+      );
 
     (* push *)
     "formula for push">:: (fun _ ->

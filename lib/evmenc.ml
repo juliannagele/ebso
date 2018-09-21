@@ -57,6 +57,8 @@ let enc_push x st j =
   (* all old elements stay the same *)
   forall n ((n < sc) ==> (sk' n == sk n))
 
+let enc_add _ _ = failwith "not implemented"
+
 (* effect of instruction on state st after j steps *)
 let enc_opcode st j = function
   | PUSH x -> enc_push x st j
