@@ -21,6 +21,11 @@ let eval_stack_exn st m i n =
   | Some e -> e
   | None -> failwith "could not eval stack"
 
+let eval_exc_halt st m =
+  match Z3.Model.eval m st.exc_halt true with
+  | Some e -> e
+  | None -> failwith "could not eval exc_halt"
+
 let suite =
   "suite" >:::
   [
@@ -88,6 +93,22 @@ let suite =
           ~printer:Z3.Expr.to_string
           (bvnum 5 ses)
           (eval_stack_exn st m 1 0)
+      );
+
+    "PUSHing too many elements leads to a stack overflow">:: (fun _ ->
+        let st = mk_state in
+        let max = Int.pow 2 sas - 1 in
+        let c =
+          init st <&>
+          (st.stack_ctr <@@> [num max] <==> (bvnum max sas)) <&>
+          (enc_push 5 st (num max))
+        in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          top
+          (eval_exc_halt st m)
       );
 
   ]
