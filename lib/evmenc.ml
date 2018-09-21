@@ -64,7 +64,19 @@ let enc_push x st j =
   (* check for stack overflow *)
   (st.exc_halt @@ [j + one] == ~! (nuw sc (bvnum 1 sas) `Add))
 
-let enc_add _ _ = failwith "not implemented"
+let enc_add st j =
+  let open Z3Ops in
+  let n = bvconst "n" sas in
+  let sk n = st.stack @@ [j; n] and sk' n = st.stack @@ [j + one; n] in
+  let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
+  (* two elements are consumed, one is added *)
+  (sc' == (sc - bvnum 1 sas)) &&
+  (* the new top element is the sum of the previous two *)
+  (sk' (sc - bvnum 2 sas) == (sk (sc - bvnum 2 sas) + sk (sc - bvnum 1 sas))) &&
+  (* all elements below remain unchanged *)
+  forall n ((n < (sc - bvnum 2 sas)) ==> (sk' n == sk n)) &&
+  (* check for stack underflow *)
+  (st.exc_halt @@ [j + one] == ((sc' - (bvnum 2 sas)) < (bvnum 0 sas)))
 
 (* effect of instruction on state st after j steps *)
 let enc_opcode st j = function
