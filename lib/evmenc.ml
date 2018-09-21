@@ -1,7 +1,9 @@
 open Core
 open Z3util
 
-(* stack address size => max stack size 2^sas *)
+(* stack address size; design decision/quick fix: the slot 2^sas - 1 is reserved
+   for exception handling, otherwise the stack counter wraps around
+   --> max stack size 2^sas - 1 *)
 let sas = 4
 
 (* stack element size *)
@@ -27,6 +29,7 @@ let mk_state = {
   stack = func_decl "stack" [int_sort; bv_sort sas] (bv_sort ses);
   (* sc(j) = index of the next free slot on the stack after j instructions *)
   stack_ctr = func_decl "sc" [int_sort] (bv_sort sas);
+  (* records if exceptional halting occurs (just the fact, not the round j) *)
   exc_halt = boolconst "exc_halt"
 }
 
