@@ -73,17 +73,6 @@ let suite =
       );
 
     (* push *)
-    "formula for push">:: (fun _ ->
-        let st = mk_state in
-        assert_equal
-          ~cmp:[%eq: string]
-          ~printer:Fn.id
-          "(let ((a!1 (forall ((n (_ BitVec 4)))
-             (=> (bvslt n (sc 3)) (= (stack (+ 3 1) n) (stack 3 n))))))
-  (and (= (sc (+ 3 1)) (bvadd (sc 3) #x1)) (= (stack (+ 3 1) (sc 3)) #x05) a!1))"
-          (Z3.Expr.to_string (enc_push 5 st (num 3)))
-      );
-
     "top of the stack is the pushed element after a PUSH">:: (fun _ ->
         let st = mk_state in
         let c = init st <&> enc_push 5 st (num 0) in
