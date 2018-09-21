@@ -71,6 +71,45 @@ let suite =
           (eval_stack_exn st m 3 0)
       );
 
+    "check that adding does not change element below">:: (fun _ ->
+        let st = mk_state in
+        let c =
+          init st <&>
+          enc_push 3 st (num 0) <&>
+          enc_push 4 st (num 1) <&>
+          enc_push 5 st (num 2) <&>
+          enc_add st (num 3)
+        in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          (bvnum 3 ses)
+          (eval_stack_exn st m 0 0)
+      );
+
+    "add with only one element">:: (fun _ ->
+        let st = mk_state in
+        let c = init st <&> enc_push 3 st (num 0) <&> enc_add st (num 1) in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          top
+          (eval_exc_halt st m 2)
+      );
+
+    "add with empty stack">:: (fun _ ->
+        let st = mk_state in
+        let c = init st <&> enc_add st (num 0) in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          top
+          (eval_exc_halt st m 1)
+      );
+
     (* push *)
     "top of the stack is the pushed element after a PUSH">:: (fun _ ->
         let st = mk_state in
