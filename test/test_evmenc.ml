@@ -85,7 +85,7 @@ let suite =
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
           (bvnum 3 ses)
-          (eval_stack_exn st m 0 0)
+          (eval_stack_exn st m 3 0)
       );
 
     "add with only one element">:: (fun _ ->
