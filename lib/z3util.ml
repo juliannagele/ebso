@@ -11,8 +11,11 @@ let num n = Expr.mk_numeral_int !ctxt n int_sort
 let one = num 1
 let bvnum n size = Expr.mk_numeral_int !ctxt n (bv_sort size)
 let bvconst = BitVector.mk_const_s !ctxt
-let intconst = Z3.Arithmetic.Integer.mk_const_s !ctxt
-let func_decl = Z3.FuncDecl.mk_func_decl_s !ctxt
+let intconst = Arithmetic.Integer.mk_const_s !ctxt
+let func_decl = FuncDecl.mk_func_decl_s !ctxt
+let boolconst = Boolean.mk_const_s !ctxt
+let top = Boolean.mk_true !ctxt
+let btm = Boolean.mk_false !ctxt
 
 let (<->>) x y =
   if Boolean.is_true x then y
