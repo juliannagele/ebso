@@ -55,8 +55,7 @@ let suite =
       );
 
     (* add *)
-
-    "add the two topmost elements of stack">:: (fun _ ->
+    "add two elements on the stack">:: (fun _ ->
         let st = mk_state in
         let c =
           init st <&>
