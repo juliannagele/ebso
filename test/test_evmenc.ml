@@ -21,8 +21,8 @@ let eval_stack_exn st m i n =
   | Some e -> e
   | None -> failwith "could not eval stack"
 
-let eval_exc_halt st m =
-  match Z3.Model.eval m st.exc_halt true with
+let eval_exc_halt st m i =
+  match Z3.Model.eval m (st.exc_halt <@@> [num i]) true with
   | Some e -> e
   | None -> failwith "could not eval exc_halt"
 
@@ -38,7 +38,7 @@ let suite =
           ~printer:Fn.id
           "(and (forall ((n (_ BitVec 4))) (= (stack 0 n) #x00))
      (= (sc 0) #x0)
-     (= exc_halt false))"
+     (= (exc_halt 0) false))"
           (Z3.Expr.to_string (init st))
       );
 
@@ -97,7 +97,7 @@ let suite =
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
           top
-          (eval_exc_halt st m)
+          (eval_exc_halt st m (max + 1))
       );
 
   ]

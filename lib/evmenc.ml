@@ -21,7 +21,7 @@ type opcode =
 type state = {
   stack : Z3.FuncDecl.func_decl;
   stack_ctr : Z3.FuncDecl.func_decl;
-  exc_halt : Z3.Expr.expr;
+  exc_halt : Z3.FuncDecl.func_decl;
 }
 
 let mk_state = {
@@ -29,8 +29,8 @@ let mk_state = {
   stack = func_decl "stack" [int_sort; bv_sort sas] (bv_sort ses);
   (* sc(j) = index of the next free slot on the stack after j instructions *)
   stack_ctr = func_decl "sc" [int_sort] (bv_sort sas);
-  (* records if exceptional halting occurs (just the fact, not the round j) *)
-  exc_halt = boolconst "exc_halt"
+  (* exc_halt(j) is true if exceptional halting occurs after j instructions *)
+  exc_halt = func_decl "exc_halt" [int_sort] bool_sort;
 }
 
 (* INIT: init stack with all 0 *)
@@ -43,7 +43,7 @@ let init st =
   forall n (st.stack @@ [num 0; n] == z)
   (* set stack counter to 0 *)
   && (st.stack_ctr @@ [num 0] == bvnum 0 sas)
-  && (st.exc_halt == btm)
+  && (st.exc_halt @@ [num 0] == btm)
 
 (* TODO: check data layout on stack *)
 let enc_stackarg x = bvnum x ses
