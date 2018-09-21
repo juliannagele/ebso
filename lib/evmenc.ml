@@ -24,7 +24,7 @@ type state = {
 let mk_state = {
   (* stack(j, n) = nth stack element after j instructions *)
   stack = func_decl "stack" [int_sort; bv_sort sas] (bv_sort ses);
-  (* sc(j) = the index of the top element of the stack after j instructions *)
+  (* sc(j) = index of the next free slot on the stack after j instructions *)
   stack_ctr = func_decl "sc" [int_sort] (bv_sort sas)
 }
 
@@ -53,9 +53,9 @@ let enc_push x st j =
   (* there will be one more element on the stack after PUSHing *)
   (sc' == (sc + bvnum 1 sas)) &&
   (* that element will be x *)
-  sk' sc' == enc_stackarg x &&
+  sk' sc == enc_stackarg x &&
   (* all old elements stay the same *)
-  forall n ((n <= sc) ==> (sk' n == sk n))
+  forall n ((n < sc) ==> (sk' n == sk n))
 
 (* effect of instruction on state st after j steps *)
 let enc_opcode st j = function
