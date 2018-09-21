@@ -7,6 +7,13 @@ let ctxt = ref (mk_context [])
 let int_sort = Arithmetic.Integer.mk_sort !ctxt
 let bv_sort = BitVector.mk_sort !ctxt
 
+let num n = Expr.mk_numeral_int !ctxt n int_sort
+let one = num 1
+let bvnum n size = Expr.mk_numeral_int !ctxt n (bv_sort size)
+let bvconst = BitVector.mk_const_s !ctxt
+let intconst = Z3.Arithmetic.Integer.mk_const_s !ctxt
+let func_decl = Z3.FuncDecl.mk_func_decl_s !ctxt
+
 let (<->>) x y =
   if Boolean.is_true x then y
   else if Boolean.is_false x then Boolean.mk_true !ctxt
@@ -29,14 +36,6 @@ let (<|>) x y = disj [x; y]
 let (~!) x = Z3.BitVector.mk_not !ctxt x
 
 let (<@@>) fn x = FuncDecl.apply fn x
-
-let num n = Expr.mk_numeral_int !ctxt n int_sort
-
-let one = num 1
-
-let bvnum n s = Expr.mk_numeral_int !ctxt n (bv_sort s)
-
-let bvconst n s = BitVector.mk_const_s !ctxt n s
 
 let (<<<>) x y = BitVector.mk_shl !ctxt x y
 let (<>>>) x y = BitVector.mk_ashr !ctxt x y
