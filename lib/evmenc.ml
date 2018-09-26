@@ -96,7 +96,8 @@ let enc_sub = enc_binop (<->)
 (* effect of instruction on state st after j steps *)
 let enc_opcode st j = function
   | PUSH x -> enc_push x st j
-  | ADD -> failwith "smt library access"
+  | ADD -> enc_add st j
+  | SUB -> enc_sub st j
   | _   -> failwith "other opcodes"
 
 
