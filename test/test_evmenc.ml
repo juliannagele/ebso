@@ -170,6 +170,18 @@ let suite =
           (eval_exc_halt st m (List.length p))
       );
 
+    "exceptional halt persists">:: (fun _ ->
+        let st = mk_state in
+        let p = [SUB; PUSH 3] in
+        let c = enc_program st p in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          top
+          (eval_exc_halt st m (List.length p))
+      );
+
     (* add and sub *)
     "combine add and sub">:: (fun _ ->
         let st = mk_state in

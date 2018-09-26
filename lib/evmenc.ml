@@ -73,8 +73,10 @@ let enc_push x st j =
   sk' sc == enc_stackarg x &&
   (* all old elements stay the same *)
   forall n ((n < sc) ==> (sk' n == sk n)) &&
-  (* check for stack overflow *)
-  (st.exc_halt @@ [j + one] == ~! (nuw sc (bvnum 1 sas) `Add))
+  (* check for exceptional halting  *)
+  (st.exc_halt @@ [j + one] ==
+  (* stack overflow occured or exceptional halting occured eariler *)
+  (~! (nuw sc (bvnum 1 sas) `Add) || st.exc_halt @@ [j]))
 
 let enc_binop op st j =
   let open Z3Ops in
@@ -87,8 +89,10 @@ let enc_binop op st j =
   (sk' (sc - bvnum 2 sas) == op (sk (sc - bvnum 2 sas)) (sk (sc - bvnum 1 sas))) &&
   (* all elements below remain unchanged *)
   forall n ((n < (sc - bvnum 2 sas)) ==> (sk' n == sk n)) &&
-  (* check for stack underflow *)
-  (st.exc_halt @@ [j + one] == ((sc' - (bvnum 2 sas)) < (bvnum 0 sas)))
+  (* check for exceptional halting *)
+  (st.exc_halt @@ [j + one] ==
+  (* stack underflow occured or exceptional halting occured eariler *)
+  ((sc' - (bvnum 2 sas)) < (bvnum 0 sas)) || st.exc_halt @@ [j])
 
 let enc_add = enc_binop (<+>)
 let enc_sub = enc_binop (<->)
