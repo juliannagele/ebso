@@ -38,7 +38,8 @@ let suite =
           ~printer:Fn.id
           "(and (forall ((n (_ BitVec 4))) (= (stack 0 n) #x00))
      (= (sc 0) #x0)
-     (= (exc_halt 0) false))"
+     (= (exc_halt 0) false)
+     (= (used_gas 0) 0))"
           (Z3.Expr.to_string (init st))
       );
 

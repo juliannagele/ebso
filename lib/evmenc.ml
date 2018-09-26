@@ -22,6 +22,7 @@ type state = {
   stack : Z3.FuncDecl.func_decl;
   stack_ctr : Z3.FuncDecl.func_decl;
   exc_halt : Z3.FuncDecl.func_decl;
+  used_gas : Z3.FuncDecl.func_decl;
 }
 
 let mk_state = {
@@ -31,6 +32,8 @@ let mk_state = {
   stack_ctr = func_decl "sc" [int_sort] (bv_sort sas);
   (* exc_halt(j) is true if exceptional halting occurs after j instructions *)
   exc_halt = func_decl "exc_halt" [int_sort] bool_sort;
+  (* gas(j) = amount of gas used to execute the first j instructions *)
+  used_gas = func_decl "used_gas" [int_sort] int_sort;
 }
 
 (* INIT: init stack with all 0 *)
@@ -44,6 +47,7 @@ let init st =
   (* set stack counter to 0 *)
   && (st.stack_ctr @@ [num 0] == bvnum 0 sas)
   && (st.exc_halt @@ [num 0] == btm)
+  && (st.used_gas @@ [num 0] == num 0)
 
 (* TODO: check data layout on stack *)
 let enc_stackarg x = bvnum x ses
