@@ -24,6 +24,8 @@ let gas_cost = function
   | POP -> 2
   | SUB -> 3
 
+let total_gas_cost = List.fold ~init:0 ~f:(fun gc i -> gc + gas_cost i)
+
 type state = {
   stack : Z3.FuncDecl.func_decl;
   stack_ctr : Z3.FuncDecl.func_decl;
