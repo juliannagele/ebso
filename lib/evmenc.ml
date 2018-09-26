@@ -18,6 +18,12 @@ type opcode =
   | SUB
 [@@deriving show { with_path = false }]
 
+let gas_cost = function
+  | ADD -> 3
+  | PUSH _ -> 2
+  | POP -> 2
+  | SUB -> 3
+
 type state = {
   stack : Z3.FuncDecl.func_decl;
   stack_ctr : Z3.FuncDecl.func_decl;
