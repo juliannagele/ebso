@@ -94,14 +94,22 @@ let enc_add = enc_binop (<+>)
 let enc_sub = enc_binop (<->)
 
 (* effect of instruction on state st after j steps *)
-let enc_opcode st j = function
-  | PUSH x -> enc_push x st j
-  | ADD -> enc_add st j
-  | SUB -> enc_sub st j
-  | _   -> failwith "other opcodes"
+let enc_instruction st j oc =
+  let open Z3Ops in
+  let enc_opcode =
+    match oc with
+    | PUSH x -> enc_push x st j
+    | ADD -> enc_add st j
+    | SUB -> enc_sub st j
+    | _   -> failwith "other opcodes"
+  in
+  let enc_used_gas =
+    st.used_gas @@ [j + one] == (st.used_gas @@ [j]) + (num (gas_cost oc))
+  in
+  enc_opcode && enc_used_gas
 
 let enc_program st =
   List.foldi ~init:(init st)
-    ~f:(fun j enc oc -> enc <&> enc_opcode st (num j) oc)
+    ~f:(fun j enc oc -> enc <&> enc_instruction st (num j) oc)
 
 let super_optimize _ = failwith "not implemented"
