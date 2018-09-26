@@ -1,6 +1,18 @@
 open Core
 open Evmenc
 
+let p0 = [
+  PUSH 1;
+  PUSH 1;
+  ADD;
+]
+
+let p0_optzd = [
+  PUSH 2;
+]
+
+(* Goal 1: super_optimze p0 == p0_optzd *)
+
 let zero = [
   PUSH 42;
   PUSH 21;
@@ -15,7 +27,7 @@ let zero_optzd = [
   SUB;
 ]
 
-(* Goal: super_optimze zero == zero_optzd *)
+(* Goal 2: super_optimze zero == zero_optzd *)
 
 let () =
   let open Command.Let_syntax in
