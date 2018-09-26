@@ -16,20 +16,16 @@ let solve_model_exn cs =
   | Z3.Solver.UNSATISFIABLE -> failwith "UNSAT"
   | Z3.Solver.UNKNOWN -> failwith (Z3.Solver.get_reason_unknown slvr)
 
-let eval_stack_exn st m i n =
-  match Z3.Model.eval m (st.stack <@@> [num i; bvnum n sas]) true with
+let eval_state_field m i ?(n=[]) f =
+  match Z3.Model.eval m (f <@@> ([num i] @ n)) true with
   | Some e -> e
-  | None -> failwith "could not eval stack"
+  | None -> failwith ("could not eval " ^ Z3.FuncDecl.to_string f)
 
-let eval_exc_halt st m i =
-  match Z3.Model.eval m (st.exc_halt <@@> [num i]) true with
-  | Some e -> e
-  | None -> failwith "could not eval exc_halt"
+let eval_stack st m i n = eval_state_field m i ~n:[bvnum n sas] st.stack
 
-let eval_gas st m i =
-  match Z3.Model.eval m (st.used_gas <@@> [num i]) true with
-  | Some e -> e
-  | None -> failwith "could not eval gas"
+let eval_exc_halt st m i = eval_state_field m i st.exc_halt
+
+let eval_gas st m i = eval_state_field m i st.used_gas
 
 let suite =
   "suite" >:::
@@ -57,7 +53,7 @@ let suite =
           ~cmp:[%eq: Z3.Expr.t list]
           ~printer:(List.to_string ~f:Z3.Expr.to_string)
           (List.init sk_size ~f:(fun _ -> bvnum 0 ses))
-          (List.init sk_size ~f:(eval_stack_exn st m 0))
+          (List.init sk_size ~f:(eval_stack st m 0))
       );
 
     (* add *)
@@ -70,7 +66,7 @@ let suite =
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
           (bvnum 9 ses)
-          (eval_stack_exn st m (List.length p) 0)
+          (eval_stack st m (List.length p) 0)
       );
 
     "check that adding does not change element below">:: (fun _ ->
@@ -82,7 +78,7 @@ let suite =
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
           (bvnum 3 ses)
-          (eval_stack_exn st m (List.length p) 0)
+          (eval_stack st m (List.length p) 0)
       );
 
     "add with only one element">:: (fun _ ->
@@ -119,7 +115,7 @@ let suite =
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
           (bvnum 5 ses)
-          (eval_stack_exn st m (List.length p) 0)
+          (eval_stack st m (List.length p) 0)
       );
 
     "subtract two elements on the stack with negative result">:: (fun _ ->
@@ -131,7 +127,7 @@ let suite =
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
           (bvnum (-5) ses)
-          (eval_stack_exn st m (List.length p) 0)
+          (eval_stack st m (List.length p) 0)
       );
 
     "check that subtraction does not change element below">:: (fun _ ->
@@ -143,7 +139,7 @@ let suite =
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
           (bvnum 3 ses)
-          (eval_stack_exn st m (List.length p) 0)
+          (eval_stack st m (List.length p) 0)
       );
 
     "SUB with only one element">:: (fun _ ->
@@ -189,7 +185,7 @@ let suite =
         let c = enc_program st p in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (bvnum 2 ses) (eval_stack_exn st m (List.length p) 0)
+          (bvnum 2 ses) (eval_stack st m (List.length p) 0)
       );
 
     (* push *)
@@ -202,7 +198,7 @@ let suite =
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
           (bvnum 5 ses)
-          (eval_stack_exn st m (List.length p) 0)
+          (eval_stack st m (List.length p) 0)
       );
 
     "PUSHing too many elements leads to a stack overflow">:: (fun _ ->
