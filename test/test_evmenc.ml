@@ -63,157 +63,134 @@ let suite =
     (* add *)
     "add two elements on the stack">:: (fun _ ->
         let st = mk_state in
-        let c =
-          init st <&>
-          enc_push 4 st (num 0) <&>
-          enc_push 5 st (num 1) <&>
-          enc_add st (num 2)
-        in
+        let p = [PUSH 4; PUSH 5; ADD] in
+        let c = enc_program st p in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
           (bvnum 9 ses)
-          (eval_stack_exn st m 3 0)
+          (eval_stack_exn st m (List.length p) 0)
       );
 
     "check that adding does not change element below">:: (fun _ ->
         let st = mk_state in
-        let c =
-          init st <&>
-          enc_push 3 st (num 0) <&>
-          enc_push 4 st (num 1) <&>
-          enc_push 5 st (num 2) <&>
-          enc_add st (num 3)
-        in
+        let p = [PUSH 3; PUSH 4; PUSH 5; ADD] in
+        let c = enc_program st p in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
           (bvnum 3 ses)
-          (eval_stack_exn st m 3 0)
+          (eval_stack_exn st m (List.length p) 0)
       );
 
     "add with only one element">:: (fun _ ->
         let st = mk_state in
-        let c = init st <&> enc_push 3 st (num 0) <&> enc_add st (num 1) in
+        let p = [PUSH 3; ADD] in
+        let c = enc_program st p in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
           top
-          (eval_exc_halt st m 2)
+          (eval_exc_halt st m (List.length p))
       );
 
     "add with empty stack">:: (fun _ ->
         let st = mk_state in
-        let c = init st <&> enc_add st (num 0) in
+        let p = [ADD] in
+        let c = enc_program st p in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
           top
-          (eval_exc_halt st m 1)
+          (eval_exc_halt st m (List.length p))
       );
 
     (* sub *)
     "subtract two elements on the stack">:: (fun _ ->
         let st = mk_state in
-        let c =
-          init st <&>
-          enc_push 8 st (num 0) <&>
-          enc_push 3 st (num 1) <&>
-          enc_sub st (num 2)
-        in
+        let p = [PUSH 8; PUSH 3; SUB] in
+        let c = enc_program st p in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
           (bvnum 5 ses)
-          (eval_stack_exn st m 3 0)
+          (eval_stack_exn st m (List.length p) 0)
       );
 
     "subtract two elements on the stack with negative result">:: (fun _ ->
         let st = mk_state in
-        let c =
-          init st <&>
-          enc_push 8 st (num 0) <&>
-          enc_push 13 st (num 1) <&>
-          enc_sub st (num 2)
-        in
+        let p = [PUSH 8; PUSH 13; SUB] in
+        let c = enc_program st p in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
           (bvnum (-5) ses)
-          (eval_stack_exn st m 3 0)
+          (eval_stack_exn st m (List.length p) 0)
       );
 
     "check that subtraction does not change element below">:: (fun _ ->
         let st = mk_state in
-        let c =
-          init st <&>
-          enc_push 3 st (num 0) <&>
-          enc_push 4 st (num 1) <&>
-          enc_push 5 st (num 2) <&>
-          enc_sub st (num 3)
-        in
+        let p = [PUSH 3; PUSH 4; PUSH 5; SUB] in
+        let c = enc_program st p in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
           (bvnum 3 ses)
-          (eval_stack_exn st m 3 0)
+          (eval_stack_exn st m (List.length p) 0)
       );
 
     "SUB with only one element">:: (fun _ ->
         let st = mk_state in
-        let c = init st <&> enc_push 3 st (num 0) <&> enc_sub st (num 1) in
+        let p = [PUSH 3; SUB] in
+        let c = enc_program st p in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
           top
-          (eval_exc_halt st m 2)
+          (eval_exc_halt st m (List.length p))
       );
 
     "sub with empty stack">:: (fun _ ->
         let st = mk_state in
-        let c = init st <&> enc_sub st (num 0) in
+        let p = [SUB] in
+        let c = enc_program st p in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
           top
-          (eval_exc_halt st m 1)
+          (eval_exc_halt st m (List.length p))
       );
 
     (* add and sub *)
     "combine add and sub">:: (fun _ ->
         let st = mk_state in
-        let c =
-          init st <&>
-          enc_push 6 st (num 0) <&>
-          enc_push 2 st (num 1) <&>
-          enc_push 2 st (num 2) <&>
-          enc_add st (num 3) <&>
-          enc_sub st (num 4)
-        in
+        let p = [PUSH 6; PUSH 2; PUSH 2; ADD; SUB] in
+        let c = enc_program st p in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (bvnum 2 ses) (eval_stack_exn st m 5 0)
+          (bvnum 2 ses) (eval_stack_exn st m (List.length p) 0)
       );
 
     (* push *)
     "top of the stack is the pushed element after a PUSH">:: (fun _ ->
         let st = mk_state in
-        let c = init st <&> enc_push 5 st (num 0) in
+        let p = [PUSH 5] in
+        let c = enc_program st p in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
           (bvnum 5 ses)
-          (eval_stack_exn st m 1 0)
+          (eval_stack_exn st m (List.length p) 0)
       );
 
     "PUSHing too many elements leads to a stack overflow">:: (fun _ ->
@@ -246,19 +223,14 @@ let suite =
 
     "after some instruction some gas has been used">::(fun _ ->
         let st = mk_state in
-        let instrs = [PUSH 6; PUSH 2; ADD] in
-        let c =
-          init st <&>
-          enc_push 6 st (num 0) <&>
-          enc_push 2 st (num 1) <&>
-          enc_add st (num 2)
-        in
+        let p = [PUSH 6; PUSH 2; ADD] in
+        let c = enc_program st p in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
-          (num @@ total_gas_cost instrs)
-          (eval_gas st m (List.length instrs))
+          (num @@ total_gas_cost p)
+          (eval_gas st m (List.length p))
       );
   ]
 

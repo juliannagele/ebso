@@ -100,5 +100,8 @@ let enc_opcode st j = function
   | SUB -> enc_sub st j
   | _   -> failwith "other opcodes"
 
+let enc_program st =
+  List.foldi ~init:(init st)
+    ~f:(fun j enc oc -> enc <&> enc_opcode st (num j) oc)
 
 let super_optimize _ = failwith "not implemented"
