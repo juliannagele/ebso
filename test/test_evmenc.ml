@@ -110,6 +110,94 @@ let suite =
           (eval_exc_halt st m 1)
       );
 
+    (* sub *)
+    "subtract two elements on the stack">:: (fun _ ->
+        let st = mk_state in
+        let c =
+          init st <&>
+          enc_push 8 st (num 0) <&>
+          enc_push 3 st (num 1) <&>
+          enc_sub st (num 2)
+        in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          (bvnum 5 ses)
+          (eval_stack_exn st m 3 0)
+      );
+
+    "subtract two elements on the stack with negative result">:: (fun _ ->
+        let st = mk_state in
+        let c =
+          init st <&>
+          enc_push 8 st (num 0) <&>
+          enc_push 13 st (num 1) <&>
+          enc_sub st (num 2)
+        in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          (bvnum (-5) ses)
+          (eval_stack_exn st m 3 0)
+      );
+
+    "check that subtraction does not change element below">:: (fun _ ->
+        let st = mk_state in
+        let c =
+          init st <&>
+          enc_push 3 st (num 0) <&>
+          enc_push 4 st (num 1) <&>
+          enc_push 5 st (num 2) <&>
+          enc_sub st (num 3)
+        in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          (bvnum 3 ses)
+          (eval_stack_exn st m 3 0)
+      );
+
+    "SUB with only one element">:: (fun _ ->
+        let st = mk_state in
+        let c = init st <&> enc_push 3 st (num 0) <&> enc_sub st (num 1) in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          top
+          (eval_exc_halt st m 2)
+      );
+
+    "sub with empty stack">:: (fun _ ->
+        let st = mk_state in
+        let c = init st <&> enc_sub st (num 0) in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          top
+          (eval_exc_halt st m 1)
+      );
+
+    (* add and sub *)
+    "combine add and sub">:: (fun _ ->
+        let st = mk_state in
+        let c =
+          init st <&>
+          enc_push 6 st (num 0) <&>
+          enc_push 2 st (num 1) <&>
+          enc_push 2 st (num 2) <&>
+          enc_add st (num 3) <&>
+          enc_sub st (num 4)
+        in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (bvnum 2 ses) (eval_stack_exn st m 5 0)
+      );
+
     (* push *)
     "top of the stack is the pushed element after a PUSH">:: (fun _ ->
         let st = mk_state in

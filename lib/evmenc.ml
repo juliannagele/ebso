@@ -79,6 +79,8 @@ let enc_binop op st j =
   (st.exc_halt @@ [j + one] == ((sc' - (bvnum 2 sas)) < (bvnum 0 sas)))
 
 let enc_add = enc_binop (<+>)
+let enc_sub = enc_binop (<->)
+
 (* effect of instruction on state st after j steps *)
 let enc_opcode st j = function
   | PUSH x -> enc_push x st j
