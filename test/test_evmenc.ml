@@ -26,6 +26,11 @@ let eval_exc_halt st m i =
   | Some e -> e
   | None -> failwith "could not eval exc_halt"
 
+let eval_gas st m i =
+  match Z3.Model.eval m (st.used_gas <@@> [num i]) true with
+  | Some e -> e
+  | None -> failwith "could not eval gas"
+
 let suite =
   "suite" >:::
   [
@@ -227,6 +232,34 @@ let suite =
           (eval_exc_halt st m (max + 1))
       );
 
+    (* gas cost *)
+    "after 0 instruction no gas has been used">::(fun _ ->
+        let st = mk_state in
+        let c = init st in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          (num 0)
+          (eval_gas st m 0)
+      );
+
+    "after some instruction some gas has been used">::(fun _ ->
+        let st = mk_state in
+        let instrs = [PUSH 6; PUSH 2; ADD] in
+        let c =
+          init st <&>
+          enc_push 6 st (num 0) <&>
+          enc_push 2 st (num 1) <&>
+          enc_add st (num 2)
+        in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          (num @@ total_gas_cost instrs)
+          (eval_gas st m (List.length instrs))
+      );
   ]
 
 let () =
