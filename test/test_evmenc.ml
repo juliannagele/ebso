@@ -33,7 +33,7 @@ let suite =
     (* init *)
 
     "formula for stack is initialized with 0">:: (fun _ ->
-        let st = mk_state in
+        let st = mk_state "" in
         assert_equal
           ~cmp:[%eq: string]
           ~printer:Fn.id
@@ -45,7 +45,7 @@ let suite =
       );
 
     "model of the initial stack holds 0 for every stack address">:: (fun _ ->
-        let st = mk_state in
+        let st = mk_state "" in
         let c = init st in
         let m = solve_model_exn [c] in
         let sk_size = (Int.pow 2 sas) - 1 in
@@ -58,7 +58,7 @@ let suite =
 
     (* add *)
     "add two elements on the stack">:: (fun _ ->
-        let st = mk_state in
+        let st = mk_state "" in
         let p = [PUSH 4; PUSH 5; ADD] in
         let c = enc_program st p in
         let m = solve_model_exn [c] in
@@ -70,7 +70,7 @@ let suite =
       );
 
     "check that adding does not change element below">:: (fun _ ->
-        let st = mk_state in
+        let st = mk_state "" in
         let p = [PUSH 3; PUSH 4; PUSH 5; ADD] in
         let c = enc_program st p in
         let m = solve_model_exn [c] in
@@ -82,7 +82,7 @@ let suite =
       );
 
     "add with only one element">:: (fun _ ->
-        let st = mk_state in
+        let st = mk_state "" in
         let p = [PUSH 3; ADD] in
         let c = enc_program st p in
         let m = solve_model_exn [c] in
@@ -94,7 +94,7 @@ let suite =
       );
 
     "add with empty stack">:: (fun _ ->
-        let st = mk_state in
+        let st = mk_state "" in
         let p = [ADD] in
         let c = enc_program st p in
         let m = solve_model_exn [c] in
@@ -107,7 +107,7 @@ let suite =
 
     (* sub *)
     "subtract two elements on the stack">:: (fun _ ->
-        let st = mk_state in
+        let st = mk_state "" in
         let p = [PUSH 8; PUSH 3; SUB] in
         let c = enc_program st p in
         let m = solve_model_exn [c] in
@@ -119,7 +119,7 @@ let suite =
       );
 
     "subtract two elements on the stack with negative result">:: (fun _ ->
-        let st = mk_state in
+        let st = mk_state "" in
         let p = [PUSH 8; PUSH 13; SUB] in
         let c = enc_program st p in
         let m = solve_model_exn [c] in
@@ -131,7 +131,7 @@ let suite =
       );
 
     "check that subtraction does not change element below">:: (fun _ ->
-        let st = mk_state in
+        let st = mk_state "" in
         let p = [PUSH 3; PUSH 4; PUSH 5; SUB] in
         let c = enc_program st p in
         let m = solve_model_exn [c] in
@@ -143,7 +143,7 @@ let suite =
       );
 
     "SUB with only one element">:: (fun _ ->
-        let st = mk_state in
+        let st = mk_state "" in
         let p = [PUSH 3; SUB] in
         let c = enc_program st p in
         let m = solve_model_exn [c] in
@@ -155,7 +155,7 @@ let suite =
       );
 
     "sub with empty stack">:: (fun _ ->
-        let st = mk_state in
+        let st = mk_state "" in
         let p = [SUB] in
         let c = enc_program st p in
         let m = solve_model_exn [c] in
@@ -167,7 +167,7 @@ let suite =
       );
 
     "exceptional halt persists">:: (fun _ ->
-        let st = mk_state in
+        let st = mk_state "" in
         let p = [SUB; PUSH 3] in
         let c = enc_program st p in
         let m = solve_model_exn [c] in
@@ -180,7 +180,7 @@ let suite =
 
     (* add and sub *)
     "combine add and sub">:: (fun _ ->
-        let st = mk_state in
+        let st = mk_state "" in
         let p = [PUSH 6; PUSH 2; PUSH 2; ADD; SUB] in
         let c = enc_program st p in
         let m = solve_model_exn [c] in
@@ -190,7 +190,7 @@ let suite =
 
     (* push *)
     "top of the stack is the pushed element after a PUSH">:: (fun _ ->
-        let st = mk_state in
+        let st = mk_state "" in
         let p = [PUSH 5] in
         let c = enc_program st p in
         let m = solve_model_exn [c] in
@@ -202,7 +202,7 @@ let suite =
       );
 
     "PUSHing too many elements leads to a stack overflow">:: (fun _ ->
-        let st = mk_state in
+        let st = mk_state "" in
         let max = Int.pow 2 sas - 1 in
         let c =
           init st <&>
@@ -219,7 +219,7 @@ let suite =
 
     (* gas cost *)
     "after 0 instruction no gas has been used">::(fun _ ->
-        let st = mk_state in
+        let st = mk_state "" in
         let c = init st in
         let m = solve_model_exn [c] in
         assert_equal
@@ -230,7 +230,7 @@ let suite =
       );
 
     "after some instruction some gas has been used">::(fun _ ->
-        let st = mk_state in
+        let st = mk_state "" in
         let p = [PUSH 6; PUSH 2; ADD] in
         let c = enc_program st p in
         let m = solve_model_exn [c] in
