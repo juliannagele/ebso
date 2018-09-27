@@ -22,10 +22,11 @@ type progr = instr list
 
 let opcode = function
   | ADD -> 0
-  | PUSH _ -> 1
-  | POP -> 2
-  | SUB -> 3
-
+  | PUSH 1 -> 1
+  | PUSH 2 -> 2
+  | POP -> 3
+  | SUB -> 4
+  | PUSH _ -> 5
 
 let gas_cost = function
   | ADD -> 3
@@ -121,9 +122,8 @@ let enc_instruction st j is =
   in
   enc_instr && enc_used_gas
 
-let enc_search_space st sis fis =
+let enc_search_space st k sis fis =
   let open Z3Ops in
-  let k = intconst "k" in
   let j = intconst "j" in
   let enc_sis =
     List.map sis ~f:(fun is ->
@@ -131,8 +131,41 @@ let enc_search_space st sis fis =
   in
   forall j ((j < k) ==> conj enc_sis)
 
+let enc_equivalence sts stt ks kt =
+  let open Z3Ops in
+  let n = bvconst "n" sas in
+  (forall n (sts.stack @@ [num 0; n] == stt.stack @@ [num 0; n])) &&
+  sts.stack_ctr @@ [num ks] == stt.stack_ctr @@ [kt] &&
+  (forall n ((n < stt.stack_ctr @@ [kt]) ==>
+     (sts.stack @@ [num ks; n] == stt.stack @@ [kt; n]))) &&
+  sts.exc_halt @@ [num ks] == stt.exc_halt @@ [kt]
+
 let enc_program st =
   List.foldi ~init:(init st)
     ~f:(fun j enc oc -> enc <&> enc_instruction st (num j) oc)
 
-let super_optimize _ = failwith "not implemented"
+let enc_super_opt p =
+  let open Z3Ops in
+  let sts = mk_state "_s" in
+  let stt = mk_state "_t" in
+  let ks = List.length p in
+  let kt = intconst "k" in
+  let fis = func_decl "instr" [int_sort] int_sort in
+  let sis = [PUSH 2] in
+  enc_program sts p &&
+  enc_search_space stt kt sis fis &&
+  enc_equivalence sts stt ks kt
+
+let super_optimize p =
+  let c = enc_super_opt p in
+  let slvr = Z3.Solver.mk_simple_solver !ctxt in
+  let () = Z3.Solver.add slvr [c] in
+  match Z3.Solver.check slvr [] with
+  | Z3.Solver.SATISFIABLE ->
+    begin
+      match Z3.Solver.get_model slvr with
+      | Some m -> Z3.Expr.to_string c ^ "\n\n\n" ^ Z3.Model.to_string m
+      | None -> failwith "SAT but no model"
+    end
+  | Z3.Solver.UNSATISFIABLE -> failwith "UNSAT"
+  | Z3.Solver.UNKNOWN -> failwith (Z3.Solver.get_reason_unknown slvr)

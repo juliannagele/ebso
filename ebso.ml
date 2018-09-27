@@ -37,8 +37,8 @@ let () =
       in
       fun () ->
         match file with
-        | None -> super_optimize zero
-        | Some f -> super_optimize f
+        | None -> print_string @@ super_optimize p0
+        | Some _ -> print_string @@ super_optimize p0
     ]
   |> Command.run ~version:"0.1"
 
