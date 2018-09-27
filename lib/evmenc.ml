@@ -100,17 +100,17 @@ let enc_add = enc_binop (<+>)
 let enc_sub = enc_binop (<->)
 
 (* effect of instruction on state st after j steps *)
-let enc_instruction st j oc =
+let enc_instruction st j is =
   let open Z3Ops in
   let enc_instr =
-    match oc with
+    match is with
     | PUSH x -> enc_push x st j
     | ADD -> enc_add st j
     | SUB -> enc_sub st j
     | _   -> failwith "other instrs"
   in
   let enc_used_gas =
-    st.used_gas @@ [j + one] == (st.used_gas @@ [j]) + (num (gas_cost oc))
+    st.used_gas @@ [j + one] == (st.used_gas @@ [j]) + (num (gas_cost is))
   in
   enc_instr && enc_used_gas
 
