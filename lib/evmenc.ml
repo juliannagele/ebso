@@ -121,6 +121,16 @@ let enc_instruction st j is =
   in
   enc_instr && enc_used_gas
 
+let enc_search_space st sis fis =
+  let open Z3Ops in
+  let k = intconst "k" in
+  let j = intconst "j" in
+  let enc_sis =
+    List.map sis ~f:(fun is ->
+        (fis @@ [j] == num (opcode is)) ==> (enc_instruction st j is))
+  in
+  forall j ((j < k) ==> conj enc_sis)
+
 let enc_program st =
   List.foldi ~init:(init st)
     ~f:(fun j enc oc -> enc <&> enc_instruction st (num j) oc)
