@@ -20,6 +20,13 @@ type instr =
 
 type progr = instr list
 
+let opcode = function
+  | ADD -> 0
+  | PUSH _ -> 1
+  | POP -> 2
+  | SUB -> 3
+
+
 let gas_cost = function
   | ADD -> 3
   | PUSH _ -> 2
