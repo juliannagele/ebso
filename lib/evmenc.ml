@@ -18,6 +18,8 @@ type instr =
   | SUB
 [@@deriving show { with_path = false }]
 
+type progr = instr list
+
 let gas_cost = function
   | ADD -> 3
   | PUSH _ -> 2
