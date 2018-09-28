@@ -193,6 +193,16 @@ let suite =
           (bvnum 2 ses) (eval_stack st m (List.length p) 0)
       );
 
+    "valid program does not halt exceptionally">:: (fun _ ->
+        let st = mk_state "" in
+        let p = [PUSH 6; PUSH 2; PUSH 2; ADD; SUB] in
+        let c = enc_program st p in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          btm
+          (eval_exc_halt st m (List.length p))
+      );
+
     (* push *)
     "top of the stack is the pushed element after a PUSH">:: (fun _ ->
         let st = mk_state "" in
