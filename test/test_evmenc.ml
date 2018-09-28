@@ -27,6 +27,11 @@ let eval_exc_halt st m i = eval_state_field m i st.exc_halt
 
 let eval_gas st m i = eval_state_field m i st.used_gas
 
+let eval_const m k =
+  match Z3.Model.eval m k true with
+  | Some e -> e
+  | None -> failwith ("could not eval " ^ Z3.Expr.to_string k)
+
 let suite =
   "suite" >:::
   [
@@ -240,6 +245,38 @@ let suite =
           (num @@ total_gas_cost p)
           (eval_gas st m (List.length p))
       );
+
+    (* enc_search_space *)
+    "search for 1 instruction program (fis)">::(fun _ ->
+        let st = mk_state "" in
+        let p = [PUSH 1] in
+        let sis = [PUSH 1] in
+        let k = intconst "k" in
+        let fis = func_decl "fis" [int_sort] int_sort in
+        let c = enc_program st p <&> enc_search_space st k sis fis in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          (num (opcode (PUSH 1)))
+          (eval_state_field m 0 fis)
+      );
+
+    "search for 1 instruction program (k)">::(fun _ ->
+        let st = mk_state "" in
+        let p = [PUSH 1] in
+        let sis = [PUSH 1] in
+        let k = intconst "k" in
+        let fis = func_decl "fis" [int_sort] int_sort in
+        let c = enc_program st p <&> enc_search_space st k sis fis in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          (num 1)
+          (eval_const m k)
+      );
+
   ]
 
 let () =
