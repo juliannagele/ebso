@@ -260,7 +260,7 @@ let suite =
 
     (* enc_search_space *)
 
-    "search for 1 instruction program (fis)">::(fun _ ->
+    "search for 1 instruction program">::(fun _ ->
         let st = mk_state "" in
         let p = [PUSH 1] in
         let sis = [PUSH 1] in
@@ -279,7 +279,7 @@ let suite =
           (eval_func_decl_at_i m 0 fis)
       );
 
-    "search for 3 instruction program (fis)">::(fun _ ->
+    "search for 3 instruction program">::(fun _ ->
         let st = mk_state "" in
         let p = [PUSH 1; PUSH 1; ADD] in
         let sis = [PUSH 1; ADD] in
