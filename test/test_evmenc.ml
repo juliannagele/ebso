@@ -299,7 +299,7 @@ let suite =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
-          (num (opcode (PUSH 1)))
+          (num (enc_opcode (PUSH 1)))
           (eval_func_decl_at_i m 0 fis)
       );
 
