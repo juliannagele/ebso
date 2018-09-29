@@ -259,13 +259,18 @@ let suite =
       );
 
     (* enc_search_space *)
+
     "search for 1 instruction program (fis)">::(fun _ ->
         let st = mk_state "" in
         let p = [PUSH 1] in
         let sis = [PUSH 1] in
         let k = intconst "k" in
         let fis = func_decl "fis" [int_sort] int_sort in
-        let c = enc_program st p <&> enc_search_space st k sis fis in
+        let c =
+          enc_program st p <&>
+          enc_search_space st k sis fis <&>
+          (k <==> (num (List.length p)))
+        in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
@@ -280,7 +285,11 @@ let suite =
         let sis = [PUSH 1] in
         let k = intconst "k" in
         let fis = func_decl "fis" [int_sort] int_sort in
-        let c = enc_program st p <&> enc_search_space st k sis fis in
+        let c =
+          enc_program st p <&>
+          enc_search_space st k sis fis <&>
+          (k <==> (num (List.length p)))
+        in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
