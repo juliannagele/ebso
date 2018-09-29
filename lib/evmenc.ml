@@ -165,6 +165,10 @@ let enc_super_opt p =
   enc_search_space stt kt sis fis &&
   enc_equivalence sts stt ks kt
 
+let dec_super_opt m k fis =
+  let k = eval_const m k in
+  List.init k ~f:(fun j -> eval_func_decl_at_j m j fis |> dec_opcode)
+
 let super_optimize p =
   let c = enc_super_opt p in
   let slvr = Z3.Solver.mk_simple_solver !ctxt in
