@@ -137,7 +137,8 @@ let enc_search_space st k sis fis =
   let in_sis =
     List.map sis ~f:(fun is -> fis @@ [j] == num (enc_opcode is))
   in
-  forall j ((j < k) ==> conj enc_sis) && forall j ((j < k) ==> disj in_sis)
+  forall j (((j < k) && (j >= (num 0))) ==> conj enc_sis && disj in_sis) &&
+  k >= (num 0)
 
 (* we only demand equivalence at kt *)
 let enc_equivalence sts stt ks kt =
