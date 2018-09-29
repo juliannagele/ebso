@@ -321,6 +321,24 @@ let suite =
           (eval_func_decl_at_i m 0 fis)
       );
 
+    "sis does not contain required instruction">::(fun _ ->
+        let st = mk_state "" in
+        let p = [PUSH 1] in
+        let sis = [ADD; SUB] in
+        let k = intconst "k" in
+        let fis = func_decl "fis" [int_sort] int_sort in
+        let c =
+          enc_program st p <&>
+          enc_search_space st k sis fis <&>
+          (k <==> (num (List.length p)))
+        in
+        let slvr = Z3.Solver.mk_simple_solver !ctxt in
+        let () = Z3.Solver.add slvr [c] in
+        assert_equal
+          Z3.Solver.UNSATISFIABLE
+          (Z3.Solver.check slvr [])
+      );
+
   ]
 
 let () =
