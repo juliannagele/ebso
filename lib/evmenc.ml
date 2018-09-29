@@ -20,7 +20,7 @@ type instr =
 
 type progr = instr list
 
-let opcode = function
+let enc_opcode = function
   | ADD -> 0
   | PUSH 1 -> 1
   | PUSH 2 -> 2
@@ -127,7 +127,7 @@ let enc_search_space st k sis fis =
   let j = intconst "j" in
   let enc_sis =
     List.map sis ~f:(fun is ->
-        (fis @@ [j] == num (opcode is)) ==> (enc_instruction st j is))
+        (fis @@ [j] == num (enc_opcode is)) ==> (enc_instruction st j is))
   in
   forall j ((j < k) ==> conj enc_sis)
 
