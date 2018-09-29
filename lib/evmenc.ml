@@ -134,6 +134,7 @@ let enc_search_space st k sis fis =
   in
   forall j ((j < k) ==> conj enc_sis)
 
+(* we only demand equivalence at kt *)
 let enc_equivalence sts stt ks kt =
   let open Z3Ops in
   let n = bvconst "n" sas in
