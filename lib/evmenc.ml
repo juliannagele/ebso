@@ -29,6 +29,7 @@ let opcodes =
   ]
 
 let enc_opcode = List.Assoc.find_exn opcodes ~equal:[%eq: instr]
+let dec_opcode = List.Assoc.find_exn (List.Assoc.inverse opcodes) ~equal:[%eq: int]
 
 let gas_cost = function
   | ADD -> 3

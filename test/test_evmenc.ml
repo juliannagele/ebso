@@ -30,6 +30,13 @@ let eval_gas st m i = eval_state_field m i st.used_gas
 let suite =
   "suite" >:::
   [
+    (* enc dec opcode *)
+
+    "encoding and decoding an opcode is the identity">:: (fun _ ->
+        assert_equal ~cmp:[%eq: instr] ~printer:[%show: instr]
+          ADD (dec_opcode (enc_opcode ADD))
+      );
+
     (* init *)
 
     "formula for stack is initialized with 0">:: (fun _ ->
