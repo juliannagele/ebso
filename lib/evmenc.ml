@@ -16,17 +16,20 @@ type instr =
   | PUSH of stackarg
   | POP
   | SUB
-[@@deriving show { with_path = false }]
+[@@deriving show { with_path = false }, eq]
 
 type progr = instr list
 
-let opcode = function
-  | ADD -> 0
-  | PUSH 1 -> 1
-  | PUSH 2 -> 2
-  | POP -> 3
-  | SUB -> 4
-  | PUSH _ -> 5
+let opcodes =
+  [ (ADD, 0)
+  ; (PUSH 1, 1)
+  ; (PUSH 2, 2)
+  ; (POP, 3)
+  ; (SUB, 4)
+  ]
+
+let enc_opcode = List.Assoc.find_exn opcodes ~equal:[%eq: instr]
+let dec_opcode = List.Assoc.find_exn (List.Assoc.inverse opcodes) ~equal:[%eq: int]
 
 let gas_cost = function
   | ADD -> 3
@@ -102,7 +105,7 @@ let enc_binop op st j =
   (* check for exceptional halting *)
   (st.exc_halt @@ [j + one] ==
   (* stack underflow occured or exceptional halting occured eariler *)
-  ((sc' - (bvnum 2 sas)) < (bvnum 0 sas)) || st.exc_halt @@ [j])
+  ((sc - (bvnum 2 sas)) < (bvnum 0 sas)) || st.exc_halt @@ [j])
 
 let enc_add = enc_binop (<+>)
 let enc_sub = enc_binop (<->)
@@ -127,10 +130,16 @@ let enc_search_space st k sis fis =
   let j = intconst "j" in
   let enc_sis =
     List.map sis ~f:(fun is ->
-        (fis @@ [j] == num (opcode is)) ==> (enc_instruction st j is))
+        (fis @@ [j] == num (enc_opcode is)) ==> (enc_instruction st j is))
   in
-  forall j ((j < k) ==> conj enc_sis)
+  (* optimization potential:
+     choose opcodes = 1 .. |sis| and demand fis (j) < |sis| *)
+  let in_sis =
+    List.map sis ~f:(fun is -> fis @@ [j] == num (enc_opcode is))
+  in
+  forall j ((j < k) ==> conj enc_sis) && forall j ((j < k) ==> disj in_sis)
 
+(* we only demand equivalence at kt *)
 let enc_equivalence sts stt ks kt =
   let open Z3Ops in
   let n = bvconst "n" sas in
@@ -155,6 +164,10 @@ let enc_super_opt p =
   enc_program sts p &&
   enc_search_space stt kt sis fis &&
   enc_equivalence sts stt ks kt
+
+let dec_super_opt m k fis =
+  let k = eval_const m k in
+  List.init k ~f:(fun j -> eval_func_decl_at_j m j fis |> dec_opcode)
 
 let super_optimize p =
   let c = enc_super_opt p in

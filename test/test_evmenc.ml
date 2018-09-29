@@ -35,6 +35,13 @@ let eval_const m k =
 let suite =
   "suite" >:::
   [
+    (* enc dec opcode *)
+
+    "encoding and decoding an opcode is the identity">:: (fun _ ->
+        assert_equal ~cmp:[%eq: instr] ~printer:[%show: instr]
+          ADD (dec_opcode (enc_opcode ADD))
+      );
+
     (* init *)
 
     "formula for stack is initialized with 0">:: (fun _ ->
@@ -107,6 +114,18 @@ let suite =
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
           top
+          (eval_exc_halt st m (List.length p))
+      );
+
+    "add two elements does not lead to stack underflow">:: (fun _ ->
+        let st = mk_state "" in
+        let p = [PUSH 4; PUSH 5; ADD] in
+        let c = enc_program st p in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          btm
           (eval_exc_halt st m (List.length p))
       );
 
@@ -230,6 +249,18 @@ let suite =
           ~printer:Z3.Expr.to_string
           top
           (eval_exc_halt st m (max + 1))
+      );
+
+    "PUSHing one element does not to a stack overflow">:: (fun _ ->
+        let st = mk_state "" in
+        let p = [PUSH 5] in
+        let c = enc_program st p in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          btm
+          (eval_exc_halt st m (List.length p))
       );
 
     (* gas cost *)
