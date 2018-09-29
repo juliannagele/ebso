@@ -102,7 +102,7 @@ let enc_binop op st j =
   (* check for exceptional halting *)
   (st.exc_halt @@ [j + one] ==
   (* stack underflow occured or exceptional halting occured eariler *)
-  ((sc' - (bvnum 2 sas)) < (bvnum 0 sas)) || st.exc_halt @@ [j])
+  ((sc - (bvnum 2 sas)) < (bvnum 0 sas)) || st.exc_halt @@ [j])
 
 let enc_add = enc_binop (<+>)
 let enc_sub = enc_binop (<->)

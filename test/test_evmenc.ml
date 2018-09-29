@@ -105,6 +105,18 @@ let suite =
           (eval_exc_halt st m (List.length p))
       );
 
+    "add two elements does not lead to stack underflow">:: (fun _ ->
+        let st = mk_state "" in
+        let p = [PUSH 4; PUSH 5; ADD] in
+        let c = enc_program st p in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          btm
+          (eval_exc_halt st m (List.length p))
+      );
+
     (* sub *)
     "subtract two elements on the stack">:: (fun _ ->
         let st = mk_state "" in
@@ -215,6 +227,18 @@ let suite =
           ~printer:Z3.Expr.to_string
           top
           (eval_exc_halt st m (max + 1))
+      );
+
+    "PUSHing one element does not to a stack overflow">:: (fun _ ->
+        let st = mk_state "" in
+        let p = [PUSH 5] in
+        let c = enc_program st p in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          btm
+          (eval_exc_halt st m (List.length p))
       );
 
     (* gas cost *)
