@@ -154,13 +154,11 @@ let enc_program st =
   List.foldi ~init:(init st)
     ~f:(fun j enc oc -> enc <&> enc_instruction st (num j) oc)
 
-let enc_super_opt p =
+let enc_super_opt p kt fis =
   let open Z3Ops in
   let sts = mk_state "_s" in
   let stt = mk_state "_t" in
   let ks = List.length p in
-  let kt = intconst "k" in
-  let fis = func_decl "instr" [int_sort] int_sort in
   let sis = [PUSH 2] in
   enc_program sts p &&
   enc_search_space stt kt sis fis &&
@@ -202,14 +200,18 @@ let dec_super_opt m k fis =
                  |> Z3.Arithmetic.Integer.get_int |> dec_opcode)
 
 let super_optimize p =
-  let c = enc_super_opt p in
+  let kt = intconst "k" in
+  let fis = func_decl "instr" [int_sort] int_sort in
+  let c = enc_super_opt p kt fis in
   let slvr = Z3.Solver.mk_simple_solver !ctxt in
   let () = Z3.Solver.add slvr [c] in
   match Z3.Solver.check slvr [] with
   | Z3.Solver.SATISFIABLE ->
     begin
       match Z3.Solver.get_model slvr with
-      | Some m -> Z3.Expr.to_string c ^ "\n\n\n" ^ Z3.Model.to_string m
+      | Some m -> Z3.Expr.to_string c ^ "\n\n\n" ^
+                  Z3.Model.to_string m ^ "\n\n" ^
+                  [%show: instr list] (dec_super_opt m kt fis)
       | None -> failwith "SAT but no model"
     end
   | Z3.Solver.UNSATISFIABLE -> failwith "UNSAT"
