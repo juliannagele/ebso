@@ -278,26 +278,6 @@ let suite =
           (num (enc_opcode (PUSH 1)))
           (eval_func_decl_at_i m 0 fis)
       );
-
-    "search for 1 instruction program (k)">::(fun _ ->
-        let st = mk_state "" in
-        let p = [PUSH 1] in
-        let sis = [PUSH 1] in
-        let k = intconst "k" in
-        let fis = func_decl "fis" [int_sort] int_sort in
-        let c =
-          enc_program st p <&>
-          enc_search_space st k sis fis <&>
-          (k <==> (num (List.length p)))
-        in
-        let m = solve_model_exn [c] in
-        assert_equal
-          ~cmp:[%eq: Z3.Expr.t]
-          ~printer:Z3.Expr.to_string
-          (num 1)
-          (eval_const m k)
-      );
-
   ]
 
 let () =
