@@ -339,6 +339,51 @@ let suite =
           (Z3.Solver.check slvr [])
       );
 
+    (* enc_equivalence *)
+
+    "search for 1 instruction program with equivalence constraint">::(fun _ ->
+        let st = mk_state "" in
+        let p = [PUSH 1] in
+        let sis = [PUSH 1] in
+        let k = intconst "k" in
+        let fis = func_decl "fis" [int_sort] int_sort in
+        let c =
+          enc_program st p <&>
+          enc_search_space st k sis fis <&>
+          enc_equivalence st st (List.length p) k
+        in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          (num (enc_opcode (PUSH 1)))
+          (eval_func_decl_at_i m 0 fis)
+      );
+
+    "search for 3 instruction program with equivalence constraint">::(fun _ ->
+        let st = mk_state "" in
+        let p = [PUSH 1; PUSH 1; ADD] in
+        let sis = [PUSH 1; ADD] in
+        let k = intconst "k" in
+        let fis = func_decl "fis" [int_sort] int_sort in
+        let c =
+          enc_program st p <&>
+          enc_search_space st k sis fis <&>
+          enc_equivalence st st (List.length p) k
+        in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t list]
+          ~printer:(List.to_string ~f:Z3.Expr.to_string)
+          [(num (enc_opcode (PUSH 1)));
+           (num (enc_opcode (PUSH 1)));
+           (num (enc_opcode (ADD)))]
+          [(eval_func_decl_at_i m 0 fis);
+           (eval_func_decl_at_i m 1 fis);
+           (eval_func_decl_at_i m 2 fis)]
+      );
+
+
   ]
 
 let () =
