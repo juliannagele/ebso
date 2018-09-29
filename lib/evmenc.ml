@@ -16,17 +16,19 @@ type instr =
   | PUSH of stackarg
   | POP
   | SUB
-[@@deriving show { with_path = false }]
+[@@deriving show { with_path = false }, eq]
 
 type progr = instr list
 
-let enc_opcode = function
-  | ADD -> 0
-  | PUSH 1 -> 1
-  | PUSH 2 -> 2
-  | POP -> 3
-  | SUB -> 4
-  | PUSH _ -> 5
+let opcodes =
+  [ (ADD, 0)
+  ; (PUSH 1, 1)
+  ; (PUSH 2, 2)
+  ; (POP, 3)
+  ; (SUB, 4)
+  ]
+
+let enc_opcode = List.Assoc.find_exn opcodes ~equal:[%eq: instr]
 
 let gas_cost = function
   | ADD -> 3
