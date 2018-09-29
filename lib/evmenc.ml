@@ -195,8 +195,10 @@ let eval_const m k =
   | None -> failwith ("could not eval " ^ Z3.Expr.to_string k)
 
 let dec_super_opt m k fis =
-  let k = eval_const m k in
-  List.init k ~f:(fun j -> eval_func_decl_at_j m j fis |> dec_opcode)
+  let k = Z3.Arithmetic.Integer.get_int @@ eval_const m k in
+  List.init k
+    ~f:(fun j -> eval_func_decl_at_i m j fis
+                 |> Z3.Arithmetic.Integer.get_int |> dec_opcode)
 
 let super_optimize p =
   let c = enc_super_opt p in
