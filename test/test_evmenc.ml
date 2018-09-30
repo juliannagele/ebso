@@ -196,7 +196,7 @@ let suite =
 
     "invalid program should halt exceptionally">:: (fun _ ->
         let st = mk_state "" in
-        let p = [(PUSH 2); SUB; (PUSH 2); ADD; (PUSH 2)] in
+        let p = [(PUSH 2); SUB; (PUSH 2); ADD;] in
         let c = enc_program st p in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
