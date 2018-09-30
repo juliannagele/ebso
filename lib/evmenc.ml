@@ -9,7 +9,9 @@ let sas = 4
 (* stack element size *)
 let ses = 8
 
-type stackarg = int [@@deriving show, eq]
+type stackarg =
+  | Val of int
+[@@deriving show, eq]
 
 type instr =
   | ADD
@@ -22,8 +24,8 @@ type progr = instr list
 
 let opcodes =
   [ (ADD, 0)
-  ; (PUSH 1, 1)
-  ; (PUSH 2, 2)
+  ; (PUSH (Val 1), 1)
+  ; (PUSH (Val 2), 2)
   ; (POP, 3)
   ; (SUB, 4)
   ]
@@ -133,7 +135,7 @@ let enc_instruction st j is =
   let open Z3Ops in
   let enc_instr =
     match is with
-    | PUSH x -> enc_push x st j
+    | PUSH (Val x) -> enc_push x st j
     | ADD -> enc_add st j
     | SUB -> enc_sub st j
     | _   -> failwith "other instrs"

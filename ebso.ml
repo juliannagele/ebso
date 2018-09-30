@@ -2,28 +2,28 @@ open Core
 open Evmenc
 
 let p0 = [
-  PUSH 1;
-  PUSH 1;
+  PUSH (Val 1);
+  PUSH (Val 1);
   ADD;
 ]
 
 let p0_optzd = [
-  PUSH 2;
+  PUSH (Val 2);
 ]
 
 (* Goal 1: super_optimze p0 == p0_optzd *)
 
 let zero = [
-  PUSH 42;
-  PUSH 21;
-  PUSH 0;
+  PUSH (Val 42);
+  PUSH (Val 21);
+  PUSH (Val 0);
   SUB;
   ADD;
 ]
 
 let zero_optzd = [
-  PUSH 21;
-  PUSH 42;
+  PUSH (Val 21);
+  PUSH (Val 42);
   SUB;
 ]
 
@@ -37,7 +37,7 @@ let () =
       in
       fun () ->
         match file with
-        | None -> print_string @@ super_optimize [PUSH 2; PUSH 1; ADD] p0
+        | None -> print_string @@ super_optimize [PUSH (Val 2); PUSH (Val 1); ADD] p0
         | Some _ -> print_string @@ super_optimize [] p0
     ]
   |> Command.run ~version:"0.1"
