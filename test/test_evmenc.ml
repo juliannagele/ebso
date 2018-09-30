@@ -270,6 +270,19 @@ let suite =
           (eval_gas st m (List.length p))
       );
 
+    "after a instructions total gas has been used">::(fun _ ->
+        let st = mk_state "" in
+        let p = [PUSH 6; PUSH 2; ADD] in
+        let c = enc_program st p in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          (num @@ total_gas_cost p)
+          (eval_gas st m (List.length p))
+      );
+
+
     (* enc_search_space *)
 
     "search for 1 instruction program">::(fun _ ->
