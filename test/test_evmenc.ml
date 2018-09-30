@@ -9,8 +9,9 @@ let suite =
     (* enc dec opcode *)
 
     "encoding and decoding an opcode is the identity">:: (fun _ ->
+        let ea = mk_enc_consts [] [] in
         assert_equal ~cmp:[%eq: instr] ~printer:[%show: instr]
-          ADD (dec_opcode (enc_opcode ADD))
+          ADD (dec_opcode ea (enc_opcode ADD))
       );
 
     (* init *)
@@ -224,7 +225,7 @@ let suite =
         let c =
           init st <&>
           (st.stack_ctr <@@> [num max] <==> (bvnum max sas)) <&>
-          (enc_push 5 st (num max))
+          (enc_push (Val 5) st (num max))
         in
         let m = solve_model_exn [c] in
         assert_equal

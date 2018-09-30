@@ -33,17 +33,6 @@ type instr =
 
 type progr = instr list
 
-let opcodes =
-  [ (ADD, 0)
-  ; (PUSH (Val 1), 1)
-  ; (PUSH (Val 2), 2)
-  ; (POP, 3)
-  ; (SUB, 4)
-  ]
-
-let enc_opcode = List.Assoc.find_exn opcodes ~equal:[%eq: instr]
-let dec_opcode = List.Assoc.find_exn (List.Assoc.inverse opcodes) ~equal:[%eq: int]
-
 let gas_cost = function
   | ADD -> 3
   | PUSH _ -> 2
@@ -75,6 +64,7 @@ type enc_consts = {
   sis : instr list;
   kt : Z3.Expr.expr;
   fis : Z3.FuncDecl.func_decl;
+  a : Z3.FuncDecl.func_decl;
 }
 
 let mk_enc_consts p sis = {
@@ -84,9 +74,27 @@ let mk_enc_consts p sis = {
   sis = sis;
   (* number of instructions in target program *)
   kt = intconst "k";
-  (* target program  *)
+  (* target program *)
   fis = func_decl "instr" [int_sort] int_sort;
+  (* arguments for PUSH instrucions in target program *)
+  a = func_decl "a" [int_sort] (bv_sort ses);
 }
+
+let opcodes =
+  [ (ADD, 0)
+  ; (PUSH (Val 1), 1)
+  ; (PUSH (Val 2), 2)
+  ; (POP, 3)
+  ; (SUB, 4)
+  ]
+
+let enc_opcode i = match i with
+  | PUSH (Tmpl _) -> 5
+  | _ -> List.Assoc.find_exn opcodes ~equal:[%eq: instr] i
+
+let dec_opcode ea i =
+  if i = 5 then PUSH (Tmpl ea.a) else
+    List.Assoc.find_exn (List.Assoc.inverse opcodes) ~equal:[%eq: int] i
 
 (* INIT: init stack with all 0 *)
 let init st =
@@ -102,7 +110,9 @@ let init st =
   && (st.used_gas @@ [num 0] == num 0)
 
 (* TODO: check data layout on stack *)
-let enc_stackarg x = bvnum x ses
+let enc_stackarg j = function
+  | Val x -> bvnum x ses
+  | Tmpl a -> a <@@> [j]
 
 let enc_push x st j =
   let open Z3Ops in
@@ -114,7 +124,7 @@ let enc_push x st j =
   (* there will be one more element on the stack after PUSHing *)
   (sc' == (sc + bvnum 1 sas)) &&
   (* that element will be x *)
-  sk' sc == enc_stackarg x &&
+  sk' sc == enc_stackarg j x &&
   (* all old elements stay the same *)
   forall n ((n < sc) ==> (sk' n == sk n)) &&
   (* check for exceptional halting  *)
@@ -146,7 +156,7 @@ let enc_instruction st j is =
   let open Z3Ops in
   let enc_instr =
     match is with
-    | PUSH (Val x) -> enc_push x st j
+    | PUSH x -> enc_push x st j
     | ADD -> enc_add st j
     | SUB -> enc_sub st j
     | _   -> failwith "other instrs"
@@ -235,7 +245,7 @@ let dec_super_opt m ea =
   let k = Z3.Arithmetic.Integer.get_int @@ eval_const m ea.kt in
   List.init k
     ~f:(fun j -> eval_func_decl_at_i m j ea.fis
-                 |> Z3.Arithmetic.Integer.get_int |> dec_opcode)
+                 |> Z3.Arithmetic.Integer.get_int |> dec_opcode ea)
 
 let super_optimize p sis =
   let ea = mk_enc_consts p sis in
