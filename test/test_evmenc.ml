@@ -424,7 +424,7 @@ let suite =
           enc_program sts p &&
           enc_search_space stt kt sis fis &&
           enc_equivalence sts stt ks kt &&
-          kt > num 3
+          sts.used_gas @@ [num ks] > stt.used_gas @@ [kt]
         in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: instr list] ~printer:[%show: instr list]

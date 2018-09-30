@@ -148,6 +148,8 @@ let enc_equivalence sts stt ks kt =
   sts.stack_ctr @@ [num 0] == stt.stack_ctr @@ [num 0] &&
   (* initally source and target stack are equal *)
   (forall n (sts.stack @@ [num 0; n] == stt.stack @@ [num 0; n])) &&
+  (* initally source and target gas are equal *)
+  sts.used_gas @@ [num 0] == stt.used_gas @@ [num 0] &&
   (* after the programs have run source and target stack counter are equal *)
   sts.stack_ctr @@ [num ks] == stt.stack_ctr @@ [kt] &&
   (* after the programs have run source and target stack are equal below the stack counter *)
