@@ -11,7 +11,18 @@ let ses = 8
 
 type stackarg =
   | Val of int
-[@@deriving show, eq]
+  | Tmpl of Z3.FuncDecl.func_decl
+
+let show_stackarg = function
+  | Val x -> Int.to_string x
+  | Tmpl a -> Z3.FuncDecl.to_string a
+
+let pp_stackarg fmt s = Format.fprintf fmt "%s" (show_stackarg s)
+
+let equal_stackarg x y = match (x, y) with
+  | (Val x, Val y) -> Int.equal x y
+  | (Tmpl a, Tmpl b) -> Z3.FuncDecl.equal a b
+  | (_, _) -> false
 
 type instr =
   | ADD
