@@ -276,31 +276,29 @@ let suite =
         let st = mk_state "" in
         let p = [PUSH 1] in
         let sis = [PUSH 1] in
-        let k = intconst "k" in
-        let fis = func_decl "fis" [int_sort] int_sort in
+        let ea = mk_enc_consts p sis in
         let c =
           enc_program st p <&>
-          enc_search_space st k sis fis <&>
-          (k <==> (num (List.length p)))
+          enc_search_space st ea <&>
+          (ea.kt <==> (num (List.length p)))
         in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
           (num (enc_opcode (PUSH 1)))
-          (eval_func_decl_at_i m 0 fis)
+          (eval_func_decl_at_i m 0 ea.fis)
       );
 
     "search for 3 instruction program">::(fun _ ->
         let st = mk_state "" in
         let p = [PUSH 1; PUSH 1; ADD] in
         let sis = [PUSH 1; ADD] in
-        let k = intconst "k" in
-        let fis = func_decl "fis" [int_sort] int_sort in
+        let ea = mk_enc_consts p sis in
         let c =
           enc_program st p <&>
-          enc_search_space st k sis fis <&>
-          (k <==> (num (List.length p)))
+          enc_search_space st ea <&>
+          (ea.kt <==> (num (List.length p)))
         in
         let m = solve_model_exn [c] in
         assert_equal
@@ -309,40 +307,38 @@ let suite =
           [(num (enc_opcode (PUSH 1)));
            (num (enc_opcode (PUSH 1)));
            (num (enc_opcode (ADD)))]
-          [(eval_func_decl_at_i m 0 fis);
-           (eval_func_decl_at_i m 1 fis);
-           (eval_func_decl_at_i m 2 fis)]
+          [(eval_func_decl_at_i m 0 ea.fis);
+           (eval_func_decl_at_i m 1 ea.fis);
+           (eval_func_decl_at_i m 2 ea.fis)]
       );
 
     "sis contains unused instructions ">::(fun _ ->
         let st = mk_state "" in
         let p = [PUSH 1] in
         let sis = [PUSH 1; PUSH 2; ADD; SUB] in
-        let k = intconst "k" in
-        let fis = func_decl "fis" [int_sort] int_sort in
+        let ea = mk_enc_consts p sis in
         let c =
           enc_program st p <&>
-          enc_search_space st k sis fis <&>
-          (k <==> (num (List.length p)))
+          enc_search_space st ea <&>
+          (ea.kt <==> (num (List.length p)))
         in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
           (num (enc_opcode (PUSH 1)))
-          (eval_func_decl_at_i m 0 fis)
+          (eval_func_decl_at_i m 0 ea.fis)
       );
 
     "sis does not contain required instruction">::(fun _ ->
         let st = mk_state "" in
         let p = [PUSH 1] in
         let sis = [ADD; SUB] in
-        let k = intconst "k" in
-        let fis = func_decl "fis" [int_sort] int_sort in
+        let ea = mk_enc_consts p sis in
         let c =
           enc_program st p <&>
-          enc_search_space st k sis fis <&>
-          (k <==> (num (List.length p)))
+          enc_search_space st ea <&>
+          (ea.kt <==> (num (List.length p)))
         in
         let slvr = Z3.Solver.mk_simple_solver !ctxt in
         let () = Z3.Solver.add slvr [c] in
@@ -357,31 +353,29 @@ let suite =
         let st = mk_state "" in
         let p = [PUSH 1] in
         let sis = [PUSH 1] in
-        let k = intconst "k" in
-        let fis = func_decl "fis" [int_sort] int_sort in
+        let ea = mk_enc_consts p sis in
         let c =
           enc_program st p <&>
-          enc_search_space st k sis fis <&>
-          enc_equivalence st st (List.length p) k
+          enc_search_space st ea <&>
+          enc_equivalence st st (List.length p) ea.kt
         in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
           (num (enc_opcode (PUSH 1)))
-          (eval_func_decl_at_i m 0 fis)
+          (eval_func_decl_at_i m 0 ea.fis)
       );
 
     "search for 3 instruction program with equivalence constraint">::(fun _ ->
         let st = mk_state "" in
         let p = [PUSH 1; PUSH 1; ADD] in
         let sis = [PUSH 1; ADD] in
-        let k = intconst "k" in
-        let fis = func_decl "fis" [int_sort] int_sort in
+        let ea = mk_enc_consts p sis in
         let c =
           enc_program st p <&>
-          enc_search_space st k sis fis <&>
-          enc_equivalence st st (List.length p) k
+          enc_search_space st ea <&>
+          enc_equivalence st st (List.length p) ea.kt
         in
         let m = solve_model_exn [c] in
         assert_equal
@@ -390,9 +384,9 @@ let suite =
           [(num (enc_opcode (PUSH 1)));
            (num (enc_opcode (PUSH 1)));
            (num (enc_opcode (ADD)))]
-          [(eval_func_decl_at_i m 0 fis);
-           (eval_func_decl_at_i m 1 fis);
-           (eval_func_decl_at_i m 2 fis)]
+          [(eval_func_decl_at_i m 0 ea.fis);
+           (eval_func_decl_at_i m 1 ea.fis);
+           (eval_func_decl_at_i m 2 ea.fis)]
       );
 
     "equivalence constraint forces inital stack for target program">:: (fun _ ->
@@ -417,18 +411,17 @@ let suite =
         let sts = mk_state "_s" in
         let stt = mk_state "_t" in
         let ks = List.length p in
-        let kt = intconst "k" in
-        let fis = func_decl "instr" [int_sort] int_sort in
         let sis = [PUSH 2; PUSH 1; ADD; SUB] in
+        let ea = mk_enc_consts p sis in
         let c =
           enc_program sts p &&
-          enc_search_space stt kt sis fis &&
-          enc_equivalence sts stt ks kt &&
-          sts.used_gas @@ [num ks] > stt.used_gas @@ [kt]
+          enc_search_space stt ea &&
+          enc_equivalence sts stt ks ea.kt &&
+          sts.used_gas @@ [num ks] > stt.used_gas @@ [ea.kt]
         in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: instr list] ~printer:[%show: instr list]
-          [PUSH 2] (dec_super_opt m kt fis)
+          [PUSH 2] (dec_super_opt m ea)
       );
 
   ]

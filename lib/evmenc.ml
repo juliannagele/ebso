@@ -57,6 +57,24 @@ let mk_state idx = {
   used_gas = func_decl ("used_gas" ^ idx) [int_sort] int_sort;
 }
 
+type enc_consts = {
+  p : instr list;
+  sis : instr list;
+  kt : Z3.Expr.expr;
+  fis : Z3.FuncDecl.func_decl;
+}
+
+let mk_enc_consts p sis = {
+  (* source program *)
+  p = p;
+  (* set of potential instructions to choose from in target program *)
+  sis = sis;
+  (* number of instructions in target program *)
+  kt = intconst "k";
+  (* target program  *)
+  fis = func_decl "instr" [int_sort] int_sort;
+}
+
 (* INIT: init stack with all 0 *)
 let init st =
   let open Z3Ops in
@@ -125,20 +143,20 @@ let enc_instruction st j is =
   in
   enc_instr && enc_used_gas
 
-let enc_search_space st k sis fis =
+let enc_search_space st ea =
   let open Z3Ops in
   let j = intconst "j" in
   let enc_sis =
-    List.map sis ~f:(fun is ->
-        (fis @@ [j] == num (enc_opcode is)) ==> (enc_instruction st j is))
+    List.map ea.sis ~f:(fun is ->
+        (ea.fis @@ [j] == num (enc_opcode is)) ==> (enc_instruction st j is))
   in
   (* optimization potential:
      choose opcodes = 1 .. |sis| and demand fis (j) < |sis| *)
   let in_sis =
-    List.map sis ~f:(fun is -> fis @@ [j] == num (enc_opcode is))
+    List.map ea.sis ~f:(fun is -> ea.fis @@ [j] == num (enc_opcode is))
   in
-  forall j (((j < k) && (j >= (num 0))) ==> conj enc_sis && disj in_sis) &&
-  k >= (num 0)
+  forall j (((j < ea.kt) && (j >= (num 0))) ==> conj enc_sis && disj in_sis) &&
+  ea.kt >= (num 0)
 
 (* we only demand equivalence at kt *)
 let enc_equivalence sts stt ks kt =
@@ -162,14 +180,14 @@ let enc_program st =
   List.foldi ~init:(init st)
     ~f:(fun j enc oc -> enc <&> enc_instruction st (num j) oc)
 
-let enc_super_opt p kt sis fis =
+let enc_super_opt ea =
   let open Z3Ops in
   let sts = mk_state "_s" in
   let stt = mk_state "_t" in
-  let ks = List.length p in
-  enc_program sts p &&
-  enc_search_space stt kt sis fis &&
-  enc_equivalence sts stt ks kt
+  let ks = List.length ea.p in
+  enc_program sts ea.p &&
+  enc_search_space stt ea &&
+  enc_equivalence sts stt ks ea.kt
 
 let solve_model_exn cs =
   let slvr = Z3.Solver.mk_simple_solver !ctxt in
@@ -200,16 +218,15 @@ let eval_const m k =
   | Some e -> e
   | None -> failwith ("could not eval " ^ Z3.Expr.to_string k)
 
-let dec_super_opt m k fis =
-  let k = Z3.Arithmetic.Integer.get_int @@ eval_const m k in
+let dec_super_opt m ea =
+  let k = Z3.Arithmetic.Integer.get_int @@ eval_const m ea.kt in
   List.init k
-    ~f:(fun j -> eval_func_decl_at_i m j fis
+    ~f:(fun j -> eval_func_decl_at_i m j ea.fis
                  |> Z3.Arithmetic.Integer.get_int |> dec_opcode)
 
 let super_optimize p sis =
-  let kt = intconst "k" in
-  let fis = func_decl "instr" [int_sort] int_sort in
-  let c = enc_super_opt p kt sis fis in
+  let ea = mk_enc_consts p sis in
+  let c = enc_super_opt ea in
   let slvr = Z3.Solver.mk_simple_solver !ctxt in
   let () = Z3.Solver.add slvr [c] in
   match Z3.Solver.check slvr [] with
@@ -218,7 +235,7 @@ let super_optimize p sis =
       match Z3.Solver.get_model slvr with
       | Some m -> Z3.Expr.to_string c ^ "\n\n\n" ^
                   Z3.Model.to_string m ^ "\n\n" ^
-                  [%show: instr list] (dec_super_opt m kt fis)
+                  [%show: instr list] (dec_super_opt m ea)
       | None -> failwith "SAT but no model"
     end
   | Z3.Solver.UNSATISFIABLE -> failwith "UNSAT"
