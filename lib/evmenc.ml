@@ -121,7 +121,7 @@ let enc_instruction st j is =
     | _   -> failwith "other instrs"
   in
   let enc_used_gas =
-    st.used_gas @@ [j + one] == (st.used_gas @@ [j]) + (num (gas_cost is))
+    st.used_gas @@ [j + one] == ((st.used_gas @@ [j]) + (num (gas_cost is)))
   in
   enc_instr && enc_used_gas
 
