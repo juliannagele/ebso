@@ -1,8 +1,6 @@
 * Abstract argument of PUSH instructions in encoding by using template; until
   then hardcode arguments
 
-* Implement decoder, i.e., model to target program
-
 * Abstract enc_instruction over number of elements added and deleted on stack
 
 * For now we assume that the stack is empty at start. This won't work
