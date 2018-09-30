@@ -194,7 +194,7 @@ let suite =
           (eval_exc_halt st m (List.length p))
       );
 
-    "invalid program does halt exceptionally">:: (fun _ ->
+    "invalid program should halt exceptionally">:: (fun _ ->
         let st = mk_state "" in
         let p = [(PUSH 2); SUB; (PUSH 2); ADD; (PUSH 2)] in
         let c = enc_program st p in
