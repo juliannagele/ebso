@@ -395,6 +395,41 @@ let suite =
            (eval_func_decl_at_i m 2 fis)]
       );
 
+    "equivalence constraint forces inital stack for target program">:: (fun _ ->
+        let sts = mk_state "_s" in
+        let stt = mk_state "_t" in
+        let kt = intconst "k" in
+        let c = init sts <&> enc_equivalence sts stt 0 kt in
+        let m = solve_model_exn [c] in
+        let sk_size = (Int.pow 2 sas) - 1 in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t list]
+          ~printer:(List.to_string ~f:Z3.Expr.to_string)
+          (List.init sk_size ~f:(fun _ -> bvnum 0 ses))
+          (List.init sk_size ~f:(eval_stack stt m 0))
+      );
+
+    (* super optimize *)
+
+    "super optimize PUSH PUSH ADD to PUSH" >::(fun _ ->
+        let open Z3Ops in
+        let p = [PUSH 1; PUSH 1; ADD] in
+        let sts = mk_state "_s" in
+        let stt = mk_state "_t" in
+        let ks = List.length p in
+        let kt = intconst "k" in
+        let fis = func_decl "instr" [int_sort] int_sort in
+        let sis = [PUSH 2; PUSH 1; ADD; SUB] in
+        let c =
+          enc_program sts p &&
+          enc_search_space stt kt sis fis &&
+          enc_equivalence sts stt ks kt &&
+          kt > num 3
+        in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: instr list] ~printer:[%show: instr list]
+          [PUSH 2] (dec_super_opt m kt fis)
+      );
 
   ]
 

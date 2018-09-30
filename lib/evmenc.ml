@@ -144,10 +144,16 @@ let enc_search_space st k sis fis =
 let enc_equivalence sts stt ks kt =
   let open Z3Ops in
   let n = bvconst "n" sas in
+  (* intially source and target stack counter are equal *)
+  sts.stack_ctr @@ [num 0] == stt.stack_ctr @@ [num 0] &&
+  (* initally source and target stack are equal *)
   (forall n (sts.stack @@ [num 0; n] == stt.stack @@ [num 0; n])) &&
+  (* after the programs have run source and target stack counter are equal *)
   sts.stack_ctr @@ [num ks] == stt.stack_ctr @@ [kt] &&
+  (* after the programs have run source and target stack are equal below the stack counter *)
   (forall n ((n < stt.stack_ctr @@ [kt]) ==>
-     (sts.stack @@ [num ks; n] == stt.stack @@ [kt; n]))) &&
+             (sts.stack @@ [num ks; n] == stt.stack @@ [kt; n]))) &&
+  (* after the programs have run source and target exceptional halting are equal *)
   sts.exc_halt @@ [num ks] == stt.exc_halt @@ [kt]
 
 let enc_program st =
@@ -159,7 +165,7 @@ let enc_super_opt p kt fis =
   let sts = mk_state "_s" in
   let stt = mk_state "_t" in
   let ks = List.length p in
-  let sis = [PUSH 2] in
+  let sis = [PUSH 2; PUSH 1; ADD] in
   enc_program sts p &&
   enc_search_space stt kt sis fis &&
   enc_equivalence sts stt ks kt
