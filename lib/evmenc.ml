@@ -162,12 +162,11 @@ let enc_program st =
   List.foldi ~init:(init st)
     ~f:(fun j enc oc -> enc <&> enc_instruction st (num j) oc)
 
-let enc_super_opt p kt fis =
+let enc_super_opt p kt sis fis =
   let open Z3Ops in
   let sts = mk_state "_s" in
   let stt = mk_state "_t" in
   let ks = List.length p in
-  let sis = [PUSH 2; PUSH 1; ADD] in
   enc_program sts p &&
   enc_search_space stt kt sis fis &&
   enc_equivalence sts stt ks kt
@@ -207,10 +206,10 @@ let dec_super_opt m k fis =
     ~f:(fun j -> eval_func_decl_at_i m j fis
                  |> Z3.Arithmetic.Integer.get_int |> dec_opcode)
 
-let super_optimize p =
+let super_optimize p sis =
   let kt = intconst "k" in
   let fis = func_decl "instr" [int_sort] int_sort in
-  let c = enc_super_opt p kt fis in
+  let c = enc_super_opt p kt sis fis in
   let slvr = Z3.Solver.mk_simple_solver !ctxt in
   let () = Z3.Solver.add slvr [c] in
   match Z3.Solver.check slvr [] with
