@@ -9,9 +9,8 @@ let suite =
     (* enc dec opcode *)
 
     "encoding and decoding an opcode is the identity">:: (fun _ ->
-        let ea = mk_enc_consts [] [] in
         assert_equal ~cmp:[%eq: instr] ~printer:[%show: instr]
-          ADD (dec_opcode ea (enc_opcode ADD))
+          ADD (dec_opcode (enc_opcode ADD))
       );
 
     (* init *)
@@ -237,10 +236,11 @@ let suite =
     "PUSHing too many elements leads to a stack overflow">:: (fun _ ->
         let st = mk_state "" in
         let max = Int.pow 2 sas - 1 in
+        let ea = mk_enc_consts [] [] in
         let c =
           init st <&>
           (st.stack_ctr <@@> [num max] <==> (bvnum max sas)) <&>
-          (enc_push (Val 5) st (num max))
+          (enc_push ea (Val 5) st (num max))
         in
         let m = solve_model_exn [c] in
         assert_equal

@@ -11,18 +11,8 @@ let ses = 8
 
 type stackarg =
   | Val of int
-  | Tmpl of Z3.FuncDecl.func_decl
-
-let show_stackarg = function
-  | Val x -> Int.to_string x
-  | Tmpl a -> Z3.FuncDecl.to_string a
-
-let pp_stackarg fmt s = Format.fprintf fmt "%s" (show_stackarg s)
-
-let equal_stackarg x y = match (x, y) with
-  | (Val x, Val y) -> Int.equal x y
-  | (Tmpl a, Tmpl b) -> Z3.FuncDecl.equal a b
-  | (_, _) -> false
+  | Tmpl
+[@@deriving show, eq]
 
 type instr =
   | ADD
@@ -86,15 +76,13 @@ let opcodes =
   ; (PUSH (Val 2), 2)
   ; (POP, 3)
   ; (SUB, 4)
+  ; (PUSH Tmpl, 5)
   ]
 
-let enc_opcode i = match i with
-  | PUSH (Tmpl _) -> 5
-  | _ -> List.Assoc.find_exn opcodes ~equal:[%eq: instr] i
+let enc_opcode i = List.Assoc.find_exn opcodes ~equal:[%eq: instr] i
 
-let dec_opcode ea i =
-  if i = 5 then PUSH (Tmpl ea.a) else
-    List.Assoc.find_exn (List.Assoc.inverse opcodes) ~equal:[%eq: int] i
+let dec_opcode i =
+  List.Assoc.find_exn (List.Assoc.inverse opcodes) ~equal:[%eq: int] i
 
 (* INIT: init stack with all 0 *)
 let init st =
@@ -110,11 +98,11 @@ let init st =
   && (st.used_gas @@ [num 0] == num 0)
 
 (* TODO: check data layout on stack *)
-let enc_stackarg j = function
+let enc_stackarg ea j = function
   | Val x -> bvnum x ses
-  | Tmpl a -> a <@@> [j]
+  | Tmpl -> ea.a <@@> [j]
 
-let enc_push x st j =
+let enc_push ea x st j =
   let open Z3Ops in
   let n = bvconst "n" sas in
   (* the stack before and after the PUSH *)
@@ -124,7 +112,7 @@ let enc_push x st j =
   (* there will be one more element on the stack after PUSHing *)
   (sc' == (sc + bvnum 1 sas)) &&
   (* that element will be x *)
-  sk' sc == enc_stackarg j x &&
+  sk' sc == enc_stackarg ea j x &&
   (* all old elements stay the same *)
   forall n ((n < sc) ==> (sk' n == sk n)) &&
   (* check for exceptional halting  *)
@@ -152,11 +140,11 @@ let enc_add = enc_binop (<+>)
 let enc_sub = enc_binop (<->)
 
 (* effect of instruction on state st after j steps *)
-let enc_instruction st j is =
+let enc_instruction ea st j is =
   let open Z3Ops in
   let enc_instr =
     match is with
-    | PUSH x -> enc_push x st j
+    | PUSH x -> enc_push ea x st j
     | ADD -> enc_add st j
     | SUB -> enc_sub st j
     | _   -> failwith "other instrs"
@@ -171,7 +159,7 @@ let enc_search_space st ea =
   let j = intconst "j" in
   let enc_sis =
     List.map ea.sis ~f:(fun is ->
-        (ea.fis @@ [j] == num (enc_opcode is)) ==> (enc_instruction st j is))
+        (ea.fis @@ [j] == num (enc_opcode is)) ==> (enc_instruction ea st j is))
   in
   (* optimization potential:
      choose opcodes = 1 .. |sis| and demand fis (j) < |sis| *)
@@ -201,7 +189,7 @@ let enc_equivalence sts stt ks kt =
 
 let enc_program ea st =
   List.foldi ~init:(init st)
-    ~f:(fun j enc oc -> enc <&> enc_instruction st (num j) oc) ea.p
+    ~f:(fun j enc oc -> enc <&> enc_instruction ea st (num j) oc) ea.p
 
 let enc_super_opt ea =
   let open Z3Ops in
@@ -245,7 +233,7 @@ let dec_super_opt m ea =
   let k = Z3.Arithmetic.Integer.get_int @@ eval_const m ea.kt in
   List.init k
     ~f:(fun j -> eval_func_decl_at_i m j ea.fis
-                 |> Z3.Arithmetic.Integer.get_int |> dec_opcode ea)
+                 |> Z3.Arithmetic.Integer.get_int |> dec_opcode)
 
 let super_optimize p sis =
   let ea = mk_enc_consts p sis in
