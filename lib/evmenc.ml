@@ -213,21 +213,11 @@ let solve_model_exn cs =
   | Z3.Solver.UNSATISFIABLE -> failwith "UNSAT"
   | Z3.Solver.UNKNOWN -> failwith (Z3.Solver.get_reason_unknown slvr)
 
-let eval_func_decl m i ?(n = []) f =
-  match Z3.Model.eval m (f <@@> ([num i] @ n)) true with
-  | Some e -> e
-  | None -> failwith ("could not eval " ^ Z3.FuncDecl.to_string f)
-
 let eval_stack st m i n = eval_func_decl m i ~n:[bvnum n sas] st.stack
 
 let eval_exc_halt st m i = eval_func_decl m i st.exc_halt
 
 let eval_gas st m i = eval_func_decl m i st.used_gas
-
-let eval_const m k =
-  match Z3.Model.eval m k true with
-  | Some e -> e
-  | None -> failwith ("could not eval " ^ Z3.Expr.to_string k)
 
 let dec_instr ea m j =
   let i =

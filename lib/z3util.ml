@@ -88,6 +88,15 @@ let exists ?(weight = None) ?(patterns = []) ?(nopatterns = [])
 
 let select a i = Z3Array.mk_select !ctxt a i
 
+let eval_func_decl m j ?(n = []) f =
+  match Z3.Model.eval m (f <@@> ([num j] @ n)) true with
+  | Some e -> e
+  | None -> failwith ("could not eval " ^ Z3.FuncDecl.to_string f)
+
+let eval_const m k =
+  match Z3.Model.eval m k true with
+  | Some e -> e
+  | None -> failwith ("could not eval " ^ Z3.Expr.to_string k)
 
 module Z3Ops = struct
   let (@@) = (<@@>)
