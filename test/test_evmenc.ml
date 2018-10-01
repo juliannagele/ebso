@@ -44,7 +44,8 @@ let suite =
     "add two elements on the stack">:: (fun _ ->
         let st = mk_state "" in
         let p = [PUSH (Val 4); PUSH (Val 5); ADD] in
-        let c = enc_program st p in
+        let ea = mk_enc_consts p [] in
+        let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
@@ -56,7 +57,8 @@ let suite =
     "check that adding does not change element below">:: (fun _ ->
         let st = mk_state "" in
         let p = [PUSH (Val 3); PUSH (Val 4); PUSH (Val 5); ADD] in
-        let c = enc_program st p in
+        let ea = mk_enc_consts p [] in
+        let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
@@ -68,7 +70,8 @@ let suite =
     "add with only one element">:: (fun _ ->
         let st = mk_state "" in
         let p = [PUSH (Val 3); ADD] in
-        let c = enc_program st p in
+        let ea = mk_enc_consts p [] in
+        let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
@@ -80,7 +83,8 @@ let suite =
     "add with empty stack">:: (fun _ ->
         let st = mk_state "" in
         let p = [ADD] in
-        let c = enc_program st p in
+        let ea = mk_enc_consts p [] in
+        let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
@@ -92,7 +96,8 @@ let suite =
     "add two elements does not lead to stack underflow">:: (fun _ ->
         let st = mk_state "" in
         let p = [PUSH (Val 4); PUSH (Val 5); ADD] in
-        let c = enc_program st p in
+        let ea = mk_enc_consts p [] in
+        let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
@@ -105,7 +110,8 @@ let suite =
     "subtract two elements on the stack">:: (fun _ ->
         let st = mk_state "" in
         let p = [PUSH (Val 8); PUSH (Val 3); SUB] in
-        let c = enc_program st p in
+        let ea = mk_enc_consts p [] in
+        let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
@@ -117,7 +123,8 @@ let suite =
     "subtract two elements on the stack with negative result">:: (fun _ ->
         let st = mk_state "" in
         let p = [PUSH (Val 8); PUSH (Val 13); SUB] in
-        let c = enc_program st p in
+        let ea = mk_enc_consts p [] in
+        let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
@@ -129,7 +136,8 @@ let suite =
     "check that subtraction does not change element below">:: (fun _ ->
         let st = mk_state "" in
         let p = [PUSH (Val 3); PUSH (Val 4); PUSH (Val 5); SUB] in
-        let c = enc_program st p in
+        let ea = mk_enc_consts p [] in
+        let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
@@ -141,7 +149,8 @@ let suite =
     "SUB with only one element">:: (fun _ ->
         let st = mk_state "" in
         let p = [PUSH (Val 3); SUB] in
-        let c = enc_program st p in
+        let ea = mk_enc_consts p [] in
+        let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
@@ -153,7 +162,8 @@ let suite =
     "sub with empty stack">:: (fun _ ->
         let st = mk_state "" in
         let p = [SUB] in
-        let c = enc_program st p in
+        let ea = mk_enc_consts p [] in
+        let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
@@ -165,7 +175,8 @@ let suite =
     "exceptional halt persists">:: (fun _ ->
         let st = mk_state "" in
         let p = [SUB; PUSH (Val 3)] in
-        let c = enc_program st p in
+        let ea = mk_enc_consts p [] in
+        let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
@@ -179,7 +190,8 @@ let suite =
     "combine add and sub">:: (fun _ ->
         let st = mk_state "" in
         let p = [PUSH (Val 6); PUSH (Val 2); PUSH (Val 2); ADD; SUB] in
-        let c = enc_program st p in
+        let ea = mk_enc_consts p [] in
+        let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
           (bvnum 2 ses) (eval_stack st m (List.length p) 0)
@@ -188,7 +200,8 @@ let suite =
     "valid program does not halt exceptionally">:: (fun _ ->
         let st = mk_state "" in
         let p = [PUSH (Val 6); PUSH (Val 2); PUSH (Val 2); ADD; SUB] in
-        let c = enc_program st p in
+        let ea = mk_enc_consts p [] in
+        let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
           btm
@@ -198,7 +211,8 @@ let suite =
     "invalid program should halt exceptionally">:: (fun _ ->
         let st = mk_state "" in
         let p = [(PUSH (Val 2)); SUB; (PUSH (Val 2)); ADD;] in
-        let c = enc_program st p in
+        let ea = mk_enc_consts p [] in
+        let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
           top
@@ -210,7 +224,8 @@ let suite =
     "top of the stack is the pushed element after a PUSH">:: (fun _ ->
         let st = mk_state "" in
         let p = [PUSH (Val 5)] in
-        let c = enc_program st p in
+        let ea = mk_enc_consts p [] in
+        let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
@@ -238,7 +253,8 @@ let suite =
     "PUSHing one element does not to a stack overflow">:: (fun _ ->
         let st = mk_state "" in
         let p = [PUSH (Val 5)] in
-        let c = enc_program st p in
+        let ea = mk_enc_consts p [] in
+        let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
@@ -262,7 +278,8 @@ let suite =
     "after some instruction some gas has been used">::(fun _ ->
         let st = mk_state "" in
         let p = [PUSH (Val 6); PUSH (Val 2); ADD] in
-        let c = enc_program st p in
+        let ea = mk_enc_consts p [] in
+        let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
@@ -279,7 +296,7 @@ let suite =
         let sis = [PUSH (Val 1)] in
         let ea = mk_enc_consts p sis in
         let c =
-          enc_program st p <&>
+          enc_program ea st <&>
           enc_search_space st ea <&>
           (ea.kt <==> (num (List.length p)))
         in
@@ -297,7 +314,7 @@ let suite =
         let sis = [PUSH (Val 1); ADD] in
         let ea = mk_enc_consts p sis in
         let c =
-          enc_program st p <&>
+          enc_program ea st <&>
           enc_search_space st ea <&>
           (ea.kt <==> (num (List.length p)))
         in
@@ -319,7 +336,7 @@ let suite =
         let sis = [PUSH (Val 1); PUSH (Val 2); ADD; SUB] in
         let ea = mk_enc_consts p sis in
         let c =
-          enc_program st p <&>
+          enc_program ea st <&>
           enc_search_space st ea <&>
           (ea.kt <==> (num (List.length p)))
         in
@@ -337,7 +354,7 @@ let suite =
         let sis = [ADD; SUB] in
         let ea = mk_enc_consts p sis in
         let c =
-          enc_program st p <&>
+          enc_program ea st <&>
           enc_search_space st ea <&>
           (ea.kt <==> (num (List.length p)))
         in
@@ -356,7 +373,7 @@ let suite =
         let sis = [PUSH (Val 1)] in
         let ea = mk_enc_consts p sis in
         let c =
-          enc_program st p <&>
+          enc_program ea st <&>
           enc_search_space st ea <&>
           enc_equivalence st st (List.length p) ea.kt
         in
@@ -374,7 +391,7 @@ let suite =
         let sis = [PUSH (Val 1); ADD] in
         let ea = mk_enc_consts p sis in
         let c =
-          enc_program st p <&>
+          enc_program ea st <&>
           enc_search_space st ea <&>
           enc_equivalence st st (List.length p) ea.kt
         in
@@ -415,7 +432,7 @@ let suite =
         let sis = [PUSH (Val 2); PUSH (Val 1); ADD; SUB] in
         let ea = mk_enc_consts p sis in
         let c =
-          enc_program sts p &&
+          enc_program ea sts &&
           enc_search_space stt ea &&
           enc_equivalence sts stt ks ea.kt &&
           sts.used_gas @@ [num ks] > stt.used_gas @@ [ea.kt]

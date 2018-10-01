@@ -199,16 +199,16 @@ let enc_equivalence sts stt ks kt =
   (* after the programs have run source and target exceptional halting are equal *)
   sts.exc_halt @@ [num ks] == stt.exc_halt @@ [kt]
 
-let enc_program st =
+let enc_program ea st =
   List.foldi ~init:(init st)
-    ~f:(fun j enc oc -> enc <&> enc_instruction st (num j) oc)
+    ~f:(fun j enc oc -> enc <&> enc_instruction st (num j) oc) ea.p
 
 let enc_super_opt ea =
   let open Z3Ops in
   let sts = mk_state "_s" in
   let stt = mk_state "_t" in
   let ks = List.length ea.p in
-  enc_program sts ea.p &&
+  enc_program ea sts &&
   enc_search_space stt ea &&
   enc_equivalence sts stt ks ea.kt
 
