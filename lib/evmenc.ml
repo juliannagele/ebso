@@ -10,7 +10,7 @@ let sas = 4
 let ses = 8
 
 type stackarg =
-  | Val of int
+  | Val of int [@printer fun fmt x -> fprintf fmt "%i" x]
   | Tmpl
 [@@deriving show { with_path = false }, eq]
 
