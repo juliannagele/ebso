@@ -12,7 +12,7 @@ let ses = 8
 type stackarg =
   | Val of int
   | Tmpl
-[@@deriving show, eq]
+[@@deriving show { with_path = false }, eq]
 
 type instr =
   | ADD
