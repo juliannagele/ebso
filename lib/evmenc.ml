@@ -122,7 +122,7 @@ let enc_binop op st j =
   (* two elements are consumed, one is added *)
   (sc' == (sc - bvnum 1 sas)) &&
   (* the new top element is the result of applying op to the previous two *)
-  (sk' (sc - bvnum 2 sas) == op (sk (sc - bvnum 2 sas)) (sk (sc - bvnum 1 sas))) &&
+  (sk' (sc - bvnum 2 sas) == op (sk (sc - bvnum 1 sas)) (sk (sc - bvnum 2 sas))) &&
   (* all elements below remain unchanged *)
   forall n ((n < (sc - bvnum 2 sas)) ==> (sk' n == sk n)) &&
   (* check for exceptional halting *)

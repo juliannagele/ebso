@@ -109,7 +109,7 @@ let suite =
     (* sub *)
     "subtract two elements on the stack">:: (fun _ ->
         let st = mk_state "" in
-        let p = [PUSH (Val 8); PUSH (Val 3); SUB] in
+        let p = [PUSH (Val 3); PUSH (Val 8); SUB] in
         let ea = mk_enc_consts p [] in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
@@ -122,7 +122,7 @@ let suite =
 
     "subtract two elements on the stack with negative result">:: (fun _ ->
         let st = mk_state "" in
-        let p = [PUSH (Val 8); PUSH (Val 13); SUB] in
+        let p = [PUSH (Val 13); PUSH (Val 8); SUB] in
         let ea = mk_enc_consts p [] in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
@@ -189,12 +189,12 @@ let suite =
 
     "combine add and sub">:: (fun _ ->
         let st = mk_state "" in
-        let p = [PUSH (Val 6); PUSH (Val 2); PUSH (Val 2); ADD; SUB] in
+        let p = [PUSH (Val 3); PUSH (Val 2); PUSH (Val 2); ADD; SUB] in
         let ea = mk_enc_consts p [] in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (bvnum 2 ses) (eval_stack st m (List.length p) 0)
+          (bvnum 1 ses) (eval_stack st m (List.length p) 0)
       );
 
     "valid program does not halt exceptionally">:: (fun _ ->
