@@ -423,19 +423,10 @@ let suite =
     (* super optimize *)
 
     "super optimize PUSH PUSH ADD to PUSH" >::(fun _ ->
-        let open Z3Ops in
         let p = [PUSH (Val 1); PUSH (Val 1); ADD] in
-        let sts = mk_state "_s" in
-        let stt = mk_state "_t" in
-        let ks = List.length p in
         let sis = [PUSH (Val 2); PUSH (Val 1); ADD; SUB] in
         let ea = mk_enc_consts p sis in
-        let c =
-          enc_program ea sts &&
-          enc_search_space stt ea &&
-          enc_equivalence sts stt ks ea.kt &&
-          sts.used_gas @@ [num ks] > stt.used_gas @@ [ea.kt]
-        in
+        let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: instr list] ~printer:[%show: instr list]
           [PUSH (Val 2)] (dec_super_opt m ea)

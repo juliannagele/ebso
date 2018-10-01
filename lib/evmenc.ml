@@ -192,7 +192,8 @@ let enc_super_opt ea =
   let ks = List.length ea.p in
   enc_program ea sts &&
   enc_search_space stt ea &&
-  enc_equivalence sts stt ks ea.kt
+  enc_equivalence sts stt ks ea.kt &&
+  sts.used_gas @@ [num ks] > stt.used_gas @@ [ea.kt]
 
 let solve_model_exn cs =
   let slvr = Z3.Solver.mk_simple_solver !ctxt in
