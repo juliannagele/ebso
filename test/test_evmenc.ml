@@ -9,8 +9,9 @@ let suite =
     (* enc dec opcode *)
 
     "encoding and decoding an opcode is the identity">:: (fun _ ->
+        let ea = mk_enc_consts [] [SUB; ADD; POP] in
         assert_equal ~cmp:[%eq: instr] ~printer:[%show: instr]
-          ADD (dec_opcode (enc_opcode ADD))
+          ADD (dec_opcode ea (enc_opcode ea ADD))
       );
 
     (* init *)
@@ -304,7 +305,7 @@ let suite =
         assert_equal
           ~cmp:[%eq: int]
           ~printer:[%show: int]
-          (enc_opcode (PUSH (Val 1)))
+          (enc_opcode ea (PUSH (Val 1)))
           (eval_fis ea m 0)
       );
 
@@ -322,7 +323,10 @@ let suite =
         assert_equal
           ~cmp:[%eq: int list]
           ~printer:[%show: int list]
-          [enc_opcode (PUSH (Val 1)); enc_opcode (PUSH (Val 1)); enc_opcode (ADD)]
+          [enc_opcode ea (PUSH (Val 1))
+          ; enc_opcode ea (PUSH (Val 1))
+          ; enc_opcode ea ADD
+          ]
           [eval_fis ea m 0; eval_fis ea m 1; eval_fis ea m 2]
       );
 
@@ -340,7 +344,7 @@ let suite =
         assert_equal
           ~cmp:[%eq: int]
           ~printer:[%show: int]
-          (enc_opcode (PUSH (Val 1)))
+          (enc_opcode ea (PUSH (Val 1)))
           (eval_fis ea m 0)
       );
 
@@ -377,7 +381,7 @@ let suite =
         assert_equal
           ~cmp:[%eq: int]
           ~printer:[%show: int]
-          (enc_opcode (PUSH (Val 1)))
+          (enc_opcode ea (PUSH (Val 1)))
           (eval_fis ea m 0)
       );
 
@@ -395,7 +399,10 @@ let suite =
         assert_equal
           ~cmp:[%eq: int list]
           ~printer:[%show: int list]
-          [enc_opcode (PUSH (Val 1)); enc_opcode (PUSH (Val 1)); enc_opcode (ADD)]
+          [enc_opcode ea (PUSH (Val 1))
+          ; enc_opcode ea (PUSH (Val 1))
+          ; enc_opcode ea ADD
+          ]
           [eval_fis ea m 0; eval_fis ea m 1; eval_fis ea m 2]
       );
 
@@ -450,7 +457,7 @@ let suite =
         assert_equal
           ~cmp:[%eq: int]
           ~printer:[%show: int]
-          (enc_opcode (PUSH Tmpl))
+          (enc_opcode ea (PUSH Tmpl))
           (eval_fis ea m 0)
       );
 
@@ -483,7 +490,10 @@ let suite =
         assert_equal
           ~cmp:[%eq: int list]
           ~printer:[%show: int list]
-          [enc_opcode (PUSH Tmpl); enc_opcode (PUSH Tmpl); enc_opcode (ADD)]
+          [ enc_opcode ea (PUSH Tmpl)
+          ; enc_opcode ea (PUSH Tmpl)
+          ; enc_opcode ea ADD
+          ]
           [eval_fis ea m 0; eval_fis ea m 1; eval_fis ea m 2]
       );
 

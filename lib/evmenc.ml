@@ -55,6 +55,7 @@ type enc_consts = {
   kt : Z3.Expr.expr;
   fis : Z3.FuncDecl.func_decl;
   a : Z3.FuncDecl.func_decl;
+  opcodes : (instr * int) list;
 }
 
 let mk_enc_consts p sis = {
@@ -68,21 +69,14 @@ let mk_enc_consts p sis = {
   fis = func_decl "instr" [int_sort] int_sort;
   (* arguments for PUSH instrucions in target program *)
   a = func_decl "a" [int_sort] (bv_sort ses);
+  (* integer encoding of opcodes *)
+  opcodes = List.mapi sis ~f:(fun i oc -> (oc, i))
 }
 
-let opcodes =
-  [ (ADD, 0)
-  ; (PUSH (Val 1), 1)
-  ; (PUSH (Val 2), 2)
-  ; (POP, 3)
-  ; (SUB, 4)
-  ; (PUSH Tmpl, 5)
-  ]
+let enc_opcode ea i = List.Assoc.find_exn ea.opcodes ~equal:[%eq: instr] i
 
-let enc_opcode i = List.Assoc.find_exn opcodes ~equal:[%eq: instr] i
-
-let dec_opcode i =
-  List.Assoc.find_exn (List.Assoc.inverse opcodes) ~equal:[%eq: int] i
+let dec_opcode ea i =
+  List.Assoc.find_exn (List.Assoc.inverse ea.opcodes) ~equal:[%eq: int] i
 
 (* INIT: init stack with all 0 *)
 let init st =
@@ -159,12 +153,12 @@ let enc_search_space st ea =
   let j = intconst "j" in
   let enc_sis =
     List.map ea.sis ~f:(fun is ->
-        (ea.fis @@ [j] == num (enc_opcode is)) ==> (enc_instruction ea st j is))
+        (ea.fis @@ [j] == num (enc_opcode ea is)) ==> (enc_instruction ea st j is))
   in
   (* optimization potential:
      choose opcodes = 1 .. |sis| and demand fis (j) < |sis| *)
   let in_sis =
-    List.map ea.sis ~f:(fun is -> ea.fis @@ [j] == num (enc_opcode is))
+    List.map ea.sis ~f:(fun is -> ea.fis @@ [j] == num (enc_opcode ea is))
   in
   forall j (((j < ea.kt) && (j >= (num 0))) ==> conj enc_sis && disj in_sis) &&
   ea.kt >= (num 0)
@@ -224,7 +218,7 @@ let eval_fis ea m j = eval_func_decl m j ea.fis |> Z3.Arithmetic.Integer.get_int
 let eval_a ea m j = eval_func_decl m j ea.a |> Z3.Arithmetic.Integer.get_int
 
 let dec_instr ea m j =
-  let i = eval_fis ea m j |> dec_opcode in
+  let i = eval_fis ea m j |> dec_opcode ea in
   match i with
   | PUSH Tmpl -> PUSH (Val (eval_a ea m j))
   | i -> i
