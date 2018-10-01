@@ -219,16 +219,14 @@ let eval_exc_halt st m i = eval_func_decl m i st.exc_halt
 
 let eval_gas st m i = eval_func_decl m i st.used_gas
 
+let eval_fis ea m j = eval_func_decl m j ea.fis |> Z3.Arithmetic.Integer.get_int
+
+let eval_a ea m j = eval_func_decl m j ea.a |> Z3.Arithmetic.Integer.get_int
+
 let dec_instr ea m j =
-  let i =
-    eval_func_decl m j ea.fis
-    |> Z3.Arithmetic.Integer.get_int
-    |> dec_opcode
-  in
+  let i = eval_fis ea m j |> dec_opcode in
   match i with
-  | PUSH Tmpl ->
-    let v = eval_func_decl m j ea.a |> Z3.Arithmetic.Integer.get_int in
-    PUSH (Val v)
+  | PUSH Tmpl -> PUSH (Val (eval_a ea m j))
   | i -> i
 
 let dec_super_opt m ea =
