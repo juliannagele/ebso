@@ -442,6 +442,85 @@ let suite =
           [PUSH (Val 2)] (dec_super_opt m ea)
       );
 
+    (* template argument for PUSH *)
+
+    "search for 1 instruction program with template (fis)">::(fun _ ->
+        let st = mk_state "" in
+        let p = [PUSH (Val 1)] in
+        let sis = [PUSH Tmpl] in
+        let ea = mk_enc_consts p sis in
+        let c =
+          enc_program ea st <&>
+          enc_search_space st ea <&>
+          (ea.kt <==> (num (List.length p)))
+        in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          (num (enc_opcode (PUSH Tmpl)))
+          (eval_func_decl_at_i m 0 ea.fis)
+      );
+
+    "search for 1 instruction program with template (a)">::(fun _ ->
+        let st = mk_state "" in
+        let p = [PUSH (Val 1)] in
+        let sis = [PUSH Tmpl] in
+        let ea = mk_enc_consts p sis in
+        let c =
+          enc_program ea st <&>
+          enc_search_space st ea <&>
+          (ea.kt <==> (num (List.length p)))
+        in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          (bvnum 1 ses)
+          (eval_func_decl_at_i m 0 ea.a)
+      );
+
+    "search for 3 instruction program with template (fis)">::(fun _ ->
+        let st = mk_state "" in
+        let p = [PUSH (Val 1); PUSH (Val 1); ADD] in
+        let sis = [PUSH Tmpl; ADD] in
+        let ea = mk_enc_consts p sis in
+        let c =
+          enc_program ea st <&>
+          enc_search_space st ea <&>
+          (ea.kt <==> (num (List.length p)))
+        in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t list]
+          ~printer:(List.to_string ~f:Z3.Expr.to_string)
+          [(num (enc_opcode (PUSH Tmpl)));
+           (num (enc_opcode (PUSH Tmpl)));
+           (num (enc_opcode (ADD)))]
+          [(eval_func_decl_at_i m 0 ea.fis);
+           (eval_func_decl_at_i m 1 ea.fis);
+           (eval_func_decl_at_i m 2 ea.fis)]
+      );
+
+    "search for 3 instruction program with template (a)">::(fun _ ->
+        let st = mk_state "" in
+        let p = [PUSH (Val 1); PUSH (Val 1); ADD] in
+        let sis = [PUSH Tmpl; ADD] in
+        let ea = mk_enc_consts p sis in
+        let c =
+          enc_program ea st <&>
+          enc_search_space st ea <&>
+          (ea.kt <==> (num (List.length p)))
+        in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t list]
+          ~printer:(List.to_string ~f:Z3.Expr.to_string)
+          [bvnum 1 ses; bvnum 1 ses]
+          [(eval_func_decl_at_i m 0 ea.a);
+           (eval_func_decl_at_i m 1 ea.a)]
+      );
+
   ]
 
 let () =
