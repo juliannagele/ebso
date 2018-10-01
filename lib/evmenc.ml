@@ -229,11 +229,21 @@ let eval_const m k =
   | Some e -> e
   | None -> failwith ("could not eval " ^ Z3.Expr.to_string k)
 
+let dec_instr ea m j =
+  let i =
+    eval_func_decl_at_i m j ea.fis
+    |> Z3.Arithmetic.Integer.get_int
+    |> dec_opcode
+  in
+  match i with
+  | PUSH Tmpl ->
+    let v = eval_func_decl_at_i m j ea.a |> Z3.Arithmetic.Integer.get_int in
+    PUSH (Val v)
+  | i -> i
+
 let dec_super_opt m ea =
   let k = Z3.Arithmetic.Integer.get_int @@ eval_const m ea.kt in
-  List.init k
-    ~f:(fun j -> eval_func_decl_at_i m j ea.fis
-                 |> Z3.Arithmetic.Integer.get_int |> dec_opcode)
+  List.init k ~f:(dec_instr ea m)
 
 let super_optimize p sis =
   let ea = mk_enc_consts p sis in
