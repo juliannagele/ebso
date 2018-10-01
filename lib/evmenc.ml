@@ -250,16 +250,7 @@ let dec_super_opt m ea =
 let super_optimize p sis =
   let ea = mk_enc_consts p sis in
   let c = enc_super_opt ea in
-  let slvr = Z3.Solver.mk_simple_solver !ctxt in
-  let () = Z3.Solver.add slvr [c] in
-  match Z3.Solver.check slvr [] with
-  | Z3.Solver.SATISFIABLE ->
-    begin
-      match Z3.Solver.get_model slvr with
-      | Some m -> Z3.Expr.to_string c ^ "\n\n\n" ^
-                  Z3.Model.to_string m ^ "\n\n" ^
-                  [%show: instr list] (dec_super_opt m ea)
-      | None -> failwith "SAT but no model"
-    end
-  | Z3.Solver.UNSATISFIABLE -> failwith "UNSAT"
-  | Z3.Solver.UNKNOWN -> failwith (Z3.Solver.get_reason_unknown slvr)
+  let m = solve_model_exn [c] in
+  Z3.Expr.to_string c ^ "\n\n\n" ^
+  Z3.Model.to_string m ^ "\n\n" ^
+  [%show: instr list] (dec_super_opt m ea)
