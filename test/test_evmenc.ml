@@ -302,10 +302,10 @@ let suite =
         in
         let m = solve_model_exn [c] in
         assert_equal
-          ~cmp:[%eq: Z3.Expr.t]
-          ~printer:Z3.Expr.to_string
-          (num (enc_opcode (PUSH (Val 1))))
-          (eval_func_decl m 0 ea.fis)
+          ~cmp:[%eq: int]
+          ~printer:[%show: int]
+          (enc_opcode (PUSH (Val 1)))
+          (eval_fis ea m 0)
       );
 
     "search for 3 instruction program">::(fun _ ->
@@ -320,14 +320,10 @@ let suite =
         in
         let m = solve_model_exn [c] in
         assert_equal
-          ~cmp:[%eq: Z3.Expr.t list]
-          ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [(num (enc_opcode (PUSH (Val 1))));
-           (num (enc_opcode (PUSH (Val 1))));
-           (num (enc_opcode (ADD)))]
-          [(eval_func_decl m 0 ea.fis);
-           (eval_func_decl m 1 ea.fis);
-           (eval_func_decl m 2 ea.fis)]
+          ~cmp:[%eq: int list]
+          ~printer:[%show: int list]
+          [enc_opcode (PUSH (Val 1)); enc_opcode (PUSH (Val 1)); enc_opcode (ADD)]
+          [eval_fis ea m 0; eval_fis ea m 1; eval_fis ea m 2]
       );
 
     "sis contains unused instructions ">::(fun _ ->
@@ -342,10 +338,10 @@ let suite =
         in
         let m = solve_model_exn [c] in
         assert_equal
-          ~cmp:[%eq: Z3.Expr.t]
-          ~printer:Z3.Expr.to_string
-          (num (enc_opcode (PUSH (Val 1))))
-          (eval_func_decl m 0 ea.fis)
+          ~cmp:[%eq: int]
+          ~printer:[%show: int]
+          (enc_opcode (PUSH (Val 1)))
+          (eval_fis ea m 0)
       );
 
     "sis does not contain required instruction">::(fun _ ->
@@ -379,10 +375,10 @@ let suite =
         in
         let m = solve_model_exn [c] in
         assert_equal
-          ~cmp:[%eq: Z3.Expr.t]
-          ~printer:Z3.Expr.to_string
-          (num (enc_opcode (PUSH (Val 1))))
-          (eval_func_decl m 0 ea.fis)
+          ~cmp:[%eq: int]
+          ~printer:[%show: int]
+          (enc_opcode (PUSH (Val 1)))
+          (eval_fis ea m 0)
       );
 
     "search for 3 instruction program with equivalence constraint">::(fun _ ->
@@ -397,14 +393,10 @@ let suite =
         in
         let m = solve_model_exn [c] in
         assert_equal
-          ~cmp:[%eq: Z3.Expr.t list]
-          ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [(num (enc_opcode (PUSH (Val 1))));
-           (num (enc_opcode (PUSH (Val 1))));
-           (num (enc_opcode (ADD)))]
-          [(eval_func_decl m 0 ea.fis);
-           (eval_func_decl m 1 ea.fis);
-           (eval_func_decl m 2 ea.fis)]
+          ~cmp:[%eq: int list]
+          ~printer:[%show: int list]
+          [enc_opcode (PUSH (Val 1)); enc_opcode (PUSH (Val 1)); enc_opcode (ADD)]
+          [eval_fis ea m 0; eval_fis ea m 1; eval_fis ea m 2]
       );
 
     "equivalence constraint forces inital stack for target program">:: (fun _ ->
@@ -456,10 +448,10 @@ let suite =
         in
         let m = solve_model_exn [c] in
         assert_equal
-          ~cmp:[%eq: Z3.Expr.t]
-          ~printer:Z3.Expr.to_string
-          (num (enc_opcode (PUSH Tmpl)))
-          (eval_func_decl m 0 ea.fis)
+          ~cmp:[%eq: int]
+          ~printer:[%show: int]
+          (enc_opcode (PUSH Tmpl))
+          (eval_fis ea m 0)
       );
 
     "search for 1 instruction program with template (a)">::(fun _ ->
@@ -473,11 +465,8 @@ let suite =
           (ea.kt <==> (num (List.length p)))
         in
         let m = solve_model_exn [c] in
-        assert_equal
-          ~cmp:[%eq: Z3.Expr.t]
-          ~printer:Z3.Expr.to_string
-          (bvnum 1 ses)
-          (eval_func_decl m 0 ea.a)
+        assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
+          1 (eval_a ea m 0)
       );
 
     "search for 3 instruction program with template (fis)">::(fun _ ->
@@ -492,14 +481,10 @@ let suite =
         in
         let m = solve_model_exn [c] in
         assert_equal
-          ~cmp:[%eq: Z3.Expr.t list]
-          ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [(num (enc_opcode (PUSH Tmpl)));
-           (num (enc_opcode (PUSH Tmpl)));
-           (num (enc_opcode (ADD)))]
-          [(eval_func_decl m 0 ea.fis);
-           (eval_func_decl m 1 ea.fis);
-           (eval_func_decl m 2 ea.fis)]
+          ~cmp:[%eq: int list]
+          ~printer:[%show: int list]
+          [enc_opcode (PUSH Tmpl); enc_opcode (PUSH Tmpl); enc_opcode (ADD)]
+          [eval_fis ea m 0; eval_fis ea m 1; eval_fis ea m 2]
       );
 
     "search for 3 instruction program with template (a)">::(fun _ ->
@@ -513,12 +498,8 @@ let suite =
           (ea.kt <==> (num (List.length p)))
         in
         let m = solve_model_exn [c] in
-        assert_equal
-          ~cmp:[%eq: Z3.Expr.t list]
-          ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [bvnum 1 ses; bvnum 1 ses]
-          [(eval_func_decl m 0 ea.a);
-           (eval_func_decl m 1 ea.a)]
+        assert_equal ~cmp:[%eq: int list] ~printer:[%show: int list]
+          [1; 1] [eval_a ea m 0; eval_a ea m 1]
       );
 
     "super optimize PUSH PUSH ADD to PUSH with template" >::(fun _ ->
