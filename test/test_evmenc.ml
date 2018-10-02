@@ -18,7 +18,8 @@ let suite =
 
     "model of the initial stack holds 0 for every stack address">:: (fun _ ->
         let st = mk_state "" in
-        let c = init st in
+        let ea = mk_enc_consts [] [] in
+        let c = init ea st in
         let m = solve_model_exn [c] in
         let sk_size = (Int.pow 2 sas) - 1 in
         assert_equal
@@ -227,7 +228,7 @@ let suite =
         let max = Int.pow 2 sas - 1 in
         let ea = mk_enc_consts [] [] in
         let c =
-          init st <&>
+          init ea st <&>
           (st.stack_ctr <@@> [num max] <==> (bvnum max sas)) <&>
           (enc_push ea (Val 5) st (num max))
         in
@@ -255,7 +256,8 @@ let suite =
     (* gas cost *)
     "after 0 instruction no gas has been used">::(fun _ ->
         let st = mk_state "" in
-        let c = init st in
+        let ea = mk_enc_consts [] [] in
+        let c = init ea st in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
@@ -398,7 +400,8 @@ let suite =
         let sts = mk_state "_s" in
         let stt = mk_state "_t" in
         let kt = intconst "k" in
-        let c = init sts <&> enc_equivalence sts stt 0 kt in
+        let ea = mk_enc_consts [] [] in
+        let c = init ea sts <&> enc_equivalence sts stt 0 kt in
         let m = solve_model_exn [c] in
         let sk_size = (Int.pow 2 sas) - 1 in
         assert_equal
@@ -567,10 +570,6 @@ let suite =
         assert_equal ~cmp:[%eq: instr list] ~printer:[%show: instr list]
           [PUSH (Val 21); SUB] (dec_super_opt m ea)
       );
-
-
-
-
   ]
 
 let () =

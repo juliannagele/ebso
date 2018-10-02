@@ -94,10 +94,14 @@ let enc_opcode ea i = List.Assoc.find_exn ea.opcodes ~equal:[%eq: instr] i
 let dec_opcode ea i =
   List.Assoc.find_exn (List.Assoc.inverse ea.opcodes) ~equal:[%eq: int] i
 
-let init st =
+let init ea st =
   let open Z3Ops in
-  (* set stack counter to 0 *)
-  (st.stack_ctr @@ [num 0] == bvnum 0 sas)
+  (* careful: if stack_depth is larger than 2^sas, no checks *)
+  let skd = stack_depth (ea.p) in
+  (* set stack counter to skd *)
+  (st.stack_ctr @@ [num 0] == bvnum skd sas)
+  (* set inital stack elements *)
+  && conj (List.mapi ea.xs ~f:(fun i x -> st.stack @@ [num 0; bvnum i sas] == x))
   && (st.exc_halt @@ [num 0] == btm)
   && (st.used_gas @@ [num 0] == num 0)
 
@@ -192,7 +196,7 @@ let enc_equivalence sts stt ks kt =
   sts.exc_halt @@ [num ks] == stt.exc_halt @@ [kt]
 
 let enc_program ea st =
-  List.foldi ~init:(init st)
+  List.foldi ~init:(init ea st)
     ~f:(fun j enc oc -> enc <&> enc_instruction ea st (num j) oc) ea.p
 
 let enc_super_opt ea =
@@ -200,10 +204,11 @@ let enc_super_opt ea =
   let sts = mk_state "_s" in
   let stt = mk_state "_t" in
   let ks = List.length ea.p in
-  enc_program ea sts &&
-  enc_search_space stt ea &&
-  enc_equivalence sts stt ks ea.kt &&
-  sts.used_gas @@ [num ks] > stt.used_gas @@ [ea.kt]
+  foralls ea.xs
+  (enc_program ea sts &&
+   enc_search_space stt ea &&
+   enc_equivalence sts stt ks ea.kt &&
+   sts.used_gas @@ [num ks] > stt.used_gas @@ [ea.kt])
 
 let solve_model_exn cs =
   let slvr = Z3.Solver.mk_simple_solver !ctxt in
