@@ -23,6 +23,14 @@ type instr =
 
 type progr = instr list
 
+let delta_alpha = function
+  | ADD -> (2, 1)
+  | PUSH _ -> (0, 1)
+  | POP -> (1, 0)
+  | SUB -> (2, 1)
+
+let stack_depth _ = 42
+
 let gas_cost = function
   | ADD -> 3
   | PUSH _ -> 2
