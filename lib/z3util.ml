@@ -74,17 +74,25 @@ let (<<=>) = mk_bin_op BitVector.mk_sle Arithmetic.mk_le
 let (<!=>) x y = Boolean.mk_distinct !ctxt [x; y]
 let (<==>) x y = Boolean.mk_eq !ctxt x y
 
-let forall ?(weight = None) ?(patterns = []) ?(nopatterns = [])
-      ?(quantifier_id = None) ?(skolem_id = None) x p =
+let foralls ?(weight = None) ?(patterns = []) ?(nopatterns = [])
+      ?(quantifier_id = None) ?(skolem_id = None) xs p =
   Quantifier.expr_of_quantifier @@
-  Quantifier.mk_forall_const !ctxt [x] p
+  Quantifier.mk_forall_const !ctxt xs p
+    weight patterns nopatterns quantifier_id skolem_id
+
+let forall ?(weight = None) ?(patterns = []) ?(nopatterns = [])
+    ?(quantifier_id = None) ?(skolem_id = None) x p =
+  foralls ~weight ~patterns ~nopatterns ~quantifier_id ~skolem_id [x] p
+
+let existss ?(weight = None) ?(patterns = []) ?(nopatterns = [])
+      ?(quantifier_id = None) ?(skolem_id = None) xs p =
+  Quantifier.expr_of_quantifier @@
+  Quantifier.mk_exists_const !ctxt xs p
     weight patterns nopatterns quantifier_id skolem_id
 
 let exists ?(weight = None) ?(patterns = []) ?(nopatterns = [])
-      ?(quantifier_id = None) ?(skolem_id = None) x p =
-  Quantifier.expr_of_quantifier @@
-  Quantifier.mk_exists_const !ctxt [x] p
-    weight patterns nopatterns quantifier_id skolem_id
+    ?(quantifier_id = None) ?(skolem_id = None) x p =
+  existss ~weight ~patterns ~nopatterns ~quantifier_id ~skolem_id [x] p
 
 let select a i = Z3Array.mk_select !ctxt a i
 
