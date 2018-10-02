@@ -29,7 +29,10 @@ let delta_alpha = function
   | POP -> (1, 0)
   | SUB -> (2, 1)
 
-let stack_depth _ = 42
+let stack_depth p =
+  Tuple.T2.get2 @@ List.fold_left ~init:(0, 0) p
+    ~f:(fun (sc, sd) is ->
+        let (d, a) = delta_alpha is in (sc - d + a, min sd (sc - d)))
 
 let gas_cost = function
   | ADD -> 3
