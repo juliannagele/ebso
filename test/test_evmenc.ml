@@ -16,18 +16,6 @@ let suite =
 
     (* init *)
 
-    "formula for stack is initialized with 0">:: (fun _ ->
-        let st = mk_state "" in
-        assert_equal
-          ~cmp:[%eq: string]
-          ~printer:Fn.id
-          "(and (forall ((n (_ BitVec 4))) (= (stack 0 n) #x00))
-     (= (sc 0) #x0)
-     (= (exc_halt 0) false)
-     (= (used_gas 0) 0))"
-          (Z3.Expr.to_string (init st))
-      );
-
     "model of the initial stack holds 0 for every stack address">:: (fun _ ->
         let st = mk_state "" in
         let c = init st in
