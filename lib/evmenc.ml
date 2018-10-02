@@ -67,6 +67,7 @@ type enc_consts = {
   fis : Z3.FuncDecl.func_decl;
   a : Z3.FuncDecl.func_decl;
   opcodes : (instr * int) list;
+  xs : Z3.Expr.expr list;
 }
 
 let mk_enc_consts p sis = {
@@ -81,7 +82,11 @@ let mk_enc_consts p sis = {
   (* arguments for PUSH instrucions in target program *)
   a = func_decl "a" [int_sort] (bv_sort ses);
   (* integer encoding of opcodes *)
-  opcodes = List.mapi sis ~f:(fun i oc -> (oc, i))
+  opcodes = List.mapi sis ~f:(fun i oc -> (oc, i));
+  (* list of free variables x_0 .. x_(stack_depth -1)
+     for stack elements already on stack *)
+  xs = List.init (stack_depth p)
+      ~f:(fun i -> bvconst ("x_" ^ Int.to_string i) ses)
 }
 
 let enc_opcode ea i = List.Assoc.find_exn ea.opcodes ~equal:[%eq: instr] i
