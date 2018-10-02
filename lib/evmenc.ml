@@ -94,16 +94,10 @@ let enc_opcode ea i = List.Assoc.find_exn ea.opcodes ~equal:[%eq: instr] i
 let dec_opcode ea i =
   List.Assoc.find_exn (List.Assoc.inverse ea.opcodes) ~equal:[%eq: int] i
 
-(* INIT: init stack with all 0 *)
 let init st =
   let open Z3Ops in
-  (* encode stack address size *)
-  let n = bvconst "n" sas in
-  (* encode 0 *)
-  let z = bvnum 0 ses in
-  forall n (st.stack @@ [num 0; n] == z)
   (* set stack counter to 0 *)
-  && (st.stack_ctr @@ [num 0] == bvnum 0 sas)
+  (st.stack_ctr @@ [num 0] == bvnum 0 sas)
   && (st.exc_halt @@ [num 0] == btm)
   && (st.used_gas @@ [num 0] == num 0)
 
