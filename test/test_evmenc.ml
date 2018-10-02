@@ -547,6 +547,42 @@ let suite =
         assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
           3 (stack_depth p)
       );
+
+    (* enc_super_opt with init stack elements *)
+
+    "super optimize with one init stack element" >::(fun _ ->
+        let p = [PUSH (Val 1); ADD] in
+        let sis = [PUSH Tmpl; ADD] in
+        let ea = mk_enc_consts p sis in
+        let c = enc_super_opt ea in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: instr list] ~printer:[%show: instr list]
+          p (dec_super_opt m ea)
+      );
+
+    "super optimize with two init stack elements" >::(fun _ ->
+        let p = [ADD] in
+        let sis = [ADD] in
+        let ea = mk_enc_consts p sis in
+        let c = enc_super_opt ea in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: instr list] ~printer:[%show: instr list]
+          p (dec_super_opt m ea)
+      );
+
+    "super optimize 21 + (0 - x) to (21 - x) " >::(fun _ ->
+        let p = [PUSH (Val 0); SUB; PUSH (Val 21); ADD;] in
+        let sis = [PUSH Tmpl; ADD; SUB;] in
+        let ea = mk_enc_consts p sis in
+        let c = enc_super_opt ea in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: instr list] ~printer:[%show: instr list]
+          [PUSH (Val 21); SUB] (dec_super_opt m ea)
+      );
+
+
+
+
   ]
 
 let () =
