@@ -533,7 +533,7 @@ let suite =
     "Start with SUB" >::(fun _ ->
         let p = [SUB] in
         assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
-          (-2) (stack_depth p)
+          2 (stack_depth p)
       );
 
     "Exactly enough arguments" >::(fun _ ->
@@ -545,7 +545,7 @@ let suite =
     "Start with SUB, go positive, but then go deeper" >::(fun _ ->
         let p = [SUB; PUSH (Val 1); PUSH (Val 1); ADD; ADD; ADD] in
         assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
-          (-3) (stack_depth p)
+          3 (stack_depth p)
       );
   ]
 

@@ -30,7 +30,7 @@ let delta_alpha = function
   | SUB -> (2, 1)
 
 let stack_depth p =
-  Tuple.T2.get2 @@ List.fold_left ~init:(0, 0) p
+  Int.abs @@ Tuple.T2.get2 @@ List.fold_left ~init:(0, 0) p
     ~f:(fun (sc, sd) is ->
         let (d, a) = delta_alpha is in (sc - d + a, min sd (sc - d)))
 
