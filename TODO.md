@@ -1,5 +1,7 @@
 * Abstract enc_instruction over number of elements added and deleted on stack
 
+* Refactor evmenc; split into modules
+
 * For now we assume that the stack is empty at start. This won't work
   when we optimise snippets of a smart contract. However, for a given
   snippet, we can always compute how deep this snippet looks into the
