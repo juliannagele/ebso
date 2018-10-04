@@ -17,8 +17,8 @@ let suite =
     (* init *)
 
     "model of the initial stack holds 0 for every stack address">:: (fun _ ->
-        let st = mk_state "" in
         let ea = mk_enc_consts [] [] in
+        let st = mk_state ea "" in
         let c = init ea st in
         let m = solve_model_exn [c] in
         let sk_size = (Int.pow 2 sas) - 1 in
@@ -31,9 +31,9 @@ let suite =
 
     (* add *)
     "add two elements on the stack">:: (fun _ ->
-        let st = mk_state "" in
         let p = [PUSH (Val 4); PUSH (Val 5); ADD] in
         let ea = mk_enc_consts p [] in
+        let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
@@ -44,9 +44,9 @@ let suite =
       );
 
     "check that adding does not change element below">:: (fun _ ->
-        let st = mk_state "" in
         let p = [PUSH (Val 3); PUSH (Val 4); PUSH (Val 5); ADD] in
         let ea = mk_enc_consts p [] in
+        let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
@@ -57,9 +57,9 @@ let suite =
       );
 
     "add with only one element">:: (fun _ ->
-        let st = mk_state "" in
         let p = [PUSH (Val 3); ADD] in
         let ea = mk_enc_consts p [] in
+        let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
@@ -70,9 +70,9 @@ let suite =
       );
 
     "add with empty stack">:: (fun _ ->
-        let st = mk_state "" in
         let p = [ADD] in
         let ea = mk_enc_consts p [] in
+        let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
@@ -83,9 +83,9 @@ let suite =
       );
 
     "add two elements does not lead to stack underflow">:: (fun _ ->
-        let st = mk_state "" in
         let p = [PUSH (Val 4); PUSH (Val 5); ADD] in
         let ea = mk_enc_consts p [] in
+        let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
@@ -97,9 +97,9 @@ let suite =
 
     (* sub *)
     "subtract two elements on the stack">:: (fun _ ->
-        let st = mk_state "" in
         let p = [PUSH (Val 3); PUSH (Val 8); SUB] in
         let ea = mk_enc_consts p [] in
+        let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
@@ -110,9 +110,9 @@ let suite =
       );
 
     "subtract two elements on the stack with negative result">:: (fun _ ->
-        let st = mk_state "" in
         let p = [PUSH (Val 13); PUSH (Val 8); SUB] in
         let ea = mk_enc_consts p [] in
+        let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
@@ -123,9 +123,9 @@ let suite =
       );
 
     "check that subtraction does not change element below">:: (fun _ ->
-        let st = mk_state "" in
         let p = [PUSH (Val 3); PUSH (Val 4); PUSH (Val 5); SUB] in
         let ea = mk_enc_consts p [] in
+        let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
@@ -136,9 +136,9 @@ let suite =
       );
 
     "SUB with only one element">:: (fun _ ->
-        let st = mk_state "" in
         let p = [PUSH (Val 3); SUB] in
         let ea = mk_enc_consts p [] in
+        let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
@@ -149,9 +149,9 @@ let suite =
       );
 
     "sub with empty stack">:: (fun _ ->
-        let st = mk_state "" in
         let p = [SUB] in
         let ea = mk_enc_consts p [] in
+        let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
@@ -162,9 +162,9 @@ let suite =
       );
 
     "exceptional halt persists">:: (fun _ ->
-        let st = mk_state "" in
         let p = [SUB; PUSH (Val 3)] in
         let ea = mk_enc_consts p [] in
+        let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
@@ -177,9 +177,9 @@ let suite =
     (* add and sub *)
 
     "combine add and sub">:: (fun _ ->
-        let st = mk_state "" in
         let p = [PUSH (Val 3); PUSH (Val 2); PUSH (Val 2); ADD; SUB] in
         let ea = mk_enc_consts p [] in
+        let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -187,9 +187,9 @@ let suite =
       );
 
     "valid program does not halt exceptionally">:: (fun _ ->
-        let st = mk_state "" in
         let p = [PUSH (Val 6); PUSH (Val 2); PUSH (Val 2); ADD; SUB] in
         let ea = mk_enc_consts p [] in
+        let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -198,9 +198,9 @@ let suite =
       );
 
     "invalid program should halt exceptionally">:: (fun _ ->
-        let st = mk_state "" in
         let p = [(PUSH (Val 2)); SUB; (PUSH (Val 2)); ADD;] in
         let ea = mk_enc_consts p [] in
+        let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -211,9 +211,9 @@ let suite =
     (* push *)
 
     "top of the stack is the pushed element after a PUSH">:: (fun _ ->
-        let st = mk_state "" in
         let p = [PUSH (Val 5)] in
         let ea = mk_enc_consts p [] in
+        let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
@@ -224,9 +224,9 @@ let suite =
       );
 
     "PUSHing too many elements leads to a stack overflow">:: (fun _ ->
-        let st = mk_state "" in
         let max = Int.pow 2 sas - 1 in
         let ea = mk_enc_consts [] [] in
+        let st = mk_state ea "" in
         let c =
           init ea st <&>
           (st.stack_ctr <@@> [num max] <==> (bvnum max sas)) <&>
@@ -241,9 +241,9 @@ let suite =
       );
 
     "PUSHing one element does not to a stack overflow">:: (fun _ ->
-        let st = mk_state "" in
         let p = [PUSH (Val 5)] in
         let ea = mk_enc_consts p [] in
+        let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
@@ -255,8 +255,8 @@ let suite =
 
     (* gas cost *)
     "after 0 instruction no gas has been used">::(fun _ ->
-        let st = mk_state "" in
         let ea = mk_enc_consts [] [] in
+        let st = mk_state ea "" in
         let c = init ea st in
         let m = solve_model_exn [c] in
         assert_equal
@@ -267,9 +267,9 @@ let suite =
       );
 
     "after some instruction some gas has been used">::(fun _ ->
-        let st = mk_state "" in
         let p = [PUSH (Val 6); PUSH (Val 2); ADD] in
         let ea = mk_enc_consts p [] in
+        let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
@@ -282,10 +282,10 @@ let suite =
     (* enc_search_space *)
 
     "search for 1 instruction program">::(fun _ ->
-        let st = mk_state "" in
         let p = [PUSH (Val 1)] in
         let sis = [PUSH (Val 1)] in
         let ea = mk_enc_consts p sis in
+        let st = mk_state ea "" in
         let c =
           enc_program ea st <&>
           enc_search_space st ea <&>
@@ -300,10 +300,10 @@ let suite =
       );
 
     "search for 3 instruction program">::(fun _ ->
-        let st = mk_state "" in
         let p = [PUSH (Val 1); PUSH (Val 1); ADD] in
         let sis = [PUSH (Val 1); ADD] in
         let ea = mk_enc_consts p sis in
+        let st = mk_state ea "" in
         let c =
           enc_program ea st <&>
           enc_search_space st ea <&>
@@ -321,10 +321,10 @@ let suite =
       );
 
     "sis contains unused instructions ">::(fun _ ->
-        let st = mk_state "" in
         let p = [PUSH (Val 1)] in
         let sis = [PUSH (Val 1); PUSH (Val 2); ADD; SUB] in
         let ea = mk_enc_consts p sis in
+        let st = mk_state ea "" in
         let c =
           enc_program ea st <&>
           enc_search_space st ea <&>
@@ -339,10 +339,10 @@ let suite =
       );
 
     "sis does not contain required instruction">::(fun _ ->
-        let st = mk_state "" in
         let p = [PUSH (Val 1)] in
         let sis = [ADD; SUB] in
         let ea = mk_enc_consts p sis in
+        let st = mk_state ea "" in
         let c =
           enc_program ea st <&>
           enc_search_space st ea <&>
@@ -358,14 +358,14 @@ let suite =
     (* enc_equivalence *)
 
     "search for 1 instruction program with equivalence constraint">::(fun _ ->
-        let st = mk_state "" in
         let p = [PUSH (Val 1)] in
         let sis = [PUSH (Val 1)] in
         let ea = mk_enc_consts p sis in
+        let st = mk_state ea "" in
         let c =
           enc_program ea st <&>
           enc_search_space st ea <&>
-          enc_equivalence st st (List.length p) ea.kt
+          enc_equivalence ea st st
         in
         let m = solve_model_exn [c] in
         assert_equal
@@ -376,14 +376,14 @@ let suite =
       );
 
     "search for 3 instruction program with equivalence constraint">::(fun _ ->
-        let st = mk_state "" in
         let p = [PUSH (Val 1); PUSH (Val 1); ADD] in
         let sis = [PUSH (Val 1); ADD] in
         let ea = mk_enc_consts p sis in
+        let st = mk_state ea "" in
         let c =
           enc_program ea st <&>
           enc_search_space st ea <&>
-          enc_equivalence st st (List.length p) ea.kt
+          enc_equivalence ea st st
         in
         let m = solve_model_exn [c] in
         assert_equal
@@ -397,11 +397,10 @@ let suite =
       );
 
     "equivalence constraint forces inital stack for target program">:: (fun _ ->
-        let sts = mk_state "_s" in
-        let stt = mk_state "_t" in
-        let kt = intconst "k" in
         let ea = mk_enc_consts [] [] in
-        let c = init ea sts <&> enc_equivalence sts stt 0 kt in
+        let sts = mk_state ea "_s" in
+        let stt = mk_state ea "_t" in
+        let c = init ea sts <&> enc_equivalence ea sts stt in
         let m = solve_model_exn [c] in
         let sk_size = (Int.pow 2 sas) - 1 in
         assert_equal
@@ -426,10 +425,10 @@ let suite =
     (* template argument for PUSH *)
 
     "search for 1 instruction program with template (fis)">::(fun _ ->
-        let st = mk_state "" in
         let p = [PUSH (Val 1)] in
         let sis = [PUSH Tmpl] in
         let ea = mk_enc_consts p sis in
+        let st = mk_state ea "" in
         let c =
           enc_program ea st <&>
           enc_search_space st ea <&>
@@ -444,10 +443,10 @@ let suite =
       );
 
     "search for 1 instruction program with template (a)">::(fun _ ->
-        let st = mk_state "" in
         let p = [PUSH (Val 1)] in
         let sis = [PUSH Tmpl] in
         let ea = mk_enc_consts p sis in
+        let st = mk_state ea "" in
         let c =
           enc_program ea st <&>
           enc_search_space st ea <&>
@@ -459,10 +458,10 @@ let suite =
       );
 
     "search for 3 instruction program with template (fis)">::(fun _ ->
-        let st = mk_state "" in
         let p = [PUSH (Val 1); PUSH (Val 1); ADD] in
         let sis = [PUSH Tmpl; ADD] in
         let ea = mk_enc_consts p sis in
+        let st = mk_state ea "" in
         let c =
           enc_program ea st <&>
           enc_search_space st ea <&>
@@ -480,10 +479,10 @@ let suite =
       );
 
     "search for 3 instruction program with template (a)">::(fun _ ->
-        let st = mk_state "" in
         let p = [PUSH (Val 1); PUSH (Val 1); ADD] in
         let sis = [PUSH Tmpl; ADD] in
         let ea = mk_enc_consts p sis in
+        let st = mk_state ea "" in
         let c =
           enc_program ea st <&>
           enc_search_space st ea <&>
@@ -497,15 +496,15 @@ let suite =
     "super optimize PUSH PUSH ADD to PUSH with template" >::(fun _ ->
         let open Z3Ops in
         let p = [PUSH (Val 1); PUSH (Val 1); ADD] in
-        let sts = mk_state "_s" in
-        let stt = mk_state "_t" in
         let ks = List.length p in
         let sis = [PUSH Tmpl; ADD; SUB] in
         let ea = mk_enc_consts p sis in
+        let sts = mk_state ea "_s" in
+        let stt = mk_state ea "_t" in
         let c =
           enc_program ea sts &&
           enc_search_space stt ea &&
-          enc_equivalence sts stt ks ea.kt &&
+          enc_equivalence ea sts stt &&
           sts.used_gas @@ [num ks] > stt.used_gas @@ [ea.kt]
         in
         let m = solve_model_exn [c] in

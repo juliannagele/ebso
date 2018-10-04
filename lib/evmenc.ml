@@ -7,7 +7,7 @@ open Z3util
 let sas = 4
 
 (* stack element size *)
-let ses = 8
+let ses = 4
 
 type stackarg =
   | Val of int [@printer fun fmt x -> fprintf fmt "%i" x]
@@ -78,16 +78,19 @@ type state = {
   used_gas : Z3.FuncDecl.func_decl;
 }
 
-let mk_state idx = {
-  (* stack(j, n) = nth stack element after j instructions *)
-  stack = func_decl ("stack" ^ idx) [int_sort; bv_sort sas] (bv_sort ses);
-  (* sc(j) = index of the next free slot on the stack after j instructions *)
-  stack_ctr = func_decl ("sc" ^ idx) [int_sort] (bv_sort sas);
-  (* exc_halt(j) is true if exceptional halting occurs after j instructions *)
-  exc_halt = func_decl ("exc_halt" ^ idx) [int_sort] bool_sort;
-  (* gas(j) = amount of gas used to execute the first j instructions *)
-  used_gas = func_decl ("used_gas" ^ idx) [int_sort] int_sort;
-}
+let mk_state ea idx =
+  let xs_sorts = List.map ea.xs ~f:(fun _ -> bv_sort ses) in
+  { (* stack(x0 ... x(sd-1), j, n) = nth stack element after j instructions
+       starting from a stack that contained elements x0 ... x(sd-1) *)
+    stack = func_decl ("stack" ^ idx)
+        (xs_sorts @ [int_sort; bv_sort sas]) (bv_sort ses);
+    (* sc(j) = index of the next free slot on the stack after j instructions *)
+    stack_ctr = func_decl ("sc" ^ idx) [int_sort] (bv_sort sas);
+    (* exc_halt(j) is true if exceptional halting occurs after j instructions *)
+    exc_halt = func_decl ("exc_halt" ^ idx) [int_sort] bool_sort;
+    (* gas(j) = amount of gas used to execute the first j instructions *)
+    used_gas = func_decl ("used_gas" ^ idx) [int_sort] int_sort;
+  }
 
 let enc_opcode ea i = List.Assoc.find_exn ea.opcodes ~equal:[%eq: instr] i
 
@@ -101,7 +104,8 @@ let init ea st =
   (* set stack counter to skd *)
   (st.stack_ctr @@ [num 0] == bvnum skd sas)
   (* set inital stack elements *)
-  && conj (List.mapi ea.xs ~f:(fun i x -> st.stack @@ [num 0; bvnum i sas] == x))
+  && conj (List.mapi ea.xs
+             ~f:(fun i x -> st.stack @@ (ea.xs @ [num 0; bvnum i sas]) == x))
   && (st.exc_halt @@ [num 0] == btm)
   && (st.used_gas @@ [num 0] == num 0)
 
@@ -114,7 +118,8 @@ let enc_push ea x st j =
   let open Z3Ops in
   let n = bvconst "n" sas in
   (* the stack before and after the PUSH *)
-  let sk n = st.stack @@ [j; n] and sk' n = st.stack @@ [j + one; n] in
+  let sk n = st.stack @@ (ea.xs @ [j; n])
+  and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
   (* the stack counter before and after the PUSH *)
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   (* there will be one more element on the stack after PUSHing *)
@@ -128,10 +133,11 @@ let enc_push ea x st j =
   (* stack overflow occured or exceptional halting occured eariler *)
   (~! (nuw sc (bvnum 1 sas) `Add) || st.exc_halt @@ [j]))
 
-let enc_binop op st j =
+let enc_binop op ea st j =
   let open Z3Ops in
   let n = bvconst "n" sas in
-  let sk n = st.stack @@ [j; n] and sk' n = st.stack @@ [j + one; n] in
+  let sk n = st.stack @@ (ea.xs @ [j; n])
+  and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   (* two elements are consumed, one is added *)
   (sc' == (sc - bvnum 1 sas)) &&
@@ -153,8 +159,8 @@ let enc_instruction ea st j is =
   let enc_instr =
     match is with
     | PUSH x -> enc_push ea x st j
-    | ADD -> enc_add st j
-    | SUB -> enc_sub st j
+    | ADD -> enc_add ea st j
+    | SUB -> enc_sub ea st j
     | _   -> failwith "other instrs"
   in
   let enc_used_gas =
@@ -178,20 +184,21 @@ let enc_search_space st ea =
   ea.kt >= (num 0)
 
 (* we only demand equivalence at kt *)
-let enc_equivalence sts stt ks kt =
+let enc_equivalence ea sts stt =
+  let ks = List.length ea.p and kt = ea.kt in
   let open Z3Ops in
   let n = bvconst "n" sas in
   (* intially source and target stack counter are equal *)
   sts.stack_ctr @@ [num 0] == stt.stack_ctr @@ [num 0] &&
   (* initally source and target stack are equal *)
-  (forall n (sts.stack @@ [num 0; n] == stt.stack @@ [num 0; n])) &&
+  (forall n (sts.stack @@ (ea.xs @ [num 0; n]) == stt.stack @@ (ea.xs @ [num 0; n]))) &&
   (* initally source and target gas are equal *)
   sts.used_gas @@ [num 0] == stt.used_gas @@ [num 0] &&
   (* after the programs have run source and target stack counter are equal *)
   sts.stack_ctr @@ [num ks] == stt.stack_ctr @@ [kt] &&
   (* after the programs have run source and target stack are equal below the stack counter *)
   (forall n ((n < stt.stack_ctr @@ [kt]) ==>
-             (sts.stack @@ [num ks; n] == stt.stack @@ [kt; n]))) &&
+             (sts.stack @@ (ea.xs @ [num ks; n]) == stt.stack @@ (ea.xs @ [kt; n])))) &&
   (* after the programs have run source and target exceptional halting are equal *)
   sts.exc_halt @@ [num ks] == stt.exc_halt @@ [kt]
 
@@ -201,13 +208,13 @@ let enc_program ea st =
 
 let enc_super_opt ea =
   let open Z3Ops in
-  let sts = mk_state "_s" in
-  let stt = mk_state "_t" in
+  let sts = mk_state ea "_s" in
+  let stt = mk_state ea "_t" in
   let ks = List.length ea.p in
   foralls ea.xs
   (enc_program ea sts &&
    enc_search_space stt ea &&
-   enc_equivalence sts stt ks ea.kt &&
+   enc_equivalence ea sts stt &&
    sts.used_gas @@ [num ks] > stt.used_gas @@ [ea.kt])
 
 let solve_model_exn cs =
