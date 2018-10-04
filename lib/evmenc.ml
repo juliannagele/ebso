@@ -42,24 +42,6 @@ let gas_cost = function
 
 let total_gas_cost = List.fold ~init:0 ~f:(fun gc i -> gc + gas_cost i)
 
-type state = {
-  stack : Z3.FuncDecl.func_decl;
-  stack_ctr : Z3.FuncDecl.func_decl;
-  exc_halt : Z3.FuncDecl.func_decl;
-  used_gas : Z3.FuncDecl.func_decl;
-}
-
-let mk_state idx = {
-  (* stack(j, n) = nth stack element after j instructions *)
-  stack = func_decl ("stack" ^ idx) [int_sort; bv_sort sas] (bv_sort ses);
-  (* sc(j) = index of the next free slot on the stack after j instructions *)
-  stack_ctr = func_decl ("sc" ^ idx) [int_sort] (bv_sort sas);
-  (* exc_halt(j) is true if exceptional halting occurs after j instructions *)
-  exc_halt = func_decl ("exc_halt" ^ idx) [int_sort] bool_sort;
-  (* gas(j) = amount of gas used to execute the first j instructions *)
-  used_gas = func_decl ("used_gas" ^ idx) [int_sort] int_sort;
-}
-
 type enc_consts = {
   p : instr list;
   sis : instr list;
@@ -87,6 +69,24 @@ let mk_enc_consts p sis = {
      for stack elements already on stack *)
   xs = List.init (stack_depth p)
       ~f:(fun i -> bvconst ("x_" ^ Int.to_string i) ses)
+}
+
+type state = {
+  stack : Z3.FuncDecl.func_decl;
+  stack_ctr : Z3.FuncDecl.func_decl;
+  exc_halt : Z3.FuncDecl.func_decl;
+  used_gas : Z3.FuncDecl.func_decl;
+}
+
+let mk_state idx = {
+  (* stack(j, n) = nth stack element after j instructions *)
+  stack = func_decl ("stack" ^ idx) [int_sort; bv_sort sas] (bv_sort ses);
+  (* sc(j) = index of the next free slot on the stack after j instructions *)
+  stack_ctr = func_decl ("sc" ^ idx) [int_sort] (bv_sort sas);
+  (* exc_halt(j) is true if exceptional halting occurs after j instructions *)
+  exc_halt = func_decl ("exc_halt" ^ idx) [int_sort] bool_sort;
+  (* gas(j) = amount of gas used to execute the first j instructions *)
+  used_gas = func_decl ("used_gas" ^ idx) [int_sort] int_sort;
 }
 
 let enc_opcode ea i = List.Assoc.find_exn ea.opcodes ~equal:[%eq: instr] i
