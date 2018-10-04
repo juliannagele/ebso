@@ -75,7 +75,8 @@ let (<!=>) x y = Boolean.mk_distinct !ctxt [x; y]
 let (<==>) x y = Boolean.mk_eq !ctxt x y
 
 let foralls ?(weight = None) ?(patterns = []) ?(nopatterns = [])
-      ?(quantifier_id = None) ?(skolem_id = None) xs p =
+    ?(quantifier_id = None) ?(skolem_id = None) xs p =
+  if List.is_empty xs then p else
   Quantifier.expr_of_quantifier @@
   Quantifier.mk_forall_const !ctxt xs p
     weight patterns nopatterns quantifier_id skolem_id
@@ -85,7 +86,8 @@ let forall ?(weight = None) ?(patterns = []) ?(nopatterns = [])
   foralls ~weight ~patterns ~nopatterns ~quantifier_id ~skolem_id [x] p
 
 let existss ?(weight = None) ?(patterns = []) ?(nopatterns = [])
-      ?(quantifier_id = None) ?(skolem_id = None) xs p =
+    ?(quantifier_id = None) ?(skolem_id = None) xs p =
+  if List.is_empty xs then p else
   Quantifier.expr_of_quantifier @@
   Quantifier.mk_exists_const !ctxt xs p
     weight patterns nopatterns quantifier_id skolem_id
