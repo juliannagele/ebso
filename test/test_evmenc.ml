@@ -263,6 +263,26 @@ let suite =
           (eval_exc_halt st m (List.length p))
       );
 
+    (* pop *)
+
+    "pop only touches top element">:: (fun _ ->
+        let p = [PUSH (Val 2); PUSH (Val 1); POP] in
+        let ea = mk_enc_consts p [] in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          (bvnum 2 ses)
+          (eval_stack st m (List.length p) 0)
+      );
+   (*
+    "push and pop leads to same stack"
+    "pop on empty stack leads to stack underflow"
+    "popping too many elements leads to stack underflow"
+   *)
+
     (* gas cost *)
     "after 0 instruction no gas has been used">::(fun _ ->
         let ea = mk_enc_consts [] [] in
