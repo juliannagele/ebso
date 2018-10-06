@@ -59,8 +59,13 @@ let suite =
     "add with only one element">:: (fun _ ->
         let p = [PUSH (Val 3); ADD] in
         let ea = mk_enc_consts p [] in
-        let st = mk_state ea "" in
-        let c = enc_program ea st in
+        (* hack to erase xs to start from emtpy stack *)
+        let st = mk_state {ea with p = []} "" in
+        let c =
+          init {ea with p = []} st <&>
+          enc_instruction ea st (num 0) (List.nth_exn p 0) <&>
+          enc_instruction ea st (num 1) (List.nth_exn p 1)
+        in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
@@ -72,8 +77,10 @@ let suite =
     "add with empty stack">:: (fun _ ->
         let p = [ADD] in
         let ea = mk_enc_consts p [] in
-        let st = mk_state ea "" in
-        let c = enc_program ea st in
+        (* hack to erase xs to start from emtpy stack *)
+        let st = mk_state {ea with p = []} "" in
+        let c = init {ea with p = []} st <&>
+                enc_instruction ea st (num 0) ADD in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
@@ -138,8 +145,13 @@ let suite =
     "SUB with only one element">:: (fun _ ->
         let p = [PUSH (Val 3); SUB] in
         let ea = mk_enc_consts p [] in
-        let st = mk_state ea "" in
-        let c = enc_program ea st in
+        (* hack to erase xs to start from emtpy stack *)
+        let st = mk_state {ea with p = []} "" in
+        let c =
+          init {ea with p = []} st <&>
+          enc_instruction ea st (num 0) (List.nth_exn p 0) <&>
+          enc_instruction ea st (num 1) (List.nth_exn p 1)
+        in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
@@ -151,8 +163,12 @@ let suite =
     "sub with empty stack">:: (fun _ ->
         let p = [SUB] in
         let ea = mk_enc_consts p [] in
-        let st = mk_state ea "" in
-        let c = enc_program ea st in
+        (* hack to erase xs to start from emtpy stack *)
+        let st = mk_state {ea with p = []} "" in
+        let c =
+          init {ea with p = []} st <&>
+          enc_instruction ea st (num 0) (List.nth_exn p 0)
+        in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
@@ -164,8 +180,13 @@ let suite =
     "exceptional halt persists">:: (fun _ ->
         let p = [SUB; PUSH (Val 3)] in
         let ea = mk_enc_consts p [] in
-        let st = mk_state ea "" in
-        let c = enc_program ea st in
+        (* hack to erase xs to start from emtpy stack *)
+        let st = mk_state {ea with p = []} "" in
+        let c =
+          init {ea with p = []} st <&>
+          enc_instruction ea st (num 0) (List.nth_exn p 0) <&>
+          enc_instruction ea st (num 1) (List.nth_exn p 1)
+        in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
