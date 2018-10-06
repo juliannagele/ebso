@@ -560,14 +560,14 @@ let suite =
           p (dec_super_opt m ea)
       );
 
-    "super optimize 21 + (0 - x) to (21 - x) " >::(fun _ ->
-        let p = [PUSH (Val 0); SUB; PUSH (Val 21); ADD;] in
+    "super optimize 3 + (0 - x) to (3 - x) " >::(fun _ ->
+        let p = [PUSH (Val 0); SUB; PUSH (Val 3); ADD;] in
         let sis = [PUSH Tmpl; ADD; SUB;] in
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: instr list] ~printer:[%show: instr list]
-          [PUSH (Val 21); SUB] (dec_super_opt m ea)
+          [PUSH (Val 3); SUB] (dec_super_opt m ea)
       );
   ]
 
