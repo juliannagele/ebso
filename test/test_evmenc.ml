@@ -277,11 +277,36 @@ let suite =
           (bvnum 2 ses)
           (eval_stack st m (List.length p) 0)
       );
-   (*
-    "push and pop leads to same stack"
-    "pop on empty stack leads to stack underflow"
-    "popping too many elements leads to stack underflow"
-   *)
+
+    "push and pop on empty stack leads to empty stack">:: (fun _ ->
+        let p = [PUSH (Val 1); POP] in
+        let ea = mk_enc_consts p [] in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          (bvnum 0 sas)
+          (eval_stack_ctr st m (List.length p))
+      );
+
+    "pop on empty stack leads to stack underflow" >:: (fun _ ->
+        let p = [POP] in
+        let ea = mk_enc_consts p [] in
+        (* hack to erase xs to start from emtpy stack *)
+        let st = mk_state {ea with p = []} "" in
+        let c =
+          init {ea with p = []} st <&>
+          enc_instruction ea st (num 0) (List.nth_exn p 0)
+        in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          top
+          (eval_exc_halt st m (List.length p))
+      );
 
     (* gas cost *)
     "after 0 instruction no gas has been used">::(fun _ ->
@@ -450,6 +475,16 @@ let suite =
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: instr list] ~printer:[%show: instr list]
           [PUSH (Val 2)] (dec_super_opt m ea)
+      );
+
+    "super optimize PUSH and POP" >::(fun _ ->
+        let p = [PUSH (Val 1); POP;] in
+        let sis = [PUSH Tmpl; POP;] in
+        let ea = mk_enc_consts p sis in
+        let c = enc_super_opt ea in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: instr list] ~printer:[%show: instr list]
+          [] (dec_super_opt m ea)
       );
 
     (* template argument for PUSH *)
