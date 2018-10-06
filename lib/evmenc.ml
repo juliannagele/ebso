@@ -133,6 +133,23 @@ let enc_push ea x st j =
   (* stack overflow occured or exceptional halting occured eariler *)
   (~! (nuw sc (bvnum 1 sas) `Add) || st.exc_halt @@ [j]))
 
+let enc_pop ea st j =
+  let open Z3Ops in
+  let n = bvconst "n" sas in
+  (* the stack before and after the POP *)
+  let sk n = st.stack @@ (ea.xs @ [j; n])
+  and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
+  (* the stack counter before and after the POP *)
+  let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
+  (* there will be one fewer element on the stack after POPing *)
+  (sc' == (sc - bvnum 1 sas)) &&
+  (* all old elements stay the same *)
+  forall n ((n < sc') ==> (sk' n == sk n)) &&
+  (* check for exceptional halting *)
+  (st.exc_halt @@ [j + one] ==
+  (* stack underflow occured or exceptional halting occured eariler *)
+  ((sc == (bvnum 0 sas)) || st.exc_halt @@ [j]))
+
 let enc_binop op ea st j =
   let open Z3Ops in
   let n = bvconst "n" sas in
@@ -159,9 +176,9 @@ let enc_instruction ea st j is =
   let enc_instr =
     match is with
     | PUSH x -> enc_push ea x st j
+    | POP -> enc_pop ea st j
     | ADD -> enc_add ea st j
     | SUB -> enc_sub ea st j
-    | _   -> failwith "other instrs"
   in
   let enc_used_gas =
     st.used_gas @@ [j + one] == ((st.used_gas @@ [j]) + (num (gas_cost is)))
