@@ -232,6 +232,8 @@ let solve_model_exn cs =
 
 let eval_stack st m i n = eval_func_decl m i ~n:[bvnum n sas] st.stack
 
+let eval_stack_ctr st m i = eval_func_decl m i st.stack_ctr
+
 let eval_exc_halt st m i = eval_func_decl m i st.exc_halt
 
 let eval_gas st m i = eval_func_decl m i st.used_gas
