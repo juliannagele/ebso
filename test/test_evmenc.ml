@@ -487,6 +487,26 @@ let suite =
           [] (dec_super_opt m ea)
       );
 
+    "super optimize x * 0 to POP; PUSH 0" >::(fun _ ->
+        let p = [PUSH (Val 0); MUL] in
+        let sis = [PUSH Tmpl; POP; MUL; ADD] in
+        let ea = mk_enc_consts p sis in
+        let c = enc_super_opt ea in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: instr list] ~printer:[%show: instr list]
+          [POP; PUSH (Val 0)] (dec_super_opt m ea)
+      );
+
+    "super optimize x * 1 to x" >::(fun _ ->
+        let p = [PUSH (Val 1); MUL] in
+        let sis = [PUSH Tmpl; POP; MUL; ADD] in
+        let ea = mk_enc_consts p sis in
+        let c = enc_super_opt ea in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: instr list] ~printer:[%show: instr list]
+          [] (dec_super_opt m ea)
+      );
+
     (* template argument for PUSH *)
 
     "search for 1 instruction program with template (fis)">::(fun _ ->
