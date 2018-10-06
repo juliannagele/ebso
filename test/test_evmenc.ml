@@ -197,17 +197,6 @@ let suite =
           (eval_exc_halt st m (List.length p))
       );
 
-    "invalid program should halt exceptionally">:: (fun _ ->
-        let p = [(PUSH (Val 2)); SUB; (PUSH (Val 2)); ADD;] in
-        let ea = mk_enc_consts p [] in
-        let st = mk_state ea "" in
-        let c = enc_program ea st in
-        let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          top
-          (eval_exc_halt st m (List.length p))
-      );
-
     (* push *)
 
     "top of the stack is the pushed element after a PUSH">:: (fun _ ->
