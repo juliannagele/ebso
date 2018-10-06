@@ -16,6 +16,7 @@ type stackarg =
 
 type instr =
   | ADD
+  | MUL
   | PUSH of stackarg
   | POP
   | SUB
@@ -25,6 +26,7 @@ type progr = instr list
 
 let delta_alpha = function
   | ADD -> (2, 1)
+  | MUL -> (2, 1)
   | PUSH _ -> (0, 1)
   | POP -> (1, 0)
   | SUB -> (2, 1)
@@ -36,6 +38,7 @@ let stack_depth p =
 
 let gas_cost = function
   | ADD -> 3
+  | MUL -> 8
   | PUSH _ -> 2
   | POP -> 2
   | SUB -> 3
@@ -169,6 +172,7 @@ let enc_binop op ea st j =
 
 let enc_add = enc_binop (<+>)
 let enc_sub = enc_binop (<->)
+let enc_mul = enc_binop (<*>)
 
 (* effect of instruction on state st after j steps *)
 let enc_instruction ea st j is =
@@ -179,6 +183,7 @@ let enc_instruction ea st j is =
     | POP -> enc_pop ea st j
     | ADD -> enc_add ea st j
     | SUB -> enc_sub ea st j
+    | MUL -> enc_mul ea st j
   in
   let enc_used_gas =
     st.used_gas @@ [j + one] == ((st.used_gas @@ [j]) + (num (gas_cost is)))
