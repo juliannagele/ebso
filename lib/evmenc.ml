@@ -7,7 +7,7 @@ open Z3util
 let sas = 4
 
 (* stack element size *)
-let ses = 4
+let ses = 3
 
 type stackarg =
   | Val of int [@printer fun fmt x -> fprintf fmt "%i" x]

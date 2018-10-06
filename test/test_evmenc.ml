@@ -560,14 +560,14 @@ let suite =
           [] (dec_super_opt m ea)
       );
 
-    "super optimize with two init stack elements" >::(fun _ ->
-        let p = [ADD] in
+    "super optimize with two init stack elements" >: test_case ~length:Long (fun _ ->
+        let p = [ADD; PUSH (Val 0); ADD] in
         let sis = [ADD] in
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: instr list] ~printer:[%show: instr list]
-          p (dec_super_opt m ea)
+          [ADD] (dec_super_opt m ea)
       );
 
     "super optimize 3 + (0 - x) to (3 - x) " >::(fun _ ->
