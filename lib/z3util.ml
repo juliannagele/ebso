@@ -100,6 +100,19 @@ let exists ?(weight = None) ?(patterns = []) ?(nopatterns = [])
 
 let select a i = Z3Array.mk_select !ctxt a i
 
+let solve_model_exn cs =
+  let slvr = Solver.mk_simple_solver !ctxt in
+  let () = Solver.add slvr cs in
+  match Solver.check slvr [] with
+  | Solver.SATISFIABLE ->
+    begin
+      match Solver.get_model slvr with
+      | Some m -> m
+      | None -> failwith "SAT but no model"
+    end
+  | Solver.UNSATISFIABLE -> failwith "UNSAT"
+  | Solver.UNKNOWN -> failwith (Solver.get_reason_unknown slvr)
+
 let eval_func_decl m j ?(n = []) f =
   match Z3.Model.eval m (f <@@> ([num j] @ n)) true with
   | Some e -> e

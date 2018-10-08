@@ -239,19 +239,6 @@ let enc_super_opt ea =
    enc_equivalence ea sts stt &&
    sts.used_gas @@ [num ks] > stt.used_gas @@ [ea.kt])
 
-let solve_model_exn cs =
-  let slvr = Z3.Solver.mk_simple_solver !ctxt in
-  let () = Z3.Solver.add slvr cs in
-  match Z3.Solver.check slvr [] with
-  | Z3.Solver.SATISFIABLE ->
-    begin
-      match Z3.Solver.get_model slvr with
-      | Some m -> m
-      | None -> failwith "SAT but no model"
-    end
-  | Z3.Solver.UNSATISFIABLE -> failwith "UNSAT"
-  | Z3.Solver.UNKNOWN -> failwith (Z3.Solver.get_reason_unknown slvr)
-
 let eval_stack st m i n = eval_func_decl m i ~n:[bvnum n sas] st.stack
 
 let eval_stack_ctr st m i = eval_func_decl m i st.stack_ctr
