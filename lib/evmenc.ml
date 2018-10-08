@@ -117,7 +117,7 @@ let enc_stackarg ea j = function
   | Val x -> bvnum x ses
   | Tmpl -> ea.a <@@> [j]
 
-let enc_push ea x st j =
+let enc_push ea st j x =
   let open Z3Ops in
   let n = bvconst "n" sas in
   (* the stack before and after the PUSH *)
@@ -153,7 +153,7 @@ let enc_pop ea st j =
   (* stack underflow occured or exceptional halting occured eariler *)
   ((sc == (bvnum 0 sas)) || st.exc_halt @@ [j]))
 
-let enc_binop op ea st j =
+let enc_binop ea st j op =
   let open Z3Ops in
   let n = bvconst "n" sas in
   let sk n = st.stack @@ (ea.xs @ [j; n])
@@ -170,16 +170,16 @@ let enc_binop op ea st j =
   (* stack underflow occured or exceptional halting occured eariler *)
   (((sc - (bvnum 2 sas)) < (bvnum 0 sas)) || st.exc_halt @@ [j]))
 
-let enc_add = enc_binop (<+>)
-let enc_sub = enc_binop (<->)
-let enc_mul = enc_binop (<*>)
+let enc_add ea st j = enc_binop ea st j (<+>)
+let enc_sub ea st j = enc_binop ea st j (<->)
+let enc_mul ea st j = enc_binop ea st j (<*>)
 
 (* effect of instruction on state st after j steps *)
 let enc_instruction ea st j is =
   let open Z3Ops in
   let enc_instr =
     match is with
-    | PUSH x -> enc_push ea x st j
+    | PUSH x -> enc_push ea st j x
     | POP -> enc_pop ea st j
     | ADD -> enc_add ea st j
     | SUB -> enc_sub ea st j
@@ -190,7 +190,7 @@ let enc_instruction ea st j is =
   in
   enc_instr && enc_used_gas
 
-let enc_search_space st ea =
+let enc_search_space ea st =
   let open Z3Ops in
   let j = intconst "j" in
   let enc_sis =
@@ -235,7 +235,7 @@ let enc_super_opt ea =
   let ks = List.length ea.p in
   foralls ea.xs
   (enc_program ea sts &&
-   enc_search_space stt ea &&
+   enc_search_space ea stt &&
    enc_equivalence ea sts stt &&
    sts.used_gas @@ [num ks] > stt.used_gas @@ [ea.kt])
 
@@ -257,7 +257,7 @@ let dec_instr ea m j =
   | PUSH Tmpl -> PUSH (Val (eval_a ea m j))
   | i -> i
 
-let dec_super_opt m ea =
+let dec_super_opt ea m =
   let k = Z3.Arithmetic.Integer.get_int @@ eval_const m ea.kt in
   List.init k ~f:(dec_instr ea m)
 
@@ -267,4 +267,4 @@ let super_optimize p sis =
   let m = solve_model_exn [c] in
   Z3.Expr.to_string c ^ "\n\n\n" ^
   Z3.Model.to_string m ^ "\n\n" ^
-  [%show: instr list] (dec_super_opt m ea)
+  [%show: instr list] (dec_super_opt ea m)

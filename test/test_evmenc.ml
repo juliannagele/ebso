@@ -240,7 +240,7 @@ let suite =
         let c =
           init ea st <&>
           (st.stack_ctr <@@> [num max] <==> (bvnum max sas)) <&>
-          (enc_push ea (Val 5) st (num max))
+          (enc_push ea st (num max) (Val 5))
         in
         let m = solve_model_exn [c] in
         assert_equal
@@ -343,7 +343,7 @@ let suite =
         let st = mk_state ea "" in
         let c =
           enc_program ea st <&>
-          enc_search_space st ea <&>
+          enc_search_space ea st <&>
           (ea.kt <==> (num (List.length p)))
         in
         let m = solve_model_exn [c] in
@@ -361,7 +361,7 @@ let suite =
         let st = mk_state ea "" in
         let c =
           enc_program ea st <&>
-          enc_search_space st ea <&>
+          enc_search_space ea st <&>
           (ea.kt <==> (num (List.length p)))
         in
         let m = solve_model_exn [c] in
@@ -382,7 +382,7 @@ let suite =
         let st = mk_state ea "" in
         let c =
           enc_program ea st <&>
-          enc_search_space st ea <&>
+          enc_search_space ea st <&>
           (ea.kt <==> (num (List.length p)))
         in
         let m = solve_model_exn [c] in
@@ -400,7 +400,7 @@ let suite =
         let st = mk_state ea "" in
         let c =
           enc_program ea st <&>
-          enc_search_space st ea <&>
+          enc_search_space ea st <&>
           (ea.kt <==> (num (List.length p)))
         in
         let slvr = Z3.Solver.mk_simple_solver !ctxt in
@@ -419,7 +419,7 @@ let suite =
         let st = mk_state ea "" in
         let c =
           enc_program ea st <&>
-          enc_search_space st ea <&>
+          enc_search_space ea st <&>
           enc_equivalence ea st st
         in
         let m = solve_model_exn [c] in
@@ -437,7 +437,7 @@ let suite =
         let st = mk_state ea "" in
         let c =
           enc_program ea st <&>
-          enc_search_space st ea <&>
+          enc_search_space ea st <&>
           enc_equivalence ea st st
         in
         let m = solve_model_exn [c] in
@@ -474,7 +474,7 @@ let suite =
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: instr list] ~printer:[%show: instr list]
-          [PUSH (Val 2)] (dec_super_opt m ea)
+          [PUSH (Val 2)] (dec_super_opt ea m)
       );
 
     "super optimize PUSH and POP" >::(fun _ ->
@@ -484,7 +484,7 @@ let suite =
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: instr list] ~printer:[%show: instr list]
-          [] (dec_super_opt m ea)
+          [] (dec_super_opt ea m)
       );
 
     "super optimize x * 0 to POP; PUSH 0" >::(fun _ ->
@@ -494,7 +494,7 @@ let suite =
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: instr list] ~printer:[%show: instr list]
-          [POP; PUSH (Val 0)] (dec_super_opt m ea)
+          [POP; PUSH (Val 0)] (dec_super_opt ea m)
       );
 
     "super optimize x * 1 to x" >::(fun _ ->
@@ -504,7 +504,7 @@ let suite =
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: instr list] ~printer:[%show: instr list]
-          [] (dec_super_opt m ea)
+          [] (dec_super_opt ea m)
       );
 
     (* template argument for PUSH *)
@@ -516,7 +516,7 @@ let suite =
         let st = mk_state ea "" in
         let c =
           enc_program ea st <&>
-          enc_search_space st ea <&>
+          enc_search_space ea st <&>
           (ea.kt <==> (num (List.length p)))
         in
         let m = solve_model_exn [c] in
@@ -534,7 +534,7 @@ let suite =
         let st = mk_state ea "" in
         let c =
           enc_program ea st <&>
-          enc_search_space st ea <&>
+          enc_search_space ea st <&>
           (ea.kt <==> (num (List.length p)))
         in
         let m = solve_model_exn [c] in
@@ -549,7 +549,7 @@ let suite =
         let st = mk_state ea "" in
         let c =
           enc_program ea st <&>
-          enc_search_space st ea <&>
+          enc_search_space ea st <&>
           (ea.kt <==> (num (List.length p)))
         in
         let m = solve_model_exn [c] in
@@ -570,7 +570,7 @@ let suite =
         let st = mk_state ea "" in
         let c =
           enc_program ea st <&>
-          enc_search_space st ea <&>
+          enc_search_space ea st <&>
           (ea.kt <==> (num (List.length p)))
         in
         let m = solve_model_exn [c] in
@@ -588,13 +588,13 @@ let suite =
         let stt = mk_state ea "_t" in
         let c =
           enc_program ea sts &&
-          enc_search_space stt ea &&
+          enc_search_space ea stt &&
           enc_equivalence ea sts stt &&
           sts.used_gas @@ [num ks] > stt.used_gas @@ [ea.kt]
         in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: instr list] ~printer:[%show: instr list]
-          [PUSH (Val 2)] (dec_super_opt m ea)
+          [PUSH (Val 2)] (dec_super_opt ea m)
       );
 
     (* stack_depth *)
@@ -632,7 +632,7 @@ let suite =
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: instr list] ~printer:[%show: instr list]
-          [] (dec_super_opt m ea)
+          [] (dec_super_opt ea m)
       );
 
     "super optimize with two init stack elements" >: test_case ~length:Long (fun _ ->
@@ -642,7 +642,7 @@ let suite =
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: instr list] ~printer:[%show: instr list]
-          [ADD] (dec_super_opt m ea)
+          [ADD] (dec_super_opt ea m)
       );
 
     "super optimize 3 + (0 - x) to (3 - x) " >::(fun _ ->
@@ -652,7 +652,7 @@ let suite =
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: instr list] ~printer:[%show: instr list]
-          [PUSH (Val 3); SUB] (dec_super_opt m ea)
+          [PUSH (Val 3); SUB] (dec_super_opt ea m)
       );
   ]
 
