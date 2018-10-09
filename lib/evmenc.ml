@@ -60,8 +60,13 @@ type enc_consts = {
   xs : Z3.Expr.expr list;
 }
 
-let mk_enc_consts p sis = {
-  (* source program *)
+let mk_enc_consts p sis =
+  let sis = match sis with
+    | `All -> all_of_instr
+    | `Progr -> sis_of_progr p
+    | `User sis -> List.stable_dedup sis
+  in
+{ (* source program *)
   p = p;
   (* set of potential instructions to choose from in target program *)
   sis = sis;

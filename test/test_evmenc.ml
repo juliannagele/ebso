@@ -9,7 +9,7 @@ let suite =
     (* enc dec opcode *)
 
     "encoding and decoding an opcode is the identity">:: (fun _ ->
-        let ea = mk_enc_consts [] [SUB; ADD; POP] in
+        let ea = mk_enc_consts [] (`User [SUB; ADD; POP]) in
         assert_equal ~cmp:[%eq: instr] ~printer:[%show: instr]
           ADD (dec_opcode ea (enc_opcode ea ADD))
       );
@@ -17,7 +17,7 @@ let suite =
     (* init *)
 
     "model of the initial stack holds 0 for every stack address">:: (fun _ ->
-        let ea = mk_enc_consts [] [] in
+        let ea = mk_enc_consts [] (`User []) in
         let st = mk_state ea "" in
         let c = init ea st in
         let m = solve_model_exn [c] in
@@ -32,7 +32,7 @@ let suite =
     (* add *)
     "add two elements on the stack">:: (fun _ ->
         let p = [PUSH (Val 4); PUSH (Val 5); ADD] in
-        let ea = mk_enc_consts p [] in
+        let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
@@ -45,7 +45,7 @@ let suite =
 
     "check that adding does not change element below">:: (fun _ ->
         let p = [PUSH (Val 3); PUSH (Val 4); PUSH (Val 5); ADD] in
-        let ea = mk_enc_consts p [] in
+        let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
@@ -58,7 +58,7 @@ let suite =
 
     "add with only one element">:: (fun _ ->
         let p = [PUSH (Val 3); ADD] in
-        let ea = mk_enc_consts p [] in
+        let ea = mk_enc_consts p (`User []) in
         (* hack to erase xs to start from emtpy stack *)
         let st = mk_state {ea with p = []} "" in
         let c =
@@ -76,7 +76,7 @@ let suite =
 
     "add with empty stack">:: (fun _ ->
         let p = [ADD] in
-        let ea = mk_enc_consts p [] in
+        let ea = mk_enc_consts p (`User []) in
         (* hack to erase xs to start from emtpy stack *)
         let st = mk_state {ea with p = []} "" in
         let c = init {ea with p = []} st <&>
@@ -91,7 +91,7 @@ let suite =
 
     "add two elements does not lead to stack underflow">:: (fun _ ->
         let p = [PUSH (Val 4); PUSH (Val 5); ADD] in
-        let ea = mk_enc_consts p [] in
+        let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
@@ -105,7 +105,7 @@ let suite =
     (* sub *)
     "subtract two elements on the stack">:: (fun _ ->
         let p = [PUSH (Val 3); PUSH (Val 8); SUB] in
-        let ea = mk_enc_consts p [] in
+        let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
@@ -118,7 +118,7 @@ let suite =
 
     "subtract two elements on the stack with negative result">:: (fun _ ->
         let p = [PUSH (Val 13); PUSH (Val 8); SUB] in
-        let ea = mk_enc_consts p [] in
+        let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
@@ -131,7 +131,7 @@ let suite =
 
     "check that subtraction does not change element below">:: (fun _ ->
         let p = [PUSH (Val 3); PUSH (Val 4); PUSH (Val 5); SUB] in
-        let ea = mk_enc_consts p [] in
+        let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
@@ -144,7 +144,7 @@ let suite =
 
     "SUB with only one element">:: (fun _ ->
         let p = [PUSH (Val 3); SUB] in
-        let ea = mk_enc_consts p [] in
+        let ea = mk_enc_consts p (`User []) in
         (* hack to erase xs to start from emtpy stack *)
         let st = mk_state {ea with p = []} "" in
         let c =
@@ -162,7 +162,7 @@ let suite =
 
     "sub with empty stack">:: (fun _ ->
         let p = [SUB] in
-        let ea = mk_enc_consts p [] in
+        let ea = mk_enc_consts p (`User []) in
         (* hack to erase xs to start from emtpy stack *)
         let st = mk_state {ea with p = []} "" in
         let c =
@@ -179,7 +179,7 @@ let suite =
 
     "exceptional halt persists">:: (fun _ ->
         let p = [SUB; PUSH (Val 3)] in
-        let ea = mk_enc_consts p [] in
+        let ea = mk_enc_consts p (`User []) in
         (* hack to erase xs to start from emtpy stack *)
         let st = mk_state {ea with p = []} "" in
         let c =
@@ -199,7 +199,7 @@ let suite =
 
     "combine add and sub">:: (fun _ ->
         let p = [PUSH (Val 3); PUSH (Val 2); PUSH (Val 2); ADD; SUB] in
-        let ea = mk_enc_consts p [] in
+        let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
@@ -209,7 +209,7 @@ let suite =
 
     "valid program does not halt exceptionally">:: (fun _ ->
         let p = [PUSH (Val 6); PUSH (Val 2); PUSH (Val 2); ADD; SUB] in
-        let ea = mk_enc_consts p [] in
+        let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
@@ -222,7 +222,7 @@ let suite =
 
     "top of the stack is the pushed element after a PUSH">:: (fun _ ->
         let p = [PUSH (Val 5)] in
-        let ea = mk_enc_consts p [] in
+        let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
@@ -235,7 +235,7 @@ let suite =
 
     "PUSHing too many elements leads to a stack overflow">:: (fun _ ->
         let max = Int.pow 2 sas - 1 in
-        let ea = mk_enc_consts [] [] in
+        let ea = mk_enc_consts [] (`User []) in
         let st = mk_state ea "" in
         let c =
           init ea st <&>
@@ -252,7 +252,7 @@ let suite =
 
     "PUSHing one element does not to a stack overflow">:: (fun _ ->
         let p = [PUSH (Val 5)] in
-        let ea = mk_enc_consts p [] in
+        let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
@@ -267,7 +267,7 @@ let suite =
 
     "pop only touches top element">:: (fun _ ->
         let p = [PUSH (Val 2); PUSH (Val 1); POP] in
-        let ea = mk_enc_consts p [] in
+        let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
@@ -280,7 +280,7 @@ let suite =
 
     "push and pop on empty stack leads to empty stack">:: (fun _ ->
         let p = [PUSH (Val 1); POP] in
-        let ea = mk_enc_consts p [] in
+        let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
@@ -293,7 +293,7 @@ let suite =
 
     "pop on empty stack leads to stack underflow" >:: (fun _ ->
         let p = [POP] in
-        let ea = mk_enc_consts p [] in
+        let ea = mk_enc_consts p (`User []) in
         (* hack to erase xs to start from emtpy stack *)
         let st = mk_state {ea with p = []} "" in
         let c =
@@ -310,7 +310,7 @@ let suite =
 
     (* gas cost *)
     "after 0 instruction no gas has been used">::(fun _ ->
-        let ea = mk_enc_consts [] [] in
+        let ea = mk_enc_consts [] (`User []) in
         let st = mk_state ea "" in
         let c = init ea st in
         let m = solve_model_exn [c] in
@@ -323,7 +323,7 @@ let suite =
 
     "after some instruction some gas has been used">::(fun _ ->
         let p = [PUSH (Val 6); PUSH (Val 2); ADD] in
-        let ea = mk_enc_consts p [] in
+        let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
@@ -338,7 +338,7 @@ let suite =
 
     "search for 1 instruction program">::(fun _ ->
         let p = [PUSH (Val 1)] in
-        let sis = [PUSH (Val 1)] in
+        let sis = `User [PUSH (Val 1)] in
         let ea = mk_enc_consts p sis in
         let st = mk_state ea "" in
         let c =
@@ -356,7 +356,7 @@ let suite =
 
     "search for 3 instruction program">::(fun _ ->
         let p = [PUSH (Val 1); PUSH (Val 1); ADD] in
-        let sis = [PUSH (Val 1); ADD] in
+        let sis = `User [PUSH (Val 1); ADD] in
         let ea = mk_enc_consts p sis in
         let st = mk_state ea "" in
         let c =
@@ -377,7 +377,7 @@ let suite =
 
     "sis contains unused instructions ">::(fun _ ->
         let p = [PUSH (Val 1)] in
-        let sis = [PUSH (Val 1); PUSH (Val 2); ADD; SUB] in
+        let sis = `User [PUSH (Val 1); PUSH (Val 2); ADD; SUB] in
         let ea = mk_enc_consts p sis in
         let st = mk_state ea "" in
         let c =
@@ -395,7 +395,7 @@ let suite =
 
     "sis does not contain required instruction">::(fun _ ->
         let p = [PUSH (Val 1)] in
-        let sis = [ADD; SUB] in
+        let sis = `User [ADD; SUB] in
         let ea = mk_enc_consts p sis in
         let st = mk_state ea "" in
         let c =
@@ -414,7 +414,7 @@ let suite =
 
     "search for 1 instruction program with equivalence constraint">::(fun _ ->
         let p = [PUSH (Val 1)] in
-        let sis = [PUSH (Val 1)] in
+        let sis = `User [PUSH (Val 1)] in
         let ea = mk_enc_consts p sis in
         let st = mk_state ea "" in
         let c =
@@ -432,7 +432,7 @@ let suite =
 
     "search for 3 instruction program with equivalence constraint">::(fun _ ->
         let p = [PUSH (Val 1); PUSH (Val 1); ADD] in
-        let sis = [PUSH (Val 1); ADD] in
+        let sis = `User [PUSH (Val 1); ADD] in
         let ea = mk_enc_consts p sis in
         let st = mk_state ea "" in
         let c =
@@ -452,7 +452,7 @@ let suite =
       );
 
     "equivalence constraint forces inital stack for target program">:: (fun _ ->
-        let ea = mk_enc_consts [] [] in
+        let ea = mk_enc_consts [] (`User []) in
         let sts = mk_state ea "_s" in
         let stt = mk_state ea "_t" in
         let c = init ea sts <&> enc_equivalence ea sts stt in
@@ -469,7 +469,7 @@ let suite =
 
     "super optimize PUSH PUSH ADD to PUSH" >::(fun _ ->
         let p = [PUSH (Val 1); PUSH (Val 1); ADD] in
-        let sis = [PUSH (Val 2); PUSH (Val 1); ADD; SUB] in
+        let sis = `User [PUSH (Val 2); PUSH (Val 1); ADD; SUB] in
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
@@ -479,7 +479,7 @@ let suite =
 
     "super optimize PUSH and POP" >::(fun _ ->
         let p = [PUSH (Val 1); POP;] in
-        let sis = [PUSH Tmpl; POP;] in
+        let sis = `User [PUSH Tmpl; POP;] in
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
@@ -489,7 +489,7 @@ let suite =
 
     "super optimize x * 0 to POP; PUSH 0" >::(fun _ ->
         let p = [PUSH (Val 0); MUL] in
-        let sis = [PUSH Tmpl; POP; MUL; ADD] in
+        let sis = `User [PUSH Tmpl; POP; MUL; ADD] in
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
@@ -499,7 +499,7 @@ let suite =
 
     "super optimize x * 1 to x" >::(fun _ ->
         let p = [PUSH (Val 1); MUL] in
-        let sis = [PUSH Tmpl; POP; MUL; ADD] in
+        let sis = `User [PUSH Tmpl; POP; MUL; ADD] in
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
@@ -511,7 +511,7 @@ let suite =
 
     "search for 1 instruction program with template (fis)">::(fun _ ->
         let p = [PUSH (Val 1)] in
-        let sis = [PUSH Tmpl] in
+        let sis = `User [PUSH Tmpl] in
         let ea = mk_enc_consts p sis in
         let st = mk_state ea "" in
         let c =
@@ -529,7 +529,7 @@ let suite =
 
     "search for 1 instruction program with template (a)">::(fun _ ->
         let p = [PUSH (Val 1)] in
-        let sis = [PUSH Tmpl] in
+        let sis = `User [PUSH Tmpl] in
         let ea = mk_enc_consts p sis in
         let st = mk_state ea "" in
         let c =
@@ -544,7 +544,7 @@ let suite =
 
     "search for 3 instruction program with template (fis)">::(fun _ ->
         let p = [PUSH (Val 1); PUSH (Val 1); ADD] in
-        let sis = [PUSH Tmpl; ADD] in
+        let sis = `User [PUSH Tmpl; ADD] in
         let ea = mk_enc_consts p sis in
         let st = mk_state ea "" in
         let c =
@@ -565,7 +565,7 @@ let suite =
 
     "search for 3 instruction program with template (a)">::(fun _ ->
         let p = [PUSH (Val 1); PUSH (Val 1); ADD] in
-        let sis = [PUSH Tmpl; ADD] in
+        let sis = `User [PUSH Tmpl; ADD] in
         let ea = mk_enc_consts p sis in
         let st = mk_state ea "" in
         let c =
@@ -582,7 +582,7 @@ let suite =
         let open Z3Ops in
         let p = [PUSH (Val 1); PUSH (Val 1); ADD] in
         let ks = List.length p in
-        let sis = [PUSH Tmpl; ADD; SUB] in
+        let sis = `User [PUSH Tmpl; ADD; SUB] in
         let ea = mk_enc_consts p sis in
         let sts = mk_state ea "_s" in
         let stt = mk_state ea "_t" in
@@ -641,7 +641,7 @@ let suite =
 
     "super optimize x + 0 with one init stack element" >::(fun _ ->
         let p = [PUSH (Val 0); ADD] in
-        let sis = [PUSH Tmpl; ADD] in
+        let sis = `User [PUSH Tmpl; ADD] in
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
@@ -651,7 +651,7 @@ let suite =
 
     "super optimize with two init stack elements" >: test_case ~length:Long (fun _ ->
         let p = [ADD; PUSH (Val 0); ADD] in
-        let sis = [ADD] in
+        let sis = `User [ADD] in
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
@@ -661,7 +661,7 @@ let suite =
 
     "super optimize 3 + (0 - x) to (3 - x) " >::(fun _ ->
         let p = [PUSH (Val 0); SUB; PUSH (Val 3); ADD;] in
-        let sis = [PUSH Tmpl; ADD; SUB;] in
+        let sis = `User [PUSH Tmpl; ADD; SUB;] in
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
