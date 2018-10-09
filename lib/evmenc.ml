@@ -12,7 +12,7 @@ let ses = 3
 type stackarg =
   | Val of int [@printer fun fmt x -> fprintf fmt "%i" x]
   | Tmpl
-[@@deriving show { with_path = false }, eq, compare]
+[@@deriving show { with_path = false }, eq]
 
 let all_of_stackarg = [Tmpl]
 
@@ -22,13 +22,12 @@ type instr =
   | PUSH of stackarg
   | POP
   | SUB
-[@@deriving show { with_path = false }, eq, compare, enumerate]
+[@@deriving show { with_path = false }, eq, enumerate]
 
 type progr = instr list [@@deriving show { with_path = false }, eq]
 
 let sis_of_progr p =
-  List.map p ~f:(function | PUSH _ -> PUSH Tmpl | i -> i) |>
-  List.dedup_and_sort ~compare:[%compare: instr]
+  List.map p ~f:(function | PUSH _ -> PUSH Tmpl | i -> i) |> List.stable_dedup
 
 let delta_alpha = function
   | ADD -> (2, 1)
