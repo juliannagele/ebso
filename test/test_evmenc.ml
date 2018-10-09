@@ -473,7 +473,7 @@ let suite =
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: instr list] ~printer:[%show: instr list]
+        assert_equal ~cmp:[%eq: progr] ~printer:[%show: progr]
           [PUSH (Val 2)] (dec_super_opt ea m)
       );
 
@@ -483,7 +483,7 @@ let suite =
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: instr list] ~printer:[%show: instr list]
+        assert_equal ~cmp:[%eq: progr] ~printer:[%show: progr]
           [] (dec_super_opt ea m)
       );
 
@@ -493,7 +493,7 @@ let suite =
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: instr list] ~printer:[%show: instr list]
+        assert_equal ~cmp:[%eq: progr] ~printer:[%show: progr]
           [POP; PUSH (Val 0)] (dec_super_opt ea m)
       );
 
@@ -503,7 +503,7 @@ let suite =
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: instr list] ~printer:[%show: instr list]
+        assert_equal ~cmp:[%eq: progr] ~printer:[%show: progr]
           [] (dec_super_opt ea m)
       );
 
@@ -593,7 +593,7 @@ let suite =
           sts.used_gas @@ [num ks] > stt.used_gas @@ [ea.kt]
         in
         let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: instr list] ~printer:[%show: instr list]
+        assert_equal ~cmp:[%eq: progr] ~printer:[%show: progr]
           [PUSH (Val 2)] (dec_super_opt ea m)
       );
 
@@ -631,7 +631,7 @@ let suite =
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: instr list] ~printer:[%show: instr list]
+        assert_equal ~cmp:[%eq: progr] ~printer:[%show: progr]
           [] (dec_super_opt ea m)
       );
 
@@ -641,7 +641,7 @@ let suite =
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: instr list] ~printer:[%show: instr list]
+        assert_equal ~cmp:[%eq: progr] ~printer:[%show: progr]
           [ADD] (dec_super_opt ea m)
       );
 
@@ -651,7 +651,7 @@ let suite =
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: instr list] ~printer:[%show: instr list]
+        assert_equal ~cmp:[%eq: progr] ~printer:[%show: progr]
           [PUSH (Val 3); SUB] (dec_super_opt ea m)
       );
   ]

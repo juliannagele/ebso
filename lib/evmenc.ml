@@ -22,7 +22,7 @@ type instr =
   | SUB
 [@@deriving show { with_path = false }, eq]
 
-type progr = instr list
+type progr = instr list [@@deriving show { with_path = false }, eq]
 
 let delta_alpha = function
   | ADD -> (2, 1)
@@ -46,7 +46,7 @@ let gas_cost = function
 let total_gas_cost = List.fold ~init:0 ~f:(fun gc i -> gc + gas_cost i)
 
 type enc_consts = {
-  p : instr list;
+  p : progr;
   sis : instr list;
   kt : Z3.Expr.expr;
   fis : Z3.FuncDecl.func_decl;
@@ -267,4 +267,4 @@ let super_optimize p sis =
   let m = solve_model_exn [c] in
   Z3.Expr.to_string c ^ "\n\n\n" ^
   Z3.Model.to_string m ^ "\n\n" ^
-  [%show: instr list] (dec_super_opt ea m)
+  [%show: progr] (dec_super_opt ea m)
