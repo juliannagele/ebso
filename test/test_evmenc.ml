@@ -623,6 +623,14 @@ let suite =
           3 (stack_depth p)
       );
 
+    (* sis_of_progr *)
+
+    "compute instruction set of given program" >::(fun _ ->
+        let p = [SUB; PUSH (Val 1); PUSH (Val 1); ADD; ADD; PUSH (Val 2); POP] in
+        assert_equal ~cmp:[%eq: progr] ~printer:[%show: progr]
+          [ADD; PUSH Tmpl; POP; SUB] (sis_of_progr p)
+      );
+
     (* enc_super_opt with init stack elements *)
 
     "super optimize x + 0 with one init stack element" >::(fun _ ->
