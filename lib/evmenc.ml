@@ -14,13 +14,15 @@ type stackarg =
   | Tmpl
 [@@deriving show { with_path = false }, eq, compare]
 
+let all_of_stackarg = [Tmpl]
+
 type instr =
   | ADD
   | MUL
   | PUSH of stackarg
   | POP
   | SUB
-[@@deriving show { with_path = false }, eq, compare]
+[@@deriving show { with_path = false }, eq, compare, enumerate]
 
 type progr = instr list [@@deriving show { with_path = false }, eq]
 

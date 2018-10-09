@@ -623,12 +623,18 @@ let suite =
           3 (stack_depth p)
       );
 
-    (* sis_of_progr *)
+    (* sis_of_progr / all_of_instr *)
 
     "compute instruction set of given program" >::(fun _ ->
         let p = [SUB; PUSH (Val 1); PUSH (Val 1); ADD; ADD; PUSH (Val 2); POP] in
         assert_equal ~cmp:[%eq: progr] ~printer:[%show: progr]
           [ADD; PUSH Tmpl; POP; SUB] (sis_of_progr p)
+      );
+
+    "list of all instructions" >::(fun _ ->
+        assert_bool "not all instructions present"
+          (List.for_all [ADD; MUL; PUSH Tmpl; POP; SUB]
+             ~f:(fun i -> List.mem all_of_instr i ~equal:[%eq: instr]))
       );
 
     (* enc_super_opt with init stack elements *)
