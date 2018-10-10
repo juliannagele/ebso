@@ -274,11 +274,3 @@ let dec_instr ea m j =
 let dec_super_opt ea m =
   let k = Z3.Arithmetic.Integer.get_int @@ eval_const m ea.kt in
   List.init k ~f:(dec_instr ea m)
-
-let super_optimize p sis =
-  let ea = mk_enc_consts p sis in
-  let c = enc_super_opt ea in
-  let m = solve_model_exn [c] in
-  Z3.Expr.to_string c ^ "\n\n\n" ^
-  Z3.Model.to_string m ^ "\n\n" ^
-  [%show: progr] (dec_super_opt ea m)
