@@ -4,10 +4,10 @@ open Z3util
 (* stack address size; design decision/quick fix: the slot 2^sas - 1 is reserved
    for exception handling, otherwise the stack counter wraps around
    --> max stack size 2^sas - 1 *)
-let sas = 4
+let sas = ref 4
 
 (* stack element size *)
-let ses = 3
+let ses = ref 3
 
 type stackarg =
   | Val of int [@printer fun fmt x -> fprintf fmt "%i" x]
@@ -79,13 +79,13 @@ let mk_enc_consts p sis =
   (* target program *)
   fis = func_decl "instr" [int_sort] int_sort;
   (* arguments for PUSH instrucions in target program *)
-  a = func_decl "a" [int_sort] (bv_sort ses);
+  a = func_decl "a" [int_sort] (bv_sort !ses);
   (* integer encoding of opcodes *)
   opcodes = List.mapi sis ~f:(fun i oc -> (oc, i));
   (* list of free variables x_0 .. x_(stack_depth -1)
      for stack elements already on stack *)
   xs = List.init (stack_depth p)
-      ~f:(fun i -> bvconst ("x_" ^ Int.to_string i) ses)
+      ~f:(fun i -> bvconst ("x_" ^ Int.to_string i) !ses)
 }
 
 type state = {
@@ -96,13 +96,13 @@ type state = {
 }
 
 let mk_state ea idx =
-  let xs_sorts = List.map ea.xs ~f:(fun _ -> bv_sort ses) in
+  let xs_sorts = List.map ea.xs ~f:(fun _ -> bv_sort !ses) in
   { (* stack(x0 ... x(sd-1), j, n) = nth stack element after j instructions
        starting from a stack that contained elements x0 ... x(sd-1) *)
     stack = func_decl ("stack" ^ idx)
-        (xs_sorts @ [int_sort; bv_sort sas]) (bv_sort ses);
+        (xs_sorts @ [int_sort; bv_sort !sas]) (bv_sort !ses);
     (* sc(j) = index of the next free slot on the stack after j instructions *)
-    stack_ctr = func_decl ("sc" ^ idx) [int_sort] (bv_sort sas);
+    stack_ctr = func_decl ("sc" ^ idx) [int_sort] (bv_sort !sas);
     (* exc_halt(j) is true if exceptional halting occurs after j instructions *)
     exc_halt = func_decl ("exc_halt" ^ idx) [int_sort] bool_sort;
     (* gas(j) = amount of gas used to execute the first j instructions *)
@@ -119,28 +119,28 @@ let init ea st =
   (* careful: if stack_depth is larger than 2^sas, no checks *)
   let skd = stack_depth (ea.p) in
   (* set stack counter to skd *)
-  (st.stack_ctr @@ [num 0] == bvnum skd sas)
+  (st.stack_ctr @@ [num 0] == bvnum skd (!sas))
   (* set inital stack elements *)
   && conj (List.mapi ea.xs
-             ~f:(fun i x -> st.stack @@ (ea.xs @ [num 0; bvnum i sas]) == x))
+             ~f:(fun i x -> st.stack @@ (ea.xs @ [num 0; bvnum i !sas]) == x))
   && (st.exc_halt @@ [num 0] == btm)
   && (st.used_gas @@ [num 0] == num 0)
 
 (* TODO: check data layout on stack *)
 let enc_stackarg ea j = function
-  | Val x -> bvnum x ses
+  | Val x -> bvnum x !ses
   | Tmpl -> ea.a <@@> [j]
 
 let enc_push ea st j x =
   let open Z3Ops in
-  let n = bvconst "n" sas in
+  let n = bvconst "n" !sas in
   (* the stack before and after the PUSH *)
   let sk n = st.stack @@ (ea.xs @ [j; n])
   and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
   (* the stack counter before and after the PUSH *)
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   (* there will be one more element on the stack after PUSHing *)
-  (sc' == (sc + bvnum 1 sas)) &&
+  (sc' == (sc + bvnum 1 !sas)) &&
   (* that element will be x *)
   sk' sc == enc_stackarg ea j x &&
   (* all old elements stay the same *)
@@ -148,41 +148,41 @@ let enc_push ea st j x =
   (* check for exceptional halting  *)
   (st.exc_halt @@ [j + one] ==
   (* stack overflow occured or exceptional halting occured eariler *)
-  (~! (nuw sc (bvnum 1 sas) `Add) || st.exc_halt @@ [j]))
+  (~! (nuw sc (bvnum 1 !sas) `Add) || st.exc_halt @@ [j]))
 
 let enc_pop ea st j =
   let open Z3Ops in
-  let n = bvconst "n" sas in
+  let n = bvconst "n" !sas in
   (* the stack before and after the POP *)
   let sk n = st.stack @@ (ea.xs @ [j; n])
   and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
   (* the stack counter before and after the POP *)
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   (* there will be one fewer element on the stack after POPing *)
-  (sc' == (sc - bvnum 1 sas)) &&
+  (sc' == (sc - bvnum 1 !sas)) &&
   (* all old elements stay the same *)
   forall n ((n < sc') ==> (sk' n == sk n)) &&
   (* check for exceptional halting *)
   (st.exc_halt @@ [j + one] ==
   (* stack underflow occured or exceptional halting occured eariler *)
-  ((sc == (bvnum 0 sas)) || st.exc_halt @@ [j]))
+  ((sc == (bvnum 0 !sas)) || st.exc_halt @@ [j]))
 
 let enc_binop ea st j op =
   let open Z3Ops in
-  let n = bvconst "n" sas in
+  let n = bvconst "n" !sas in
   let sk n = st.stack @@ (ea.xs @ [j; n])
   and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   (* two elements are consumed, one is added *)
-  (sc' == (sc - bvnum 1 sas)) &&
+  (sc' == (sc - bvnum 1 !sas)) &&
   (* the new top element is the result of applying op to the previous two *)
-  (sk' (sc - bvnum 2 sas) == op (sk (sc - bvnum 1 sas)) (sk (sc - bvnum 2 sas))) &&
+  (sk' (sc - bvnum 2 !sas) == op (sk (sc - bvnum 1 !sas)) (sk (sc - bvnum 2 !sas))) &&
   (* all elements below remain unchanged *)
-  forall n ((n < (sc - bvnum 2 sas)) ==> (sk' n == sk n)) &&
+  forall n ((n < (sc - bvnum 2 !sas)) ==> (sk' n == sk n)) &&
   (* check for exceptional halting *)
   (st.exc_halt @@ [j + one] ==
   (* stack underflow occured or exceptional halting occured eariler *)
-  (((sc - (bvnum 2 sas)) < (bvnum 0 sas)) || st.exc_halt @@ [j]))
+  (((sc - (bvnum 2 !sas)) < (bvnum 0 !sas)) || st.exc_halt @@ [j]))
 
 let enc_add ea st j = enc_binop ea st j (<+>)
 let enc_sub ea st j = enc_binop ea st j (<->)
@@ -223,7 +223,7 @@ let enc_search_space ea st =
 let enc_equivalence ea sts stt =
   let ks = List.length ea.p and kt = ea.kt in
   let open Z3Ops in
-  let n = bvconst "n" sas in
+  let n = bvconst "n" !sas in
   (* intially source and target stack counter are equal *)
   sts.stack_ctr @@ [num 0] == stt.stack_ctr @@ [num 0] &&
   (* initally source and target stack are equal *)
@@ -253,7 +253,7 @@ let enc_super_opt ea =
    enc_equivalence ea sts stt &&
    sts.used_gas @@ [num ks] > stt.used_gas @@ [ea.kt])
 
-let eval_stack st m i n = eval_func_decl m i ~n:[bvnum n sas] st.stack
+let eval_stack st m i n = eval_func_decl m i ~n:[bvnum n !sas] st.stack
 
 let eval_stack_ctr st m i = eval_func_decl m i st.stack_ctr
 
