@@ -128,7 +128,7 @@ module Z3Ops = struct
   let (==>) x y = (<->>) x y
   let (&&) = (<&>)
   let (||) = (<|>)
-  let (!) = (~!)
+  let (~!) = (~!)
   let (<<) = (<<<>)
   let (>>) = (<>>>)
   let (+) = (<+>)
