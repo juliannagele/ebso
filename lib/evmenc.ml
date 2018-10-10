@@ -12,19 +12,23 @@ let ses = 3
 type stackarg =
   | Val of int [@printer fun fmt x -> fprintf fmt "%i" x]
   | Tmpl
-[@@deriving show { with_path = false }, eq]
+[@@deriving show { with_path = false }, eq, sexp]
+
+let stackarg_of_sexp s = match s with
+  | Sexp.Atom i -> if String.equal i "Tmpl" then Tmpl else Val (Int.of_string i)
+  | Sexp.List _ -> failwith "could not parse argument of PUSH"
 
 let all_of_stackarg = [Tmpl]
 
 type instr =
   | ADD
   | MUL
-  | PUSH of stackarg
+  | PUSH of stackarg [@printer fun fmt x -> fprintf fmt "PUSH %s" (show_stackarg x)]
   | POP
   | SUB
-[@@deriving show { with_path = false }, eq, enumerate]
+[@@deriving show { with_path = false }, eq, enumerate, sexp]
 
-type progr = instr list [@@deriving show { with_path = false }, eq]
+type progr = instr list [@@deriving show { with_path = false }, eq, sexp]
 
 let sis_of_progr p =
   List.map p ~f:(function | PUSH _ -> PUSH Tmpl | i -> i) |> List.stable_dedup
