@@ -101,7 +101,7 @@ let exists ?(weight = None) ?(patterns = []) ?(nopatterns = [])
 let select a i = Z3Array.mk_select !ctxt a i
 
 let solve_model_exn cs =
-  let slvr = Solver.mk_simple_solver !ctxt in
+  let slvr = Solver.mk_solver !ctxt None in
   let () = Solver.add slvr cs in
   match Solver.check slvr [] with
   | Solver.SATISFIABLE ->
