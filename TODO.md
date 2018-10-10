@@ -1,5 +1,32 @@
+* Encode remaining instructions
+
 * Abstract enc_instruction over number of elements added and deleted on stack
 
 * Refactor evmenc; split into modules
 
-* Make stack element size configurable
+* Implement "normal" superoptimization: enumerate candidate programs and test
+  for equivalence
+
+* Add bound on number of instructions in target program to allow solver to prove
+  optimally (easy bound: gas cost of input program divided by cost of cheapest
+  instruction)
+
+* Collect benchmarks: SMT and EVM bytecode snippets
+  * open Zeppelin: compile with and without optimization with solc
+  * get contracts from blockchain (filter out garbage)
+
+* Bitblasting performance problem:
+  * check CAV 2015 paper (and journal version)
+  * change BVs to Ints
+  * try vampire
+  * generate candidate program by instantiating quantifier and then check
+    equivalence
+
+* Regression tests
+  * geth debugger
+  * actual blockchain (what do we compare? what about hashes that changed?)
+
+* Set up experiments/evaluation
+  * output format
+  * how to keep connection between benchmarks and contracts they are from
+  * where to run?
