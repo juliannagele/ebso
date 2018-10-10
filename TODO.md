@@ -1,5 +1,10 @@
 * Encode remaining instructions
 
+* Get real gas prizes
+
+* Encodings of if possible? Conjecture: unbounded super optimization
+  outperforms super optimization
+
 * Abstract enc_instruction over number of elements added and deleted on stack
 
 * Refactor evmenc; split into modules
