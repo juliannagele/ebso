@@ -1,7 +1,7 @@
 (executables
  (names test_evmenc)
  (libraries core ebso oUnit z3)
- (preprocess (pps ppx_jane ppx_deriving.std))
+ (preprocess (pps ppx_deriving.std))
 )
 
 (alias
