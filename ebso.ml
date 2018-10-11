@@ -2,7 +2,7 @@ open Core
 open Z3util
 open Evmenc
 
-let super_optimize p sis pm pc =
+let super_optimize p sis pm pc psmt =
   let log b s =
     if b then
       begin
@@ -14,6 +14,9 @@ let super_optimize p sis pm pc =
   let ea = mk_enc_consts p sis in
   let c = enc_super_opt ea in
   log pc ("Constraint generated:\n" ^ Z3.Expr.to_string (Z3.Expr.simplify c None) ^ "\n\n");
+  log psmt ("SMT-LIB Benchmark generated:\n" ^
+            Z3.SMT.benchmark_to_smtstring !ctxt "" "" "unknown" "" []
+              (Z3.Expr.simplify c None) ^ "\n\n");
   let m = solve_model_exn [c] in
   log pm ("Model found:\n" ^ Z3.Model.to_string m ^ "\n\n");
   (dec_super_opt ea m)
@@ -29,6 +32,8 @@ let () =
           ~doc:"print model found by solver"
       and p_constr = flag "print-constraint" no_arg
           ~doc:"print constraint given to solver"
+      and p_smt = flag "print-smt" no_arg
+          ~doc:"print constraint given to solver in SMT-LIB format"
       and stackes = flag "stack-element-size" (optional int)
           ~doc:"ses number of bits used for stack elements"
       and stackas = flag "stack-address-size" (optional int)
@@ -55,7 +60,7 @@ let () =
           if direct then progr else In_channel.read_all progr
         in
         let p = Sexp.of_string progr |> progr_of_sexp in
-        super_optimize p `All p_model p_constr
+        super_optimize p `All p_model p_constr p_smt
         |> show_progr
         |> print_string
     ]
