@@ -2,3 +2,4 @@
 .ocamlinit
 _build/
 .#*
+*.install
