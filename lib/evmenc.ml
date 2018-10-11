@@ -47,8 +47,8 @@ let stack_depth p =
 
 let gas_cost = function
   | ADD -> 3
-  | MUL -> 8
-  | PUSH _ -> 2
+  | MUL -> 5
+  | PUSH _ -> 3
   | POP -> 2
   | SUB -> 3
 
