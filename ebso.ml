@@ -34,6 +34,9 @@ let () =
       and stackas = flag "stack-address-size" (optional int)
           ~doc:"sas number of bits used for addressing stack elements \
                 (i.e. stack then has 2^sas elements)"
+      and nobv = flag "no-bitvectors" no_arg
+          ~doc:"do not use bit vectors, but integers everywhere \
+                (stack-element-size and stack-address-size have no effect)"
       and progr = anon ("PROGRAM" %: string)
       in
       fun () ->
@@ -47,6 +50,7 @@ let () =
           | None -> ()
           | Some stackas -> sasort := bv_sort stackas
         end;
+        begin if nobv then (sesort := int_sort; sasort := int_sort) else () end;
         let progr =
           if direct then progr else In_channel.read_all progr
         in

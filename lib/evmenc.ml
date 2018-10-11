@@ -148,6 +148,12 @@ let enc_push ea st j x =
   and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
   (* the stack counter before and after the PUSH *)
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
+  (* check for stack overflow depending on sort of stack counter *)
+  let overflow_chk = match Z3.Sort.get_sort_kind !sasort with
+    | BV_SORT -> ~! (nuw sc (sanum 1) `Add)
+    | INT_SORT -> (sc + (sanum 1)) < (sanum 1024)
+    | _ -> btm
+  in
   (* there will be one more element on the stack after PUSHing *)
   (sc' == (sc + sanum 1)) &&
   (* that element will be x *)
@@ -157,7 +163,7 @@ let enc_push ea st j x =
   (* check for exceptional halting  *)
   (st.exc_halt @@ [j + one] ==
   (* stack overflow occured or exceptional halting occured eariler *)
-  (~! (nuw sc (sanum 1) `Add) || st.exc_halt @@ [j]))
+  (overflow_chk || st.exc_halt @@ [j]))
 
 let enc_pop ea st j =
   let open Z3Ops in
