@@ -671,6 +671,61 @@ let suite =
         assert_equal ~cmp:[%eq: progr] ~printer:[%show: progr]
           [PUSH (Val 3); SUB] (dec_super_opt ea m)
       );
+
+    (* SWAP *)
+
+    "swap two elements on stack" >::(fun _ ->
+        let p = [PUSH (Val 1); PUSH (Val 2); SWAP I] in
+        let ea = mk_enc_consts p `All in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t list]
+          ~printer:(List.to_string ~f:Z3.Expr.to_string)
+          [(bvnum 2 !ses); (bvnum 1 !ses)]
+          [(eval_stack st m (List.length p) 0); (eval_stack st m (List.length p) 1)]
+      );
+
+    "swap with only one element" >::(fun _ ->
+        let p = [PUSH (Val 1); SWAP I] in
+        let ea = mk_enc_consts p `All in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t list]
+          ~printer:(List.to_string ~f:Z3.Expr.to_string)
+          [(bvnum 2 !ses); List.hd_exn ea.xs]
+          [(eval_stack st m (List.length p) 0); (eval_stack st m (List.length p) 1)]
+      );
+
+    "swap with no elements" >::(fun _ ->
+        let p = [SWAP I] in
+        let ea = mk_enc_consts p `All in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t list]
+          ~printer:(List.to_string ~f:Z3.Expr.to_string)
+          (List.rev ea.xs)
+          [(eval_stack st m (List.length p) 0); (eval_stack st m (List.length p) 1)]
+      );
+
+    "swap does not touch element below" >::(fun _ ->
+        let p = [PUSH (Val 1); PUSH (Val 2); PUSH (Val 3); SWAP I] in
+        let ea = mk_enc_consts p `All in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          (bvnum 1 !ses)
+          (eval_stack st m (List.length p) 0)
+      );
+
   ]
 
 let () =

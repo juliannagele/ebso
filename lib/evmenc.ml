@@ -20,12 +20,16 @@ let stackarg_of_sexp s = match s with
 
 let all_of_stackarg = [Tmpl]
 
+type idx = I [@value 1]
+[@@deriving show { with_path = false }, eq, enum, enumerate, sexp]
+
 type instr =
   | ADD
   | MUL
   | PUSH of stackarg [@printer fun fmt x -> fprintf fmt "PUSH %s" (show_stackarg x)]
   | POP
   | SUB
+  | SWAP of idx
 [@@deriving show { with_path = false }, eq, enumerate, sexp]
 
 type progr = instr list [@@deriving show { with_path = false }, eq, sexp]
@@ -39,6 +43,7 @@ let delta_alpha = function
   | PUSH _ -> (0, 1)
   | POP -> (1, 0)
   | SUB -> (2, 1)
+  | SWAP i -> (idx_to_enum i + 1, idx_to_enum i + 1)
 
 let stack_depth p =
   Int.abs @@ Tuple.T2.get2 @@ List.fold_left ~init:(0, 0) p
@@ -51,6 +56,7 @@ let gas_cost = function
   | PUSH _ -> 3
   | POP -> 2
   | SUB -> 3
+  | SWAP _ -> 3
 
 let total_gas_cost = List.fold ~init:0 ~f:(fun gc i -> gc + gas_cost i)
 
@@ -198,6 +204,7 @@ let enc_instruction ea st j is =
     | ADD -> enc_add ea st j
     | SUB -> enc_sub ea st j
     | MUL -> enc_mul ea st j
+    | _ -> failwith "instruction not encoded"
   in
   let enc_used_gas =
     st.used_gas @@ [j + one] == ((st.used_gas @@ [j]) + (num (gas_cost is)))
