@@ -10,6 +10,7 @@ bug-reports: "https://github.com/juliannagele/ebso/issues"
 depends: [
   "ocaml"
   "dune"
+  "ocamlfind"
   "z3"
   "core"
   "ounit" {with-test}
