@@ -260,7 +260,8 @@ let enc_super_opt ea =
    enc_equivalence ea sts stt &&
    sts.used_gas @@ [num ks] > stt.used_gas @@ [ea.kt])
 
-let eval_stack st m i n = eval_func_decl m i ~n:[bvnum n !sas] st.stack
+let eval_stack ?(xs = []) st m i n =
+  eval_func_decl m i ~n:[bvnum n !sas] ~xs:xs st.stack
 
 let eval_stack_ctr st m i = eval_func_decl m i st.stack_ctr
 

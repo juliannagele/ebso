@@ -113,8 +113,8 @@ let solve_model_exn cs =
   | Solver.UNSATISFIABLE -> failwith "UNSAT"
   | Solver.UNKNOWN -> failwith (Solver.get_reason_unknown slvr)
 
-let eval_func_decl m j ?(n = []) f =
-  match Z3.Model.eval m (f <@@> ([num j] @ n)) true with
+let eval_func_decl m j ?(n = []) ?(xs = []) f =
+  match Z3.Model.eval m (f <@@> (xs @ [num j] @ n)) true with
   | Some e -> e
   | None -> failwith ("could not eval " ^ Z3.FuncDecl.to_string f)
 
