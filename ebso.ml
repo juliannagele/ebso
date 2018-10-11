@@ -40,12 +40,12 @@ let () =
         begin
           match stackes with
           | None -> ()
-          | Some stackes -> ses := stackes
+          | Some stackes -> sesort := bv_sort stackes
         end;
         begin
           match stackas with
           | None -> ()
-          | Some stackas -> sas := stackas
+          | Some stackas -> sasort := bv_sort stackas
         end;
         let progr =
           if direct then progr else In_channel.read_all progr

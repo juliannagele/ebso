@@ -3,10 +3,12 @@ open Evmenc
 open Z3util
 open Core
 
+(* set low for fast testing *)
+let ses = 3 and sas = 4
+
 let suite =
-  (* set low for fast testing *)
-  sas := 4;
-  ses := 3;
+  sesort := bv_sort ses;
+  sasort := bv_sort sas;
   "suite" >:::
   [
     (* enc dec opcode *)
@@ -24,11 +26,11 @@ let suite =
         let st = mk_state ea "" in
         let c = init ea st in
         let m = solve_model_exn [c] in
-        let sk_size = (Int.pow 2 !sas) - 1 in
+        let sk_size = (Int.pow 2 sas) - 1 in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t list]
           ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          (List.init sk_size ~f:(fun _ -> bvnum 0 !ses))
+          (List.init sk_size ~f:(fun _ -> senum 0))
           (List.init sk_size ~f:(eval_stack st m 0))
       );
 
@@ -42,7 +44,7 @@ let suite =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
-          (bvnum 9 !ses)
+          (senum 9)
           (eval_stack st m (List.length p) 0)
       );
 
@@ -55,7 +57,7 @@ let suite =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
-          (bvnum 3 !ses)
+          (senum 3)
           (eval_stack st m (List.length p) 0)
       );
 
@@ -115,7 +117,7 @@ let suite =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
-          (bvnum 5 !ses)
+          (senum 5)
           (eval_stack st m (List.length p) 0)
       );
 
@@ -128,7 +130,7 @@ let suite =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
-          (bvnum (-5) !ses)
+          (senum (-5))
           (eval_stack st m (List.length p) 0)
       );
 
@@ -141,7 +143,7 @@ let suite =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
-          (bvnum 3 !ses)
+          (senum 3)
           (eval_stack st m (List.length p) 0)
       );
 
@@ -207,7 +209,7 @@ let suite =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (bvnum 1 !ses) (eval_stack st m (List.length p) 0)
+          (senum 1) (eval_stack st m (List.length p) 0)
       );
 
     "valid program does not halt exceptionally">:: (fun _ ->
@@ -232,17 +234,17 @@ let suite =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
-          (bvnum 5 !ses)
+          (senum 5)
           (eval_stack st m (List.length p) 0)
       );
 
     "PUSHing too many elements leads to a stack overflow">:: (fun _ ->
-        let max = Int.pow 2 !sas - 1 in
+        let max = Int.pow 2 sas - 1 in
         let ea = mk_enc_consts [] (`User []) in
         let st = mk_state ea "" in
         let c =
           init ea st <&>
-          (st.stack_ctr <@@> [num max] <==> (bvnum max !sas)) <&>
+          (st.stack_ctr <@@> [num max] <==> (sanum max)) <&>
           (enc_push ea st (num max) (Val 5))
         in
         let m = solve_model_exn [c] in
@@ -277,7 +279,7 @@ let suite =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
-          (bvnum 2 !ses)
+          (senum 2)
           (eval_stack st m (List.length p) 0)
       );
 
@@ -290,7 +292,7 @@ let suite =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
-          (bvnum 0 !sas)
+          (sanum 0)
           (eval_stack_ctr st m (List.length p))
       );
 
@@ -460,11 +462,11 @@ let suite =
         let stt = mk_state ea "_t" in
         let c = init ea sts <&> enc_equivalence ea sts stt in
         let m = solve_model_exn [c] in
-        let sk_size = (Int.pow 2 !sas) - 1 in
+        let sk_size = (Int.pow 2 sas) - 1 in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t list]
           ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          (List.init sk_size ~f:(fun _ -> bvnum 0 !ses))
+          (List.init sk_size ~f:(fun _ -> senum 0))
           (List.init sk_size ~f:(eval_stack stt m 0))
       );
 
@@ -683,7 +685,7 @@ let suite =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t list]
           ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [(bvnum 2 !ses); (bvnum 1 !ses)]
+          [senum 2; senum 1]
           [(eval_stack st m (List.length p) 0); (eval_stack st m (List.length p) 1)]
       );
 
@@ -697,9 +699,9 @@ let suite =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t list]
           ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [bvnum 1 !ses; bvnum 2 !ses]
-          [(eval_stack ~xs:[bvnum 2 !ses] st m (List.length p) 0);
-           (eval_stack ~xs:[bvnum 2 !ses] st m (List.length p) 1)]
+          [senum 1; senum 2]
+          [(eval_stack ~xs:[senum 2] st m (List.length p) 0);
+           (eval_stack ~xs:[senum 2] st m (List.length p) 1)]
       );
 
     "swap with no elements" >::(fun _ ->
@@ -712,9 +714,9 @@ let suite =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t list]
           ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [bvnum 1 !ses; bvnum 2 !ses]
-          [(eval_stack ~xs:[bvnum 2 !ses; bvnum 1 !ses] st m (List.length p) 0);
-           (eval_stack ~xs:[bvnum 2 !ses; bvnum 1 !ses] st m (List.length p) 1)]
+          [senum 1; senum 2]
+          [(eval_stack ~xs:[senum 2; senum 1] st m (List.length p) 0);
+           (eval_stack ~xs:[senum 2; senum 1] st m (List.length p) 1)]
       );
 
     "swap does not touch element below" >::(fun _ ->
@@ -726,7 +728,7 @@ let suite =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
-          (bvnum 1 !ses)
+          (senum 1)
           (eval_stack st m (List.length p) 0)
       );
 
