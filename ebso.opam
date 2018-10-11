@@ -1,0 +1,24 @@
+opam-version: "2.0"
+name: "ebso"
+version: "0.1"
+synopsis: "EVM Bytecode Super Optimizer"
+maintainer: [ "mail@jnagele.net" "mail@maria-a-schett.net" ]
+authors: [ "mail@jnagele.net" "mail@maria-a-schett.net" ]
+homepage: "https://github.com/juliannagele/ebso"
+dev-repo: "git+https://github.com:juliannagele/ebso.git"
+bug-reports: "https://github.com/juliannagele/ebso/issues"
+depends: [
+  "ocaml"
+  "dune"
+  "z3"
+  "core"
+  "ounit" {with-test}
+  "ppx_sexp_conv"
+  "ppx_enumerate"
+  "ppx_deriving"
+]
+build: [
+  [ "dune" "subst" ] {pinned}
+  [ "dune" "build" "-p" name "-j" jobs ]
+]
+run-test: [make "test"]
