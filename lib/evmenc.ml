@@ -194,9 +194,27 @@ let enc_add ea st j = enc_binop ea st j (<+>)
 let enc_sub ea st j = enc_binop ea st j (<->)
 let enc_mul ea st j = enc_binop ea st j (<*>)
 
+let enc_swap ea st j idx =
+  let idx = bvnum (idx + 1) !sas in
+  let open Z3Ops in
+  let n = bvconst "n" !sas in
+  let sk n = st.stack @@ (ea.xs @ [j; n])
+  and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
+  let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
+  (* stack_counter remains unchanged *)
+  (sc' == sc) &&
+  (* the new top element is the 1+idx'th from the old stack *)
+  (sk' (sc' - bvnum 1 !sas) == sk (sc - idx)) &&
+  (* the new 1+idx'th element is the top from the old stack*)
+  (sk' (sc' - idx) == sk (sc - bvnum 1 !sas)) &&
+  (* all other stack elements are not touched *)
+  forall n (((n < (sc - bvnum 1 !sas)) && (n != (sc - idx)))
+            ==> (sk' n == sk n)) &&
+  (* exceptional halting carries over *)
+  (st.exc_halt @@ [j + one] == st.exc_halt @@ [j])
+
 (* effect of instruction on state st after j steps *)
 let enc_instruction ea st j is =
-  let open Z3Ops in
   let enc_instr =
     match is with
     | PUSH x -> enc_push ea st j x
@@ -204,8 +222,9 @@ let enc_instruction ea st j is =
     | ADD -> enc_add ea st j
     | SUB -> enc_sub ea st j
     | MUL -> enc_mul ea st j
-    | _ -> failwith "instruction not encoded"
+    | SWAP idx -> enc_swap ea st j (idx_to_enum idx)
   in
+  let open Z3Ops in
   let enc_used_gas =
     st.used_gas @@ [j + one] == ((st.used_gas @@ [j]) + (num (gas_cost is)))
   in
