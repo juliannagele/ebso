@@ -18,8 +18,3 @@ Simply run `opam install .` after cloning the repository.
 Afterwards one can run `ebso -help` for information on how to call ebso.
 Currently lists of instructions are given to ebso as S-expressions like
 so `((PUSH 0) SUB (PUSH 3) ADD)`.
-
-## authors
-
-[Julian Nagele](https://jnagele.net/) &
-[Maria A Schett](http://maria-a-schett.net/)
