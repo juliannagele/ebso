@@ -6,6 +6,21 @@ open Core
 (* set low for fast testing *)
 let ses = 3 and sas = 4
 
+let test_enc_pres oc =
+  let (d, _) = delta_alpha oc in
+  (* create program that initializes stack with d + 2 values *)
+  let ip = List.init (d + 2) ~f:(fun i -> PUSH (Val i)) in
+  let p = ip @ [oc] in
+  let ea = mk_enc_consts p (`User []) in
+  let st = mk_state ea "" in
+  let c = enc_program ea st in
+  let m = solve_model_exn [c] in
+  (* check all elements below delta *)
+  assert_equal ~cmp:[%eq: Z3.Expr.t list]
+    ~printer:(List.to_string ~f:Z3.Expr.to_string)
+    [(senum 0); (senum 1)]
+    [(eval_stack st m (List.length p) 0); (eval_stack st m (List.length p) 1)]
+
 let suite =
   sesort := bv_sort ses;
   sasort := bv_sort sas;
@@ -34,6 +49,22 @@ let suite =
           (List.init sk_size ~f:(eval_stack st m 0))
       );
 
+    (* test preservation *)
+
+    "preservation of ADD">:: (fun _ ->
+        test_enc_pres ADD
+      );
+    "preservation of SUB">:: (fun _ ->
+        test_enc_pres SUB
+      );
+    "preservation of POP">:: (fun _ ->
+        test_enc_pres POP
+      );
+    "preservation of SWAP I">:: (fun _ ->
+        test_enc_pres (SWAP I)
+      );
+
+
     (* add *)
     "add two elements on the stack">:: (fun _ ->
         let p = [PUSH (Val 4); PUSH (Val 5); ADD] in
@@ -45,19 +76,6 @@ let suite =
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
           (senum 9)
-          (eval_stack st m (List.length p) 0)
-      );
-
-    "check that adding does not change element below">:: (fun _ ->
-        let p = [PUSH (Val 3); PUSH (Val 4); PUSH (Val 5); ADD] in
-        let ea = mk_enc_consts p (`User []) in
-        let st = mk_state ea "" in
-        let c = enc_program ea st in
-        let m = solve_model_exn [c] in
-        assert_equal
-          ~cmp:[%eq: Z3.Expr.t]
-          ~printer:Z3.Expr.to_string
-          (senum 3)
           (eval_stack st m (List.length p) 0)
       );
 
@@ -131,19 +149,6 @@ let suite =
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
           (senum (-5))
-          (eval_stack st m (List.length p) 0)
-      );
-
-    "check that subtraction does not change element below">:: (fun _ ->
-        let p = [PUSH (Val 3); PUSH (Val 4); PUSH (Val 5); SUB] in
-        let ea = mk_enc_consts p (`User []) in
-        let st = mk_state ea "" in
-        let c = enc_program ea st in
-        let m = solve_model_exn [c] in
-        assert_equal
-          ~cmp:[%eq: Z3.Expr.t]
-          ~printer:Z3.Expr.to_string
-          (senum 3)
           (eval_stack st m (List.length p) 0)
       );
 
@@ -269,19 +274,6 @@ let suite =
       );
 
     (* pop *)
-
-    "pop only touches top element">:: (fun _ ->
-        let p = [PUSH (Val 2); PUSH (Val 1); POP] in
-        let ea = mk_enc_consts p (`User []) in
-        let st = mk_state ea "" in
-        let c = enc_program ea st in
-        let m = solve_model_exn [c] in
-        assert_equal
-          ~cmp:[%eq: Z3.Expr.t]
-          ~printer:Z3.Expr.to_string
-          (senum 2)
-          (eval_stack st m (List.length p) 0)
-      );
 
     "push and pop on empty stack leads to empty stack">:: (fun _ ->
         let p = [PUSH (Val 1); POP] in
@@ -717,19 +709,6 @@ let suite =
           [senum 1; senum 2]
           [(eval_stack ~xs:[senum 2; senum 1] st m (List.length p) 0);
            (eval_stack ~xs:[senum 2; senum 1] st m (List.length p) 1)]
-      );
-
-    "swap does not touch element below" >::(fun _ ->
-        let p = [PUSH (Val 1); PUSH (Val 2); PUSH (Val 3); SWAP I] in
-        let ea = mk_enc_consts p `All in
-        let st = mk_state ea "" in
-        let c = enc_program ea st in
-        let m = solve_model_exn [c] in
-        assert_equal
-          ~cmp:[%eq: Z3.Expr.t]
-          ~printer:Z3.Expr.to_string
-          (senum 1)
-          (eval_stack st m (List.length p) 0)
       );
 
   ]
