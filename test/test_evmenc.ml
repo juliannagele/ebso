@@ -74,39 +74,6 @@ let misc =
           (eval_stack st m (List.length p) 0)
       );
 
-    "add with only one element">:: (fun _ ->
-        let p = [PUSH (Val 3); ADD] in
-        let ea = mk_enc_consts p (`User []) in
-        (* hack to erase xs to start from emtpy stack *)
-        let st = mk_state {ea with p = []} "" in
-        let c =
-          init {ea with p = []} st <&>
-          enc_instruction ea st (num 0) (List.nth_exn p 0) <&>
-          enc_instruction ea st (num 1) (List.nth_exn p 1)
-        in
-        let m = solve_model_exn [c] in
-        assert_equal
-          ~cmp:[%eq: Z3.Expr.t]
-          ~printer:Z3.Expr.to_string
-          top
-          (eval_exc_halt st m (List.length p))
-      );
-
-    "add with empty stack">:: (fun _ ->
-        let p = [ADD] in
-        let ea = mk_enc_consts p (`User []) in
-        (* hack to erase xs to start from emtpy stack *)
-        let st = mk_state {ea with p = []} "" in
-        let c = init {ea with p = []} st <&>
-                enc_instruction ea st (num 0) ADD in
-        let m = solve_model_exn [c] in
-        assert_equal
-          ~cmp:[%eq: Z3.Expr.t]
-          ~printer:Z3.Expr.to_string
-          top
-          (eval_exc_halt st m (List.length p))
-      );
-
     (* sub *)
     "subtract two elements on the stack">:: (fun _ ->
         let p = [PUSH (Val 3); PUSH (Val 8); SUB] in
@@ -132,41 +99,6 @@ let misc =
           ~printer:Z3.Expr.to_string
           (senum (-5))
           (eval_stack st m (List.length p) 0)
-      );
-
-    "SUB with only one element">:: (fun _ ->
-        let p = [PUSH (Val 3); SUB] in
-        let ea = mk_enc_consts p (`User []) in
-        (* hack to erase xs to start from emtpy stack *)
-        let st = mk_state {ea with p = []} "" in
-        let c =
-          init {ea with p = []} st <&>
-          enc_instruction ea st (num 0) (List.nth_exn p 0) <&>
-          enc_instruction ea st (num 1) (List.nth_exn p 1)
-        in
-        let m = solve_model_exn [c] in
-        assert_equal
-          ~cmp:[%eq: Z3.Expr.t]
-          ~printer:Z3.Expr.to_string
-          top
-          (eval_exc_halt st m (List.length p))
-      );
-
-    "sub with empty stack">:: (fun _ ->
-        let p = [SUB] in
-        let ea = mk_enc_consts p (`User []) in
-        (* hack to erase xs to start from emtpy stack *)
-        let st = mk_state {ea with p = []} "" in
-        let c =
-          init {ea with p = []} st <&>
-          enc_instruction ea st (num 0) (List.nth_exn p 0)
-        in
-        let m = solve_model_exn [c] in
-        assert_equal
-          ~cmp:[%eq: Z3.Expr.t]
-          ~printer:Z3.Expr.to_string
-          top
-          (eval_exc_halt st m (List.length p))
       );
 
     "exceptional halt persists">:: (fun _ ->
@@ -227,23 +159,6 @@ let misc =
           ~printer:Z3.Expr.to_string
           (sanum 0)
           (eval_stack_ctr st m (List.length p))
-      );
-
-    "pop on empty stack leads to stack underflow" >:: (fun _ ->
-        let p = [POP] in
-        let ea = mk_enc_consts p (`User []) in
-        (* hack to erase xs to start from emtpy stack *)
-        let st = mk_state {ea with p = []} "" in
-        let c =
-          init {ea with p = []} st <&>
-          enc_instruction ea st (num 0) (List.nth_exn p 0)
-        in
-        let m = solve_model_exn [c] in
-        assert_equal
-          ~cmp:[%eq: Z3.Expr.t]
-          ~printer:Z3.Expr.to_string
-          top
-          (eval_exc_halt st m (List.length p))
       );
 
     (* gas cost *)
@@ -596,12 +511,95 @@ let exc_halt =
       );
   ]
 
+let forced_stack_underflow =
+  (* test below use hack to erase xs to start from emtpy stack *)
+  [
+    "add with only one element">:: (fun _ ->
+        let p = [PUSH (Val 3); ADD] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state {ea with p = []} "" in
+        let c =
+          init {ea with p = []} st <&>
+          enc_instruction ea st (num 0) (List.nth_exn p 0) <&>
+          enc_instruction ea st (num 1) (List.nth_exn p 1)
+        in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          top
+          (eval_exc_halt st m (List.length p))
+      );
+
+    "add with empty stack">:: (fun _ ->
+        let p = [ADD] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state {ea with p = []} "" in
+        let c = init {ea with p = []} st <&>
+                enc_instruction ea st (num 0) ADD in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          top
+          (eval_exc_halt st m (List.length p))
+      );
+
+    "SUB with only one element">:: (fun _ ->
+        let p = [PUSH (Val 3); SUB] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state {ea with p = []} "" in
+        let c =
+          init {ea with p = []} st <&>
+          enc_instruction ea st (num 0) (List.nth_exn p 0) <&>
+          enc_instruction ea st (num 1) (List.nth_exn p 1)
+        in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          top
+          (eval_exc_halt st m (List.length p))
+      );
+
+    "sub with empty stack">:: (fun _ ->
+        let p = [SUB] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state {ea with p = []} "" in
+        let c =
+          init {ea with p = []} st <&>
+          enc_instruction ea st (num 0) (List.nth_exn p 0)
+        in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          top
+          (eval_exc_halt st m (List.length p))
+      );
+
+    "pop on empty stack leads to stack underflow" >:: (fun _ ->
+        let p = [POP] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state {ea with p = []} "" in
+        let c =
+          init {ea with p = []} st <&>
+          enc_instruction ea st (num 0) (List.nth_exn p 0)
+        in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          top
+          (eval_exc_halt st m (List.length p))
+      );
+  ]
 
 let suite =
   sesort := bv_sort ses;
   sasort := bv_sort sas;
   "suite" >:::
-  misc @ pres_stack @ exc_halt
+  misc @ pres_stack @ exc_halt @ forced_stack_underflow
 
 let () =
   run_test_tt_main suite
