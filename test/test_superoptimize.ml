@@ -52,19 +52,10 @@ let suite =
       );
 
     "super optimize PUSH PUSH ADD to PUSH with template" >::(fun _ ->
-        let open Z3Ops in
         let p = [PUSH (Val 1); PUSH (Val 1); ADD] in
-        let ks = List.length p in
         let sis = `User [PUSH Tmpl; ADD; SUB] in
         let ea = mk_enc_consts p sis in
-        let sts = mk_state ea "_s" in
-        let stt = mk_state ea "_t" in
-        let c =
-          enc_program ea sts &&
-          enc_search_space ea stt &&
-          enc_equivalence ea sts stt &&
-          sts.used_gas @@ [num ks] > stt.used_gas @@ [ea.kt]
-        in
+        let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: progr] ~printer:[%show: progr]
           [PUSH (Val 2)] (dec_super_opt ea m)
