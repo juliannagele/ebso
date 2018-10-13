@@ -63,6 +63,12 @@ let suite =
     "preservation of SWAP I">:: (fun _ ->
         test_enc_pres (SWAP I)
       );
+    "preservation of MUL">:: (fun _ ->
+        test_enc_pres MUL
+      );
+    "preservation of PUSH">:: (fun _ ->
+        test_enc_pres (PUSH Tmpl)
+      );
 
 
     (* add *)
