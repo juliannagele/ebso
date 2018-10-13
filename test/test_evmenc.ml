@@ -6,7 +6,7 @@ open Core
 (* set low for fast testing *)
 let ses = 3 and sas = 4
 
-let test_enc_pres oc =
+let test_pres oc =
   let (d, _) = delta_alpha oc in
   (* create program that initializes stack with d + 2 values *)
   let ip = List.init (d + 2) ~f:(fun i -> PUSH (Val i)) in
@@ -607,7 +607,7 @@ let suite =
   (* test preservation for all opcodes *)
   List.map all_of_instr
     ~f:(fun oc -> "preservation of" ^ [%show: instr] oc
-                  >:: (fun _ -> test_enc_pres oc))
+                  >:: (fun _ -> test_pres oc))
 
 let () =
   run_test_tt_main suite
