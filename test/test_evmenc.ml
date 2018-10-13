@@ -494,20 +494,17 @@ let exc_halt =
       );
 
     "PUSHing too many elements leads to a stack overflow">:: (fun _ ->
-        let max = Int.pow 2 sas - 1 in
-        let ea = mk_enc_consts [] (`User []) in
+        let max = Int.pow 2 sas in
+        let p = List.init max ~f:(fun _ -> PUSH (Val 1)) in
+        let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
-        let c =
-          init ea st <&>
-          (st.stack_ctr <@@> [num max] <==> (sanum max)) <&>
-          (enc_push ea st (num max) (Val 5))
-        in
+        let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
           top
-          (eval_exc_halt st m (max + 1))
+          (eval_exc_halt st m (List.length p))
       );
   ]
 
