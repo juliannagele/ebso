@@ -115,24 +115,6 @@ let misc =
           (eval_stack st m (List.length p) 0)
       );
 
-    "exceptional halt persists">:: (fun _ ->
-        let p = [SUB; PUSH (Val 3)] in
-        let ea = mk_enc_consts p (`User []) in
-        (* hack to erase xs to start from emtpy stack *)
-        let st = mk_state {ea with p = []} "" in
-        let c =
-          init {ea with p = []} st <&>
-          enc_instruction ea st (num 0) (List.nth_exn p 0) <&>
-          enc_instruction ea st (num 1) (List.nth_exn p 1)
-        in
-        let m = solve_model_exn [c] in
-        assert_equal
-          ~cmp:[%eq: Z3.Expr.t]
-          ~printer:Z3.Expr.to_string
-          top
-          (eval_exc_halt st m (List.length p))
-      );
-
     (* add and sub *)
 
     "combine add and sub">:: (fun _ ->
@@ -523,6 +505,10 @@ let exc_halt =
           ~printer:Z3.Expr.to_string
           top
           (eval_exc_halt st m (List.length p))
+      );
+
+    "exceptional halt persists for multiple instructions">:: (fun _ ->
+        test_exc_halt_pres [SUB; PUSH (Val 3)]
       );
   ]
 
