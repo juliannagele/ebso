@@ -94,6 +94,7 @@ let mk_enc_consts p sis =
   opcodes = List.mapi sis ~f:(fun i oc -> (oc, i));
   (* list of free variables x_0 .. x_(stack_depth -1)
      for stack elements already on stack *)
+  (* careful: no check that this does not generate more than max stacksize variables *)
   xs = List.init (stack_depth p) ~f:(fun i -> seconst ("x_" ^ Int.to_string i))
 }
 
