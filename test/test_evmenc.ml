@@ -35,6 +35,20 @@ let test_no_exc_halt p =
     btm
     (eval_exc_halt st m (List.length p))
 
+let test_exc_halt_pres p =
+  let max = Int.pow 2 sas in
+  let ip = List.init max ~f:(fun _ -> PUSH (Val 1)) in
+  let p = ip @ p in
+  let ea = mk_enc_consts p (`User []) in
+  let st = mk_state ea "" in
+  let c = enc_program ea st in
+  let m = solve_model_exn [c] in
+  assert_equal
+    ~cmp:[%eq: Z3.Expr.t]
+    ~printer:Z3.Expr.to_string
+    top
+    (eval_exc_halt st m (List.length p))
+
 let misc =
   [
     (* enc dec opcode *)
@@ -484,11 +498,15 @@ let pres_stack =
                   >:: (fun _ -> test_stack_pres oc))
 
 let exc_halt =
+  (* test all instructions preserve exceptional halting *)
+  List.map all_of_instr
+    ~f:(fun oc -> "exc_halt is preserved by " ^ [%show: instr] oc
+                  >:: (fun _ -> test_exc_halt_pres [oc])) @
   (* test no exceptional halting due to stack underflow *)
   List.map all_of_instr
-    ~f:(fun oc -> "no exc_halt due to stack underflow by " ^ [%show: instr] oc
-                  >:: (fun _ -> test_no_exc_halt [oc]))
-  @ [
+    ~f:(fun oc -> "no exc_halt due to stack underflow by "  ^ [%show: instr] oc
+                  >:: (fun _ -> test_no_exc_halt [oc])) @
+  [
     "valid program does not halt exceptionally">:: (fun _ ->
         test_no_exc_halt [ADD; SUB]
       );
