@@ -1,5 +1,5 @@
 (executables
- (names test_evmenc)
+ (names test_evmenc test_superoptimize)
  (libraries core ebso oUnit z3)
  (preprocess (pps ppx_deriving.std))
 )
@@ -7,5 +7,11 @@
 (alias
  (name runtest)
  (deps (:x test_evmenc.exe))
+ (action (run %{x}))
+)
+
+(alias
+ (name runtest)
+ (deps (:x test_superoptimize.exe))
  (action (run %{x}))
 )
