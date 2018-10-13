@@ -1,6 +1,8 @@
 * Encode remaining instructions
 
-* Get real gas prizes
+* Encode instructions such as GASPRICE or BLOCKHASH, which are basically pushing 
+  an unknown number onto the stack, by PUSH (Const y) and forall quantification
+  over all ys, similar to initial stack arguments
 
 * Encodings of if possible? Conjecture: unbounded super optimization
   outperforms super optimization
