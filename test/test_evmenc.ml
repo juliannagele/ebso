@@ -21,6 +21,20 @@ let test_stack_pres oc =
     [(senum 0); (senum 1)]
     [(eval_stack st m (List.length p) 0); (eval_stack st m (List.length p) 1)]
 
+let test_no_exc_halt p =
+  let d = stack_depth p in
+  (* create program that initializes stack with d values *)
+  let ip = List.init d ~f:(fun i -> PUSH (Val i)) in
+  let p = ip @ p in
+  let ea = mk_enc_consts p (`User []) in
+  let st = mk_state ea "" in
+  let c = enc_program ea st in
+  let m = solve_model_exn [c] in
+  (* check no exceptional halting occured *)
+  assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+    btm
+    (eval_exc_halt st m (List.length p))
+
 let suite =
   sesort := bv_sort ses;
   sasort := bv_sort sas;
@@ -97,16 +111,7 @@ let suite =
       );
 
     "add two elements does not lead to stack underflow">:: (fun _ ->
-        let p = [PUSH (Val 4); PUSH (Val 5); ADD] in
-        let ea = mk_enc_consts p (`User []) in
-        let st = mk_state ea "" in
-        let c = enc_program ea st in
-        let m = solve_model_exn [c] in
-        assert_equal
-          ~cmp:[%eq: Z3.Expr.t]
-          ~printer:Z3.Expr.to_string
-          btm
-          (eval_exc_halt st m (List.length p))
+        test_no_exc_halt [ADD]
       );
 
     (* sub *)
@@ -202,14 +207,7 @@ let suite =
       );
 
     "valid program does not halt exceptionally">:: (fun _ ->
-        let p = [PUSH (Val 6); PUSH (Val 2); PUSH (Val 2); ADD; SUB] in
-        let ea = mk_enc_consts p (`User []) in
-        let st = mk_state ea "" in
-        let c = enc_program ea st in
-        let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          btm
-          (eval_exc_halt st m (List.length p))
+        test_no_exc_halt [ADD; SUB]
       );
 
     (* push *)
@@ -245,16 +243,7 @@ let suite =
       );
 
     "PUSHing one element does not to a stack overflow">:: (fun _ ->
-        let p = [PUSH (Val 5)] in
-        let ea = mk_enc_consts p (`User []) in
-        let st = mk_state ea "" in
-        let c = enc_program ea st in
-        let m = solve_model_exn [c] in
-        assert_equal
-          ~cmp:[%eq: Z3.Expr.t]
-          ~printer:Z3.Expr.to_string
-          btm
-          (eval_exc_halt st m (List.length p))
+        test_no_exc_halt [PUSH (Val 5)]
       );
 
     (* pop *)
