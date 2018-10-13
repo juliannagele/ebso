@@ -35,10 +35,7 @@ let test_no_exc_halt p =
     btm
     (eval_exc_halt st m (List.length p))
 
-let suite =
-  sesort := bv_sort ses;
-  sasort := bv_sort sas;
-  "suite" >:::
+let misc =
   [
     (* enc dec opcode *)
 
@@ -580,25 +577,29 @@ let suite =
            (eval_stack ~xs:[senum 2; senum 1] st m (List.length p) 1)]
       );
 
-  ] @
+  ]
+
+let pres_stack =
   (* test preservation of stack elements for all opcodes *)
   List.map all_of_instr
     ~f:(fun oc -> "preservation of stack elements by " ^ [%show: instr] oc
                   >:: (fun _ -> test_stack_pres oc))
-  @
 
+let exc_halt =
   (* test no exceptional halting due to stack underflow *)
+  [ "valid program does not halt exceptionally">:: (fun _ ->
+        test_no_exc_halt [ADD; SUB]
+      );
+  ] @
   List.map all_of_instr
     ~f:(fun oc -> "no exc_halt due to stack underflow by " ^ [%show: instr] oc
                   >:: (fun _ -> test_no_exc_halt [oc]))
-  @
-  [
-    "valid program does not halt exceptionally">:: (fun _ ->
-        test_no_exc_halt [ADD; SUB]
-      );
-  ]
 
-
+let suite =
+  sesort := bv_sort ses;
+  sasort := bv_sort sas;
+  "suite" >:::
+  misc @ pres_stack @ exc_halt
 
 let () =
   run_test_tt_main suite
