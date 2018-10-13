@@ -110,10 +110,6 @@ let suite =
           (eval_exc_halt st m (List.length p))
       );
 
-    "add two elements does not lead to stack underflow">:: (fun _ ->
-        test_no_exc_halt [ADD]
-      );
-
     (* sub *)
     "subtract two elements on the stack">:: (fun _ ->
         let p = [PUSH (Val 3); PUSH (Val 8); SUB] in
@@ -206,10 +202,6 @@ let suite =
           (senum 1) (eval_stack st m (List.length p) 0)
       );
 
-    "valid program does not halt exceptionally">:: (fun _ ->
-        test_no_exc_halt [ADD; SUB]
-      );
-
     (* push *)
 
     "top of the stack is the pushed element after a PUSH">:: (fun _ ->
@@ -240,10 +232,6 @@ let suite =
           ~printer:Z3.Expr.to_string
           top
           (eval_exc_halt st m (max + 1))
-      );
-
-    "PUSHing one element does not to a stack overflow">:: (fun _ ->
-        test_no_exc_halt [PUSH (Val 5)]
       );
 
     (* pop *)
@@ -597,6 +585,20 @@ let suite =
   List.map all_of_instr
     ~f:(fun oc -> "preservation of stack elements by " ^ [%show: instr] oc
                   >:: (fun _ -> test_stack_pres oc))
+  @
+
+  (* test no exceptional halting due to stack underflow *)
+  List.map all_of_instr
+    ~f:(fun oc -> "no exc_halt due to stack underflow by " ^ [%show: instr] oc
+                  >:: (fun _ -> test_no_exc_halt [oc]))
+  @
+  [
+    "valid program does not halt exceptionally">:: (fun _ ->
+        test_no_exc_halt [ADD; SUB]
+      );
+  ]
+
+
 
 let () =
   run_test_tt_main suite
