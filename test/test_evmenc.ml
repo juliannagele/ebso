@@ -49,28 +49,6 @@ let suite =
           (List.init sk_size ~f:(eval_stack st m 0))
       );
 
-    (* test preservation *)
-
-    "preservation of ADD">:: (fun _ ->
-        test_enc_pres ADD
-      );
-    "preservation of SUB">:: (fun _ ->
-        test_enc_pres SUB
-      );
-    "preservation of POP">:: (fun _ ->
-        test_enc_pres POP
-      );
-    "preservation of SWAP I">:: (fun _ ->
-        test_enc_pres (SWAP I)
-      );
-    "preservation of MUL">:: (fun _ ->
-        test_enc_pres MUL
-      );
-    "preservation of PUSH">:: (fun _ ->
-        test_enc_pres (PUSH Tmpl)
-      );
-
-
     (* add *)
     "add two elements on the stack">:: (fun _ ->
         let p = [PUSH (Val 4); PUSH (Val 5); ADD] in
@@ -625,7 +603,11 @@ let suite =
            (eval_stack ~xs:[senum 2; senum 1] st m (List.length p) 1)]
       );
 
-  ]
+  ] @
+  (* test preservation for all opcodes *)
+  List.map all_of_instr
+    ~f:(fun oc -> "preservation of" ^ [%show: instr] oc
+                  >:: (fun _ -> test_enc_pres oc))
 
 let () =
   run_test_tt_main suite
