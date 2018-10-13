@@ -214,23 +214,6 @@ let misc =
           (eval_stack st m (List.length p) 0)
       );
 
-    "PUSHing too many elements leads to a stack overflow">:: (fun _ ->
-        let max = Int.pow 2 sas - 1 in
-        let ea = mk_enc_consts [] (`User []) in
-        let st = mk_state ea "" in
-        let c =
-          init ea st <&>
-          (st.stack_ctr <@@> [num max] <==> (sanum max)) <&>
-          (enc_push ea st (num max) (Val 5))
-        in
-        let m = solve_model_exn [c] in
-        assert_equal
-          ~cmp:[%eq: Z3.Expr.t]
-          ~printer:Z3.Expr.to_string
-          top
-          (eval_exc_halt st m (max + 1))
-      );
-
     (* pop *)
 
     "push and pop on empty stack leads to empty stack">:: (fun _ ->
@@ -587,13 +570,32 @@ let pres_stack =
 
 let exc_halt =
   (* test no exceptional halting due to stack underflow *)
-  [ "valid program does not halt exceptionally">:: (fun _ ->
-        test_no_exc_halt [ADD; SUB]
-      );
-  ] @
   List.map all_of_instr
     ~f:(fun oc -> "no exc_halt due to stack underflow by " ^ [%show: instr] oc
                   >:: (fun _ -> test_no_exc_halt [oc]))
+  @ [
+    "valid program does not halt exceptionally">:: (fun _ ->
+        test_no_exc_halt [ADD; SUB]
+      );
+
+    "PUSHing too many elements leads to a stack overflow">:: (fun _ ->
+        let max = Int.pow 2 sas - 1 in
+        let ea = mk_enc_consts [] (`User []) in
+        let st = mk_state ea "" in
+        let c =
+          init ea st <&>
+          (st.stack_ctr <@@> [num max] <==> (sanum max)) <&>
+          (enc_push ea st (num max) (Val 5))
+        in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          top
+          (eval_exc_halt st m (max + 1))
+      );
+  ]
+
 
 let suite =
   sesort := bv_sort ses;
