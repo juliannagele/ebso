@@ -141,59 +141,56 @@ let enc_stackarg ea j = function
   | Val x -> senum x
   | Tmpl -> ea.a <@@> [j]
 
+let enc_pres ea st j oc =
+  let (d, _) = delta_alpha oc in
+  let open Z3Ops in
+  let n = saconst "n" in
+  (* the stack before and after oc *)
+  let sk n = st.stack @@ (ea.xs @ [j; n])
+  and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
+  (* the stack counter before oc *)
+  let sc = st.stack_ctr @@ [j] in
+  (* all elements below d stay the same *)
+  forall n ((n < sc - sanum d) ==> (sk' n == sk n))
+
 let enc_push ea st j x =
   let open Z3Ops in
-  let n = saconst "n" in
-  (* the stack before and after the PUSH *)
-  let sk n = st.stack @@ (ea.xs @ [j; n])
-  and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
+  (* the stack after the PUSH *)
+  let sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
   (* the stack counter before the PUSH *)
   let sc = st.stack_ctr @@ [j] in
-  (* that element will be x *)
+  (* the new top element will be x *)
   sk' sc == enc_stackarg ea j x &&
-  (* all old elements stay the same *)
-  forall n ((n < sc) ==> (sk' n == sk n))
+  enc_pres ea st j (PUSH x)
 
 let enc_pop ea st j =
-  let open Z3Ops in
-  let n = saconst "n" in
-  (* the stack before and after the POP *)
-  let sk n = st.stack @@ (ea.xs @ [j; n])
-  and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
-  (* the stack counter after the POP *)
-  let sc'= st.stack_ctr @@ [j + one] in
-  (* all old elements stay the same *)
-  forall n ((n < sc') ==> (sk' n == sk n))
+  enc_pres ea st j POP
 
 let enc_binop ea st j op =
   let open Z3Ops in
-  let n = saconst "n" in
   let sk n = st.stack @@ (ea.xs @ [j; n])
   and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] in
   (* the new top element is the result of applying op to the previous two *)
-  (sk' (sc - sanum 2) == op (sk (sc - sanum 1)) (sk (sc - sanum 2))) &&
-  (* all elements below remain unchanged *)
-  forall n ((n < (sc - sanum 2)) ==> (sk' n == sk n))
+  (sk' (sc - sanum 2) == op (sk (sc - sanum 1)) (sk (sc - sanum 2)))
 
-let enc_add ea st j = enc_binop ea st j (<+>)
-let enc_sub ea st j = enc_binop ea st j (<->)
-let enc_mul ea st j = enc_binop ea st j (<*>)
+let enc_add ea st j = enc_binop ea st j (<+>) <&> enc_pres ea st j ADD
+let enc_sub ea st j = enc_binop ea st j (<->) <&> enc_pres ea st j SUB
+let enc_mul ea st j = enc_binop ea st j (<*>) <&> enc_pres ea st j MUL
 
 let enc_swap ea st j idx =
-  let idx = sanum (idx + 1) in
+  let idx' = sanum (idx + 1) in
   let open Z3Ops in
-  let n = saconst "n" in
   let sk n = st.stack @@ (ea.xs @ [j; n])
   and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   (* the new top element is the 1+idx'th from the old stack *)
-  (sk' (sc' - sanum 1) == sk (sc - idx)) &&
+  (sk' (sc' - sanum 1) == sk (sc - idx')) &&
   (* the new 1+idx'th element is the top from the old stack*)
-  (sk' (sc' - idx) == sk (sc - sanum 1)) &&
+  (sk' (sc' - idx') == sk (sc - sanum 1)) &&
   (* all other stack elements are not touched *)
-  forall n (((n < (sc - sanum 1)) && (n != (sc - idx)))
-            ==> (sk' n == sk n))
+  conj (List.init (Int.pred idx) ~f:(fun i -> (sk' (sc' - sanum i) == sk (sc - sanum i)))) &&
+  enc_pres ea st j (SWAP I)
 
 (* effect of instruction on state st after j steps *)
 let enc_instruction ea st j is =
