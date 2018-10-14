@@ -24,7 +24,10 @@ let stackarg_of_sexp s = match s with
 
 let all_of_stackarg = [Tmpl]
 
-type idx = I [@value 1] | II | III
+type idx =
+  | I [@value 1] | II | III | IV | V
+  | VI | VII | VIII | IX | X
+  | XI | XII | XIII | XIV | XV | XVI
 [@@deriving show { with_path = false }, eq, enum, enumerate, sexp]
 
 type instr =

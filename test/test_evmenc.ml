@@ -4,7 +4,7 @@ open Z3util
 open Core
 
 (* set low for fast testing *)
-let ses = 3 and sas = 4
+let ses = 3 and sas = 6
 
 let test_stack_pres oc =
   let (d, _) = delta_alpha oc in
