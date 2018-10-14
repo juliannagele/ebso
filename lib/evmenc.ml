@@ -141,6 +141,21 @@ let enc_stackarg ea j = function
   | Val x -> senum x
   | Tmpl -> ea.a <@@> [j]
 
+let enc_exc_halt st j oc =
+  let (d, a) = delta_alpha oc in let diff = a - d in
+  let open Z3Ops in
+  let sc = st.stack_ctr @@ [j] in
+  let underflow = if Int.is_positive d then (sc - (sanum d)) < (sanum 0) else btm in
+  let overflow =
+    if Int.is_positive diff then
+      match Z3.Sort.get_sort_kind !sasort with
+      | BV_SORT -> ~! (nuw sc (sanum diff) `Add)
+      | INT_SORT -> (sc + (sanum diff)) > (sanum 1024)
+      | _ -> btm
+    else btm
+  in
+  st.exc_halt @@ [j + one] == (st.exc_halt @@ [j] || underflow || overflow)
+
 let enc_push ea st j x =
   let open Z3Ops in
   let n = saconst "n" in
