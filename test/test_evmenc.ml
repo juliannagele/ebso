@@ -64,32 +64,10 @@ let test_exc_halt_pres p =
     top
     (eval_exc_halt st m (List.length p))
 
-let misc =
+let effect =
   [
-    (* enc dec opcode *)
-
-    "encoding and decoding an opcode is the identity">:: (fun _ ->
-        let ea = mk_enc_consts [] (`User [SUB; ADD; POP]) in
-        assert_equal ~cmp:[%eq: instr] ~printer:[%show: instr]
-          ADD (dec_opcode ea (enc_opcode ea ADD))
-      );
-
-    (* init *)
-
-    "model of the initial stack holds 0 for every stack address">:: (fun _ ->
-        let ea = mk_enc_consts [] (`User []) in
-        let st = mk_state ea "" in
-        let c = init ea st in
-        let m = solve_model_exn [c] in
-        let sk_size = (Int.pow 2 sas) - 1 in
-        assert_equal
-          ~cmp:[%eq: Z3.Expr.t list]
-          ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          (List.init sk_size ~f:(fun _ -> senum 0))
-          (List.init sk_size ~f:(eval_stack st m 0))
-      );
-
     (* add *)
+
     "add two elements on the stack">:: (fun _ ->
         let p = [PUSH (Val 4); PUSH (Val 5); ADD] in
         let ea = mk_enc_consts p (`User []) in
@@ -104,6 +82,7 @@ let misc =
       );
 
     (* sub *)
+
     "subtract two elements on the stack">:: (fun _ ->
         let p = [PUSH (Val 3); PUSH (Val 8); SUB] in
         let ea = mk_enc_consts p (`User []) in
@@ -155,275 +134,6 @@ let misc =
           ~printer:Z3.Expr.to_string
           (senum 5)
           (eval_stack st m (List.length p) 0)
-      );
-
-    (* gas cost *)
-    "after 0 instruction no gas has been used">::(fun _ ->
-        let ea = mk_enc_consts [] (`User []) in
-        let st = mk_state ea "" in
-        let c = init ea st in
-        let m = solve_model_exn [c] in
-        assert_equal
-          ~cmp:[%eq: Z3.Expr.t]
-          ~printer:Z3.Expr.to_string
-          (num 0)
-          (eval_gas st m 0)
-      );
-
-    "after some instruction some gas has been used">::(fun _ ->
-        let p = [PUSH (Val 6); PUSH (Val 2); ADD] in
-        let ea = mk_enc_consts p (`User []) in
-        let st = mk_state ea "" in
-        let c = enc_program ea st in
-        let m = solve_model_exn [c] in
-        assert_equal
-          ~cmp:[%eq: Z3.Expr.t]
-          ~printer:Z3.Expr.to_string
-          (num @@ total_gas_cost p)
-          (eval_gas st m (List.length p))
-      );
-
-    (* enc_search_space *)
-
-    "search for 1 instruction program">::(fun _ ->
-        let p = [PUSH (Val 1)] in
-        let sis = `User [PUSH (Val 1)] in
-        let ea = mk_enc_consts p sis in
-        let st = mk_state ea "" in
-        let c =
-          enc_program ea st <&>
-          enc_search_space ea st <&>
-          (ea.kt <==> (num (List.length p)))
-        in
-        let m = solve_model_exn [c] in
-        assert_equal
-          ~cmp:[%eq: int]
-          ~printer:[%show: int]
-          (enc_opcode ea (PUSH (Val 1)))
-          (eval_fis ea m 0)
-      );
-
-    "search for 3 instruction program">::(fun _ ->
-        let p = [PUSH (Val 1); PUSH (Val 1); ADD] in
-        let sis = `User [PUSH (Val 1); ADD] in
-        let ea = mk_enc_consts p sis in
-        let st = mk_state ea "" in
-        let c =
-          enc_program ea st <&>
-          enc_search_space ea st <&>
-          (ea.kt <==> (num (List.length p)))
-        in
-        let m = solve_model_exn [c] in
-        assert_equal
-          ~cmp:[%eq: int list]
-          ~printer:[%show: int list]
-          [enc_opcode ea (PUSH (Val 1))
-          ; enc_opcode ea (PUSH (Val 1))
-          ; enc_opcode ea ADD
-          ]
-          [eval_fis ea m 0; eval_fis ea m 1; eval_fis ea m 2]
-      );
-
-    "sis contains unused instructions ">::(fun _ ->
-        let p = [PUSH (Val 1)] in
-        let sis = `User [PUSH (Val 1); PUSH (Val 2); ADD; SUB] in
-        let ea = mk_enc_consts p sis in
-        let st = mk_state ea "" in
-        let c =
-          enc_program ea st <&>
-          enc_search_space ea st <&>
-          (ea.kt <==> (num (List.length p)))
-        in
-        let m = solve_model_exn [c] in
-        assert_equal
-          ~cmp:[%eq: int]
-          ~printer:[%show: int]
-          (enc_opcode ea (PUSH (Val 1)))
-          (eval_fis ea m 0)
-      );
-
-    "sis does not contain required instruction">::(fun _ ->
-        let p = [PUSH (Val 1)] in
-        let sis = `User [ADD; SUB] in
-        let ea = mk_enc_consts p sis in
-        let st = mk_state ea "" in
-        let c =
-          enc_program ea st <&>
-          enc_search_space ea st <&>
-          (ea.kt <==> (num (List.length p)))
-        in
-        let slvr = Z3.Solver.mk_simple_solver !ctxt in
-        let () = Z3.Solver.add slvr [c] in
-        assert_equal
-          Z3.Solver.UNSATISFIABLE
-          (Z3.Solver.check slvr [])
-      );
-
-    (* enc_equivalence *)
-
-    "search for 1 instruction program with equivalence constraint">::(fun _ ->
-        let p = [PUSH (Val 1)] in
-        let sis = `User [PUSH (Val 1)] in
-        let ea = mk_enc_consts p sis in
-        let st = mk_state ea "" in
-        let c =
-          enc_program ea st <&>
-          enc_search_space ea st <&>
-          enc_equivalence ea st st
-        in
-        let m = solve_model_exn [c] in
-        assert_equal
-          ~cmp:[%eq: int]
-          ~printer:[%show: int]
-          (enc_opcode ea (PUSH (Val 1)))
-          (eval_fis ea m 0)
-      );
-
-    "search for 3 instruction program with equivalence constraint">::(fun _ ->
-        let p = [PUSH (Val 1); PUSH (Val 1); ADD] in
-        let sis = `User [PUSH (Val 1); ADD] in
-        let ea = mk_enc_consts p sis in
-        let st = mk_state ea "" in
-        let c =
-          enc_program ea st <&>
-          enc_search_space ea st <&>
-          enc_equivalence ea st st
-        in
-        let m = solve_model_exn [c] in
-        assert_equal
-          ~cmp:[%eq: int list]
-          ~printer:[%show: int list]
-          [enc_opcode ea (PUSH (Val 1))
-          ; enc_opcode ea (PUSH (Val 1))
-          ; enc_opcode ea ADD
-          ]
-          [eval_fis ea m 0; eval_fis ea m 1; eval_fis ea m 2]
-      );
-
-    "equivalence constraint forces inital stack for target program">:: (fun _ ->
-        let ea = mk_enc_consts [] (`User []) in
-        let sts = mk_state ea "_s" in
-        let stt = mk_state ea "_t" in
-        let c = init ea sts <&> enc_equivalence ea sts stt in
-        let m = solve_model_exn [c] in
-        let sk_size = (Int.pow 2 sas) - 1 in
-        assert_equal
-          ~cmp:[%eq: Z3.Expr.t list]
-          ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          (List.init sk_size ~f:(fun _ -> senum 0))
-          (List.init sk_size ~f:(eval_stack stt m 0))
-      );
-
-
-    (* template argument for PUSH *)
-
-    "search for 1 instruction program with template (fis)">::(fun _ ->
-        let p = [PUSH (Val 1)] in
-        let sis = `User [PUSH Tmpl] in
-        let ea = mk_enc_consts p sis in
-        let st = mk_state ea "" in
-        let c =
-          enc_program ea st <&>
-          enc_search_space ea st <&>
-          (ea.kt <==> (num (List.length p)))
-        in
-        let m = solve_model_exn [c] in
-        assert_equal
-          ~cmp:[%eq: int]
-          ~printer:[%show: int]
-          (enc_opcode ea (PUSH Tmpl))
-          (eval_fis ea m 0)
-      );
-
-    "search for 1 instruction program with template (a)">::(fun _ ->
-        let p = [PUSH (Val 1)] in
-        let sis = `User [PUSH Tmpl] in
-        let ea = mk_enc_consts p sis in
-        let st = mk_state ea "" in
-        let c =
-          enc_program ea st <&>
-          enc_search_space ea st <&>
-          (ea.kt <==> (num (List.length p)))
-        in
-        let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
-          1 (eval_a ea m 0)
-      );
-
-    "search for 3 instruction program with template (fis)">::(fun _ ->
-        let p = [PUSH (Val 1); PUSH (Val 1); ADD] in
-        let sis = `User [PUSH Tmpl; ADD] in
-        let ea = mk_enc_consts p sis in
-        let st = mk_state ea "" in
-        let c =
-          enc_program ea st <&>
-          enc_search_space ea st <&>
-          (ea.kt <==> (num (List.length p)))
-        in
-        let m = solve_model_exn [c] in
-        assert_equal
-          ~cmp:[%eq: int list]
-          ~printer:[%show: int list]
-          [ enc_opcode ea (PUSH Tmpl)
-          ; enc_opcode ea (PUSH Tmpl)
-          ; enc_opcode ea ADD
-          ]
-          [eval_fis ea m 0; eval_fis ea m 1; eval_fis ea m 2]
-      );
-
-    "search for 3 instruction program with template (a)">::(fun _ ->
-        let p = [PUSH (Val 1); PUSH (Val 1); ADD] in
-        let sis = `User [PUSH Tmpl; ADD] in
-        let ea = mk_enc_consts p sis in
-        let st = mk_state ea "" in
-        let c =
-          enc_program ea st <&>
-          enc_search_space ea st <&>
-          (ea.kt <==> (num (List.length p)))
-        in
-        let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: int list] ~printer:[%show: int list]
-          [1; 1] [eval_a ea m 0; eval_a ea m 1]
-      );
-
-    (* stack_depth *)
-
-    "No negative stack depth, sufficient arguments" >::(fun _ ->
-        let p = [PUSH (Val 1); PUSH (Val 1); PUSH (Val 1); SUB] in
-        assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
-          0 (stack_depth p)
-      );
-
-    "Start with SUB" >::(fun _ ->
-        let p = [SUB] in
-        assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
-          2 (stack_depth p)
-      );
-
-    "Exactly enough arguments" >::(fun _ ->
-        let p = [PUSH (Val 1); PUSH (Val 1); SUB] in
-        assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
-          0 (stack_depth p)
-      );
-
-    "Start with SUB, go positive, but then go deeper" >::(fun _ ->
-        let p = [SUB; PUSH (Val 1); PUSH (Val 1); ADD; ADD; ADD] in
-        assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
-          3 (stack_depth p)
-      );
-
-    (* sis_of_progr / all_of_instr *)
-
-    "compute instruction set of given program" >::(fun _ ->
-        let p = [SUB; PUSH (Val 1); PUSH (Val 1); ADD; ADD; PUSH (Val 2); POP] in
-        assert_equal ~cmp:[%eq: progr] ~printer:[%show: progr]
-          [SUB; PUSH Tmpl; ADD; POP] (sis_of_progr p)
-      );
-
-    "list of all instructions" >::(fun _ ->
-        assert_bool "not all instructions present"
-          (List.for_all [ADD; MUL; PUSH Tmpl; POP; SUB]
-             ~f:(fun i -> List.mem all_of_instr i ~equal:[%eq: instr]))
       );
 
     (* SWAP *)
@@ -611,11 +321,107 @@ let forced_stack_underflow =
       );
   ]
 
+let gas_cost =
+  [
+    "after 0 instruction no gas has been used">::(fun _ ->
+        let ea = mk_enc_consts [] (`User []) in
+        let st = mk_state ea "" in
+        let c = init ea st in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          (num 0)
+          (eval_gas st m 0)
+      );
+
+    "after some instruction some gas has been used">::(fun _ ->
+        let p = [PUSH (Val 6); PUSH (Val 2); ADD] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t]
+          ~printer:Z3.Expr.to_string
+          (num @@ total_gas_cost p)
+          (eval_gas st m (List.length p))
+      );
+  ]
+
+let misc =
+  [
+    (* enc dec opcode *)
+
+    "encoding and decoding an opcode is the identity">:: (fun _ ->
+        let ea = mk_enc_consts [] (`User [SUB; ADD; POP]) in
+        assert_equal ~cmp:[%eq: instr] ~printer:[%show: instr]
+          ADD (dec_opcode ea (enc_opcode ea ADD))
+      );
+
+    (* init *)
+
+    "model of the initial stack holds 0 for every stack address">:: (fun _ ->
+        let ea = mk_enc_consts [] (`User []) in
+        let st = mk_state ea "" in
+        let c = init ea st in
+        let m = solve_model_exn [c] in
+        let sk_size = (Int.pow 2 sas) - 1 in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t list]
+          ~printer:(List.to_string ~f:Z3.Expr.to_string)
+          (List.init sk_size ~f:(fun _ -> senum 0))
+          (List.init sk_size ~f:(eval_stack st m 0))
+      );
+
+    (* stack_depth *)
+
+    "No negative stack depth, sufficient arguments" >::(fun _ ->
+        let p = [PUSH (Val 1); PUSH (Val 1); PUSH (Val 1); SUB] in
+        assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
+          0 (stack_depth p)
+      );
+
+    "Start with SUB" >::(fun _ ->
+        let p = [SUB] in
+        assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
+          2 (stack_depth p)
+      );
+
+    "Exactly enough arguments" >::(fun _ ->
+        let p = [PUSH (Val 1); PUSH (Val 1); SUB] in
+        assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
+          0 (stack_depth p)
+      );
+
+    "Start with SUB, go positive, but then go deeper" >::(fun _ ->
+        let p = [SUB; PUSH (Val 1); PUSH (Val 1); ADD; ADD; ADD] in
+        assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
+          3 (stack_depth p)
+      );
+
+    (* sis_of_progr / all_of_instr *)
+
+    "compute instruction set of given program" >::(fun _ ->
+        let p = [SUB; PUSH (Val 1); PUSH (Val 1); ADD; ADD; PUSH (Val 2); POP] in
+        assert_equal ~cmp:[%eq: progr] ~printer:[%show: progr]
+          [SUB; PUSH Tmpl; ADD; POP] (sis_of_progr p)
+      );
+
+    "list of all instructions" >::(fun _ ->
+        assert_bool "not all instructions present"
+          (List.for_all [ADD; MUL; PUSH Tmpl; POP; SUB]
+             ~f:(fun i -> List.mem all_of_instr i ~equal:[%eq: instr]))
+      );
+
+]
+
 let suite =
   sesort := bv_sort ses;
   sasort := bv_sort sas;
   "suite" >:::
-  misc @ pres_stack @ stack_ctr @ exc_halt @ forced_stack_underflow
+  effect @ pres_stack @ stack_ctr @ exc_halt @ forced_stack_underflow
+  @ gas_cost @ misc
 
 let () =
   run_test_tt_main suite
