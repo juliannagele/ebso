@@ -138,7 +138,7 @@ let effect =
 
     (* SWAP *)
 
-    "swap two elements on stack" >::(fun _ ->
+    "swap I two elements on stack" >::(fun _ ->
         let p = [PUSH (Val 1); PUSH (Val 2); SWAP I] in
         let ea = mk_enc_consts p `All in
         let st = mk_state ea "" in
@@ -151,7 +151,7 @@ let effect =
           [(eval_stack st m (List.length p) 0); (eval_stack st m (List.length p) 1)]
       );
 
-    "swap with only one element" >::(fun _ ->
+    "swap I with only one element" >::(fun _ ->
         let p = [PUSH (Val 1); SWAP I] in
         let ea = mk_enc_consts p `All in
         let st = mk_state ea "" in
@@ -166,7 +166,7 @@ let effect =
            (eval_stack ~xs:[senum 2] st m (List.length p) 1)]
       );
 
-    "swap with no elements" >::(fun _ ->
+    "swap I with no elements" >::(fun _ ->
         let p = [SWAP I] in
         let ea = mk_enc_consts p `All in
         let st = mk_state ea "" in
