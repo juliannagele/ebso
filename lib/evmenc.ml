@@ -179,7 +179,7 @@ let enc_swap ea st j idx =
 
 (* effect of instruction on state st after j steps *)
 let enc_instruction ea st j is =
-  let enc_instr =
+  let enc_effect =
     match is with
     | PUSH x -> enc_push ea st j x
     | POP -> enc_pop ea st j
@@ -216,7 +216,7 @@ let enc_instruction ea st j is =
     (* all elements below d stay the same *)
     forall n ((n < sc - sanum d) ==> (sk' n == sk n))
   in
-  enc_instr && enc_used_gas && enc_stack_ctr && enc_pres && enc_exc_halt
+  enc_effect && enc_used_gas && enc_stack_ctr && enc_pres && enc_exc_halt
 
 let enc_search_space ea st =
   let open Z3Ops in
