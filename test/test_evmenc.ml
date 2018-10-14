@@ -159,8 +159,8 @@ let misc =
 
     (* pop *)
 
-    "push and pop on empty stack leads to empty stack">:: (fun _ ->
-        let p = [PUSH (Val 1); POP] in
+    "test a program leading to an empty stack">:: (fun _ ->
+        let p = [PUSH (Val 1); PUSH (Val 1); ADD; POP] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
