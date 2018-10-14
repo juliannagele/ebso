@@ -21,6 +21,21 @@ let test_stack_pres oc =
     [(senum 0); (senum 1)]
     [(eval_stack st m (List.length p) 0); (eval_stack st m (List.length p) 1)]
 
+let test_stack_ctr p =
+  let d = stack_depth p in
+  (* create program that initializes stack with d values *)
+  let ip = List.init d ~f:(fun i -> PUSH (Val i)) in
+  let p = ip @ p in
+  let ea = mk_enc_consts p (`User []) in
+  let st = mk_state ea "" in
+  let c = enc_program ea st in
+  let m = solve_model_exn [c] in
+  let upd_sc sc oc = let (d, a) = delta_alpha oc in sc - d + a in
+  (* check that stack counter is adjusted accordingly *)
+  assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+    (sanum (List.fold_left p ~init:0 ~f:upd_sc))
+    (eval_stack_ctr st m (List.length p))
+
 let test_no_exc_halt p =
   let d = stack_depth p in
   (* create program that initializes stack with d values *)
@@ -479,6 +494,13 @@ let pres_stack =
     ~f:(fun oc -> "preservation of stack elements by " ^ [%show: instr] oc
                   >:: (fun _ -> test_stack_pres oc))
 
+let stack_ctr =
+  (* test all instructions manipulate stack counter correctly *)
+  List.map all_of_instr
+    ~f:(fun oc -> "stack_ctr is changed correctly by " ^ [%show: instr] oc
+                  >:: (fun _ -> test_stack_ctr [oc])) @
+ []
+
 let exc_halt =
   (* test all instructions preserve exceptional halting *)
   List.map all_of_instr
@@ -600,7 +622,7 @@ let suite =
   sesort := bv_sort ses;
   sasort := bv_sort sas;
   "suite" >:::
-  misc @ pres_stack @ exc_halt @ forced_stack_underflow
+  misc @ pres_stack @ stack_ctr @ exc_halt @ forced_stack_underflow
 
 let () =
   run_test_tt_main suite
