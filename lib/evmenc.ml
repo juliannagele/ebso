@@ -141,18 +141,6 @@ let enc_stackarg ea j = function
   | Val x -> senum x
   | Tmpl -> ea.a <@@> [j]
 
-let enc_pres ea st j oc =
-  let (d, _) = delta_alpha oc in
-  let open Z3Ops in
-  let n = saconst "n" in
-  (* the stack before and after oc *)
-  let sk n = st.stack @@ (ea.xs @ [j; n])
-  and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
-  (* the stack counter before oc *)
-  let sc = st.stack_ctr @@ [j] in
-  (* all elements below d stay the same *)
-  forall n ((n < sc - sanum d) ==> (sk' n == sk n))
-
 let enc_push ea st j x =
   let open Z3Ops in
   (* the stack after the PUSH *)
@@ -160,11 +148,9 @@ let enc_push ea st j x =
   (* the stack counter before the PUSH *)
   let sc = st.stack_ctr @@ [j] in
   (* the new top element will be x *)
-  sk' sc == enc_stackarg ea j x &&
-  enc_pres ea st j (PUSH x)
+  sk' sc == enc_stackarg ea j x
 
-let enc_pop ea st j =
-  enc_pres ea st j POP
+let enc_pop _ _ _ = top
 
 let enc_binop ea st j op =
   let open Z3Ops in
@@ -174,9 +160,9 @@ let enc_binop ea st j op =
   (* the new top element is the result of applying op to the previous two *)
   (sk' (sc - sanum 2) == op (sk (sc - sanum 1)) (sk (sc - sanum 2)))
 
-let enc_add ea st j = enc_binop ea st j (<+>) <&> enc_pres ea st j ADD
-let enc_sub ea st j = enc_binop ea st j (<->) <&> enc_pres ea st j SUB
-let enc_mul ea st j = enc_binop ea st j (<*>) <&> enc_pres ea st j MUL
+let enc_add ea st j = enc_binop ea st j (<+>)
+let enc_sub ea st j = enc_binop ea st j (<->)
+let enc_mul ea st j = enc_binop ea st j (<*>)
 
 let enc_swap ea st j idx =
   let idx' = sanum (idx + 1) in
@@ -189,8 +175,7 @@ let enc_swap ea st j idx =
   (* the new 1+idx'th element is the top from the old stack*)
   (sk' (sc' - idx') == sk (sc - sanum 1)) &&
   (* all other stack elements are not touched *)
-  conj (List.init (Int.pred idx) ~f:(fun i -> (sk' (sc' - sanum i) == sk (sc - sanum i)))) &&
-  enc_pres ea st j (SWAP I)
+  conj (List.init (Int.pred idx) ~f:(fun i -> (sk' (sc' - sanum i) == sk (sc - sanum i))))
 
 (* effect of instruction on state st after j steps *)
 let enc_instruction ea st j is =
@@ -206,6 +191,8 @@ let enc_instruction ea st j is =
   let (d, a) = delta_alpha is in let diff = (a - d) in
   let open Z3Ops in
   let sc = st.stack_ctr @@ [j] in
+  let sk n = st.stack @@ (ea.xs @ [j; n])
+  and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
   let enc_used_gas =
     st.used_gas @@ [j + one] == ((st.used_gas @@ [j]) + (num (gas_cost is)))
   in
@@ -224,7 +211,12 @@ let enc_instruction ea st j is =
     in
     st.exc_halt @@ [j + one] == (st.exc_halt @@ [j] || underflow || overflow)
   in
-  enc_instr && enc_used_gas && enc_stack_ctr && enc_exc_halt
+  let enc_pres =
+    let n = saconst "n" in
+    (* all elements below d stay the same *)
+    forall n ((n < sc - sanum d) ==> (sk' n == sk n))
+  in
+  enc_instr && enc_used_gas && enc_stack_ctr && enc_pres && enc_exc_halt
 
 let enc_search_space ea st =
   let open Z3Ops in
