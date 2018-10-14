@@ -147,7 +147,7 @@ let enc_push ea st j x =
   (* the stack before and after the PUSH *)
   let sk n = st.stack @@ (ea.xs @ [j; n])
   and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
-  (* the stack counter before and after the PUSH *)
+  (* the stack counter before the PUSH *)
   let sc = st.stack_ctr @@ [j] in
   (* check for stack overflow depending on sort of stack counter *)
   let overflow_chk = match Z3.Sort.get_sort_kind !sasort with
