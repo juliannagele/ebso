@@ -382,19 +382,19 @@ let misc =
           0 (stack_depth p)
       );
 
-    "Start with SUB" >::(fun _ ->
+    "Stack depth of SUB" >::(fun _ ->
         let p = [SUB] in
         assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
           2 (stack_depth p)
       );
 
-    "Exactly enough arguments" >::(fun _ ->
+    "Stack depth of exactly enough arguments" >::(fun _ ->
         let p = [PUSH (Val 1); PUSH (Val 1); SUB] in
         assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
           0 (stack_depth p)
       );
 
-    "Start with SUB, go positive, but then go deeper" >::(fun _ ->
+    "Stack depth when starting with SUB, go positive, but then go deeper" >::(fun _ ->
         let p = [SUB; PUSH (Val 1); PUSH (Val 1); ADD; ADD; ADD] in
         assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
           3 (stack_depth p)
