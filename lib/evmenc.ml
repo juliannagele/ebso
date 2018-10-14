@@ -165,17 +165,19 @@ let enc_sub ea st j = enc_binop ea st j (<->)
 let enc_mul ea st j = enc_binop ea st j (<*>)
 
 let enc_swap ea st j idx =
-  let idx' = sanum (idx + 1) in
+  let sc_idx = sanum (idx + 1) in
   let open Z3Ops in
   let sk n = st.stack @@ (ea.xs @ [j; n])
   and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   (* the new top element is the 1+idx'th from the old stack *)
-  (sk' (sc' - sanum 1) == sk (sc - idx')) &&
+  (sk' (sc' - sanum 1) == sk (sc - sc_idx)) &&
   (* the new 1+idx'th element is the top from the old stack*)
-  (sk' (sc' - idx') == sk (sc - sanum 1)) &&
+  (sk' (sc' - sc_idx) == sk (sc - sanum 1)) &&
   (* all other stack elements are not touched *)
-  conj (List.init (Int.pred idx) ~f:(fun i -> (sk' (sc' - sanum i) == sk (sc - sanum i))))
+  conj (List.init (Int.pred idx) ~f:(fun i ->
+      let sc_iidx = sanum (Int.(-) idx i) in
+      (sk' (sc' - sc_iidx) == sk (sc - sc_iidx))))
 
 (* effect of instruction on state st after j steps *)
 let enc_instruction ea st j is =
