@@ -141,6 +141,12 @@ let enc_stackarg ea j = function
   | Val x -> senum x
   | Tmpl -> ea.a <@@> [j]
 
+let enc_stack_ctr st j oc =
+  let (d, a) = delta_alpha oc in
+  let diff = sanum (a - d) in
+  let open Z3Ops in
+  st.stack_ctr @@ [j + one] == ((st.stack_ctr @@ [j]) + diff)
+
 let enc_push ea st j x =
   let open Z3Ops in
   let n = saconst "n" in
@@ -148,15 +154,14 @@ let enc_push ea st j x =
   let sk n = st.stack @@ (ea.xs @ [j; n])
   and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
   (* the stack counter before and after the PUSH *)
-  let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
+  let sc = st.stack_ctr @@ [j] in
   (* check for stack overflow depending on sort of stack counter *)
   let overflow_chk = match Z3.Sort.get_sort_kind !sasort with
     | BV_SORT -> ~! (nuw sc (sanum 1) `Add)
     | INT_SORT -> (sc + (sanum 1)) < (sanum 1024)
     | _ -> btm
   in
-  (* there will be one more element on the stack after PUSHing *)
-  (sc' == (sc + sanum 1)) &&
+  enc_stack_ctr st j (PUSH x) &&
   (* that element will be x *)
   sk' sc == enc_stackarg ea j x &&
   (* all old elements stay the same *)
@@ -175,7 +180,7 @@ let enc_pop ea st j =
   (* the stack counter before and after the POP *)
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   (* there will be one fewer element on the stack after POPing *)
-  (sc' == (sc - sanum 1)) &&
+  enc_stack_ctr st j POP &&
   (* all old elements stay the same *)
   forall n ((n < sc') ==> (sk' n == sk n)) &&
   (* check for exceptional halting *)
@@ -188,9 +193,7 @@ let enc_binop ea st j op =
   let n = saconst "n" in
   let sk n = st.stack @@ (ea.xs @ [j; n])
   and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
-  let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
-  (* two elements are consumed, one is added *)
-  (sc' == (sc - sanum 1)) &&
+  let sc = st.stack_ctr @@ [j] in
   (* the new top element is the result of applying op to the previous two *)
   (sk' (sc - sanum 2) == op (sk (sc - sanum 1)) (sk (sc - sanum 2))) &&
   (* all elements below remain unchanged *)
@@ -200,9 +203,9 @@ let enc_binop ea st j op =
   (* stack underflow occured or exceptional halting occured eariler *)
   (((sc - (sanum 2)) < (sanum 0)) || st.exc_halt @@ [j]))
 
-let enc_add ea st j = enc_binop ea st j (<+>)
-let enc_sub ea st j = enc_binop ea st j (<->)
-let enc_mul ea st j = enc_binop ea st j (<*>)
+let enc_add ea st j = enc_binop ea st j (<+>) <&> enc_stack_ctr st j ADD
+let enc_sub ea st j = enc_binop ea st j (<->) <&> enc_stack_ctr st j SUB
+let enc_mul ea st j = enc_binop ea st j (<*>) <&> enc_stack_ctr st j MUL
 
 let enc_swap ea st j idx =
   let idx = sanum (idx + 1) in
@@ -212,7 +215,7 @@ let enc_swap ea st j idx =
   and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   (* stack_counter remains unchanged *)
-  (sc' == sc) &&
+  enc_stack_ctr st j (SWAP I) &&
   (* the new top element is the 1+idx'th from the old stack *)
   (sk' (sc' - sanum 1) == sk (sc - idx)) &&
   (* the new 1+idx'th element is the top from the old stack*)
