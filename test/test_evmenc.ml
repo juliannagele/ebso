@@ -157,21 +157,6 @@ let misc =
           (eval_stack st m (List.length p) 0)
       );
 
-    (* pop *)
-
-    "test a program leading to an empty stack">:: (fun _ ->
-        let p = [PUSH (Val 1); PUSH (Val 1); ADD; POP] in
-        let ea = mk_enc_consts p (`User []) in
-        let st = mk_state ea "" in
-        let c = enc_program ea st in
-        let m = solve_model_exn [c] in
-        assert_equal
-          ~cmp:[%eq: Z3.Expr.t]
-          ~printer:Z3.Expr.to_string
-          (sanum 0)
-          (eval_stack_ctr st m (List.length p))
-      );
-
     (* gas cost *)
     "after 0 instruction no gas has been used">::(fun _ ->
         let ea = mk_enc_consts [] (`User []) in
@@ -499,7 +484,15 @@ let stack_ctr =
   List.map all_of_instr
     ~f:(fun oc -> "stack_ctr is changed correctly by " ^ [%show: instr] oc
                   >:: (fun _ -> test_stack_ctr [oc])) @
- []
+  [
+    "test a program leading to an empty stack">:: (fun _ ->
+        test_stack_ctr [PUSH (Val 1); PUSH (Val 1); ADD; POP]
+      );
+
+    "test stack counter for empty program">:: (fun _ ->
+        test_stack_ctr []
+      );
+  ]
 
 let exc_halt =
   (* test all instructions preserve exceptional halting *)
