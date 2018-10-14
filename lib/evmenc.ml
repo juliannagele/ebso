@@ -164,20 +164,12 @@ let enc_push ea st j x =
   and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
   (* the stack counter before the PUSH *)
   let sc = st.stack_ctr @@ [j] in
-  (* check for stack overflow depending on sort of stack counter *)
-  let overflow_chk = match Z3.Sort.get_sort_kind !sasort with
-    | BV_SORT -> ~! (nuw sc (sanum 1) `Add)
-    | INT_SORT -> (sc + (sanum 1)) < (sanum 1024)
-    | _ -> btm
-  in
   (* that element will be x *)
   sk' sc == enc_stackarg ea j x &&
   (* all old elements stay the same *)
   forall n ((n < sc) ==> (sk' n == sk n)) &&
   (* check for exceptional halting  *)
-  (st.exc_halt @@ [j + one] ==
-  (* stack overflow occured or exceptional halting occured eariler *)
-  (overflow_chk || st.exc_halt @@ [j]))
+  enc_exc_halt st j (PUSH x)
 
 let enc_pop ea st j =
   let open Z3Ops in
@@ -185,14 +177,12 @@ let enc_pop ea st j =
   (* the stack before and after the POP *)
   let sk n = st.stack @@ (ea.xs @ [j; n])
   and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
-  (* the stack counter before and after the POP *)
-  let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
+  (* the stack counter after the POP *)
+  let sc'= st.stack_ctr @@ [j + one] in
   (* all old elements stay the same *)
   forall n ((n < sc') ==> (sk' n == sk n)) &&
   (* check for exceptional halting *)
-  (st.exc_halt @@ [j + one] ==
-  (* stack underflow occured or exceptional halting occured eariler *)
-  ((sc == (sanum 0)) || st.exc_halt @@ [j]))
+  enc_exc_halt st j (POP)
 
 let enc_binop ea st j op =
   let open Z3Ops in
@@ -203,15 +193,11 @@ let enc_binop ea st j op =
   (* the new top element is the result of applying op to the previous two *)
   (sk' (sc - sanum 2) == op (sk (sc - sanum 1)) (sk (sc - sanum 2))) &&
   (* all elements below remain unchanged *)
-  forall n ((n < (sc - sanum 2)) ==> (sk' n == sk n)) &&
-  (* check for exceptional halting *)
-  (st.exc_halt @@ [j + one] ==
-  (* stack underflow occured or exceptional halting occured eariler *)
-  (((sc - (sanum 2)) < (sanum 0)) || st.exc_halt @@ [j]))
+  forall n ((n < (sc - sanum 2)) ==> (sk' n == sk n))
 
-let enc_add ea st j = enc_binop ea st j (<+>)
-let enc_sub ea st j = enc_binop ea st j (<->)
-let enc_mul ea st j = enc_binop ea st j (<*>)
+let enc_add ea st j = enc_binop ea st j (<+>) <&> enc_exc_halt st j (ADD)
+let enc_sub ea st j = enc_binop ea st j (<->) <&> enc_exc_halt st j (SUB)
+let enc_mul ea st j = enc_binop ea st j (<*>) <&> enc_exc_halt st j (MUL)
 
 let enc_swap ea st j idx =
   let idx = sanum (idx + 1) in
@@ -228,7 +214,7 @@ let enc_swap ea st j idx =
   forall n (((n < (sc - sanum 1)) && (n != (sc - idx)))
             ==> (sk' n == sk n)) &&
   (* exceptional halting carries over *)
-  (st.exc_halt @@ [j + one] == st.exc_halt @@ [j])
+  enc_exc_halt st j (SWAP I)
 
 (* effect of instruction on state st after j steps *)
 let enc_instruction ea st j is =
