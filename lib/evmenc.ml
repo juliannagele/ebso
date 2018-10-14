@@ -141,21 +141,6 @@ let enc_stackarg ea j = function
   | Val x -> senum x
   | Tmpl -> ea.a <@@> [j]
 
-let enc_exc_halt st j oc =
-  let (d, a) = delta_alpha oc in let diff = a - d in
-  let open Z3Ops in
-  let sc = st.stack_ctr @@ [j] in
-  let underflow = if Int.is_positive d then (sc - (sanum d)) < (sanum 0) else btm in
-  let overflow =
-    if Int.is_positive diff then
-      match Z3.Sort.get_sort_kind !sasort with
-      | BV_SORT -> ~! (nuw sc (sanum diff) `Add)
-      | INT_SORT -> (sc + (sanum diff)) > (sanum 1024)
-      | _ -> btm
-    else btm
-  in
-  st.exc_halt @@ [j + one] == (st.exc_halt @@ [j] || underflow || overflow)
-
 let enc_push ea st j x =
   let open Z3Ops in
   let n = saconst "n" in
@@ -167,9 +152,7 @@ let enc_push ea st j x =
   (* that element will be x *)
   sk' sc == enc_stackarg ea j x &&
   (* all old elements stay the same *)
-  forall n ((n < sc) ==> (sk' n == sk n)) &&
-  (* check for exceptional halting  *)
-  enc_exc_halt st j (PUSH x)
+  forall n ((n < sc) ==> (sk' n == sk n))
 
 let enc_pop ea st j =
   let open Z3Ops in
@@ -180,9 +163,7 @@ let enc_pop ea st j =
   (* the stack counter after the POP *)
   let sc'= st.stack_ctr @@ [j + one] in
   (* all old elements stay the same *)
-  forall n ((n < sc') ==> (sk' n == sk n)) &&
-  (* check for exceptional halting *)
-  enc_exc_halt st j (POP)
+  forall n ((n < sc') ==> (sk' n == sk n))
 
 let enc_binop ea st j op =
   let open Z3Ops in
@@ -195,9 +176,9 @@ let enc_binop ea st j op =
   (* all elements below remain unchanged *)
   forall n ((n < (sc - sanum 2)) ==> (sk' n == sk n))
 
-let enc_add ea st j = enc_binop ea st j (<+>) <&> enc_exc_halt st j (ADD)
-let enc_sub ea st j = enc_binop ea st j (<->) <&> enc_exc_halt st j (SUB)
-let enc_mul ea st j = enc_binop ea st j (<*>) <&> enc_exc_halt st j (MUL)
+let enc_add ea st j = enc_binop ea st j (<+>)
+let enc_sub ea st j = enc_binop ea st j (<->)
+let enc_mul ea st j = enc_binop ea st j (<*>)
 
 let enc_swap ea st j idx =
   let idx = sanum (idx + 1) in
@@ -212,9 +193,7 @@ let enc_swap ea st j idx =
   (sk' (sc' - idx) == sk (sc - sanum 1)) &&
   (* all other stack elements are not touched *)
   forall n (((n < (sc - sanum 1)) && (n != (sc - idx)))
-            ==> (sk' n == sk n)) &&
-  (* exceptional halting carries over *)
-  enc_exc_halt st j (SWAP I)
+            ==> (sk' n == sk n))
 
 (* effect of instruction on state st after j steps *)
 let enc_instruction ea st j is =
@@ -227,15 +206,28 @@ let enc_instruction ea st j is =
     | MUL -> enc_mul ea st j
     | SWAP idx -> enc_swap ea st j (idx_to_enum idx)
   in
+  let (d, a) = delta_alpha is in let diff = (a - d) in
   let open Z3Ops in
+  let sc = st.stack_ctr @@ [j] in
   let enc_used_gas =
     st.used_gas @@ [j + one] == ((st.used_gas @@ [j]) + (num (gas_cost is)))
   in
   let enc_stack_ctr =
-    let (d, a) = delta_alpha is in let diff = sanum (Int.(-) a d) in
-    st.stack_ctr @@ [j + one] == ((st.stack_ctr @@ [j]) + diff)
+    st.stack_ctr @@ [j + one] == (sc + sanum diff)
   in
-  enc_instr && enc_used_gas && enc_stack_ctr
+  let enc_exc_halt =
+    let underflow = if Int.is_positive d then (sc - (sanum d)) < (sanum 0) else btm in
+    let overflow =
+      if Int.is_positive diff then
+        match Z3.Sort.get_sort_kind !sasort with
+        | BV_SORT -> ~! (nuw sc (sanum diff) `Add)
+        | INT_SORT -> (sc + (sanum diff)) > (sanum 1024)
+        | _ -> btm
+      else btm
+    in
+    st.exc_halt @@ [j + one] == (st.exc_halt @@ [j] || underflow || overflow)
+  in
+  enc_instr && enc_used_gas && enc_stack_ctr && enc_exc_halt
 
 let enc_search_space ea st =
   let open Z3Ops in
