@@ -20,3 +20,18 @@
 	
   * [Google](https://cloud.google.com/blog/products/data-analytics/ethereum-bigquery-public-dataset-smart-contract-analytics)
 
+* possible reasons for unknown opcodes:
+  * 0xfe is supposed to be unknown:
+    [EIP 141](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-141.md)
+  * 0xfd is REVERT:
+    [EIP 140](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-140.md)
+  * 0xfa is STATICCALL: [EIP 214](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-214.md)
+  * solidity does use other opcodes not specified in the yellow paper, see
+    [Instruction.h](https://github.com/ethereum/solidity/blob/develop/libevmasm/Instruction.h)
+  * solc adds metadata to the end of the deployed bytecode:
+    `0xa1 0x65 'b' 'z' 'z' 'r' '0' 0x58 0x20 <32 bytes swarm hash> 0x00 0x29`, see
+    [solidity doc](https://solidity.readthedocs.io/en/develop/metadata.html#encoding-of-the-metadata-hash-in-the-bytecode)
+    and [manticore issue](https://github.com/trailofbits/manticore/issues/527)
+  * contracts might store data after the code, see
+    [stackexchange](https://ethereum.stackexchange.com/questions/15050/extra-byte-in-the-thedao-v1-bytecode/15289#15289)
+    and [go-ethereum issue](https://github.com/ethereum/go-ethereum/issues/14376)
