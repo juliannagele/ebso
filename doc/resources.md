@@ -21,13 +21,19 @@
   * [Google](https://cloud.google.com/blog/products/data-analytics/ethereum-bigquery-public-dataset-smart-contract-analytics)
 
 * possible reasons for unknown opcodes:
-  * 0xfe is supposed to be unknown:
+  * 0xfe is designated to be invalid:
     [EIP 141](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-141.md)
   * 0xfd is REVERT:
     [EIP 140](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-140.md)
   * 0xfa is STATICCALL: [EIP 214](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-214.md)
-  * solidity does use other opcodes not specified in the yellow paper, see
-    [Instruction.h](https://github.com/ethereum/solidity/blob/develop/libevmasm/Instruction.h)
+  * 0x1b, 0x1c, 0x1d are SHL, SHR, SAR:
+    [EIP 145](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-145.md)
+  * 0x3f is EXTCODEHASH:
+    [EIP 1052](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1052.md)
+  * 0xb0 to 0xb9 are "Subroutines and Static Jumps":
+    [EIP 615](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-615.md)
+  * 0xf5 is CREATE2:
+    [EIP 1014](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md)
   * solc adds metadata to the end of the deployed bytecode:
     `0xa1 0x65 'b' 'z' 'z' 'r' '0' 0x58 0x20 <32 bytes swarm hash> 0x00 0x29`, see
     [solidity doc](https://solidity.readthedocs.io/en/develop/metadata.html#encoding-of-the-metadata-hash-in-the-bytecode)
