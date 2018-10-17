@@ -38,7 +38,7 @@ type enc_consts = {
 
 let mk_enc_consts p sis =
   let sis = match sis with
-    | `All -> Instruction.all
+    | `All -> Instruction.encodable
     | `Progr -> sis_of_progr p
     | `User sis -> List.stable_dedup sis
   in
@@ -151,6 +151,7 @@ let enc_instruction ea st j is =
     | SUB -> enc_sub ea st j
     | MUL -> enc_mul ea st j
     | SWAP idx -> enc_swap ea st j (idx_to_enum idx)
+    | _ -> failwith "not implemented"
   in
   let (d, a) = delta_alpha is in let diff = (a - d) in
   let open Z3Ops in

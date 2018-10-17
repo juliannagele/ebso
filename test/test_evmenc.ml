@@ -214,13 +214,13 @@ let effect =
 
 let pres_stack =
   (* test preservation of stack elements for all opcodes *)
-  List.map Instruction.all
+  List.map Instruction.encodable
     ~f:(fun oc -> "preservation of stack elements by " ^ [%show: Instruction.t] oc
                   >:: (fun _ -> test_stack_pres oc))
 
 let stack_ctr =
   (* test all instructions manipulate stack counter correctly *)
-  List.map Instruction.all
+  List.map Instruction.encodable
     ~f:(fun oc -> "stack_ctr is changed correctly by " ^ [%show: Instruction.t] oc
                   >:: (fun _ -> test_stack_ctr [oc])) @
   [
@@ -235,11 +235,11 @@ let stack_ctr =
 
 let exc_halt =
   (* test all instructions preserve exceptional halting *)
-  List.map Instruction.all
+  List.map Instruction.encodable
     ~f:(fun oc -> "exc_halt is preserved by " ^ [%show: Instruction.t] oc
                   >:: (fun _ -> test_exc_halt_pres [oc])) @
   (* test no exceptional halting due to stack underflow *)
-  List.map Instruction.all
+  List.map Instruction.encodable
     ~f:(fun oc -> "no exc_halt due to stack underflow by "  ^ [%show: Instruction.t] oc
                   >:: (fun _ -> test_no_exc_halt [oc])) @
   [
