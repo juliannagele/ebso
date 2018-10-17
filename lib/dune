@@ -1,5 +1,5 @@
 (library (name ebso)
  (wrapped false)
- (libraries core z3)
- (preprocess (pps ppx_sexp_conv ppx_enumerate ppx_deriving.std))
+ (libraries core z3 sedlex)
+ (preprocess (pps ppx_sexp_conv ppx_enumerate ppx_deriving.std sedlex.ppx))
 )
