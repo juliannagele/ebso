@@ -1,7 +1,8 @@
-open OUnit2
-open Evmenc
-open Z3util
 open Core
+open OUnit2
+open Z3util
+open Instruction
+open Evmenc
 
 (* set low for fast testing *)
 let ses = 3 and sas = 4

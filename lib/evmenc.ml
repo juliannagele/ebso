@@ -1,5 +1,6 @@
 open Core
 open Z3util
+open Instruction
 
 (* stack address size; design decision/quick fix: the slot 2^sas - 1 is reserved
    for exception handling, otherwise the stack counter wraps around
@@ -13,73 +14,31 @@ let sanum n = Z3.Expr.mk_numeral_int !ctxt n !sasort
 let seconst s = Z3.Expr.mk_const_s !ctxt s !sesort
 let saconst s = Z3.Expr.mk_const_s !ctxt s !sasort
 
-type stackarg =
-  | Val of int [@printer fun fmt x -> fprintf fmt "%i" x]
-  | Tmpl
-[@@deriving show { with_path = false }, eq, sexp]
-
-let stackarg_of_sexp s = match s with
-  | Sexp.Atom i -> if String.equal i "Tmpl" then Tmpl else Val (Int.of_string i)
-  | Sexp.List _ -> failwith "could not parse argument of PUSH"
-
-let all_of_stackarg = [Tmpl]
-
-type idx =
-  | I [@value 1] | II | III | IV | V
-  | VI | VII | VIII | IX | X
-  | XI | XII | XIII | XIV | XV | XVI
-[@@deriving show { with_path = false }, eq, enum, enumerate, sexp]
-
-type instr =
-  | ADD
-  | MUL
-  | PUSH of stackarg [@printer fun fmt x -> fprintf fmt "PUSH %s" (show_stackarg x)]
-  | POP
-  | SUB
-  | SWAP of idx
-[@@deriving show { with_path = false }, eq, enumerate, sexp]
-
-type progr = instr list [@@deriving show { with_path = false }, eq, sexp]
+type progr = Instruction.t list [@@deriving show { with_path = false }, eq, sexp]
 
 let sis_of_progr p =
   List.map p ~f:(function | PUSH _ -> PUSH Tmpl | i -> i) |> List.stable_dedup
-
-let delta_alpha = function
-  | ADD -> (2, 1)
-  | MUL -> (2, 1)
-  | PUSH _ -> (0, 1)
-  | POP -> (1, 0)
-  | SUB -> (2, 1)
-  | SWAP i -> (idx_to_enum i + 1, idx_to_enum i + 1)
 
 let stack_depth p =
   Int.abs @@ Tuple.T2.get2 @@ List.fold_left ~init:(0, 0) p
     ~f:(fun (sc, sd) is ->
         let (d, a) = delta_alpha is in (sc - d + a, min sd (sc - d)))
 
-let gas_cost = function
-  | ADD -> 3
-  | MUL -> 5
-  | PUSH _ -> 3
-  | POP -> 2
-  | SUB -> 3
-  | SWAP _ -> 3
-
 let total_gas_cost = List.fold ~init:0 ~f:(fun gc i -> gc + gas_cost i)
 
 type enc_consts = {
   p : progr;
-  sis : instr list;
+  sis : Instruction.t list;
   kt : Z3.Expr.expr;
   fis : Z3.FuncDecl.func_decl;
   a : Z3.FuncDecl.func_decl;
-  opcodes : (instr * int) list;
+  opcodes : (Instruction.t * int) list;
   xs : Z3.Expr.expr list;
 }
 
 let mk_enc_consts p sis =
   let sis = match sis with
-    | `All -> all_of_instr
+    | `All -> Instruction.all
     | `Progr -> sis_of_progr p
     | `User sis -> List.stable_dedup sis
   in
@@ -122,7 +81,7 @@ let mk_state ea idx =
     used_gas = func_decl ("used_gas" ^ idx) [int_sort] int_sort;
   }
 
-let enc_opcode ea i = List.Assoc.find_exn ea.opcodes ~equal:[%eq: instr] i
+let enc_opcode ea i = List.Assoc.find_exn ea.opcodes ~equal:[%eq: Instruction.t] i
 
 let dec_opcode ea i =
   List.Assoc.find_exn (List.Assoc.inverse ea.opcodes) ~equal:[%eq: int] i

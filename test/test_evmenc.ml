@@ -1,7 +1,8 @@
-open OUnit2
-open Evmenc
-open Z3util
 open Core
+open OUnit2
+open Z3util
+open Instruction
+open Evmenc
 
 (* set low for fast testing *)
 let ses = 3 and sas = 6
@@ -213,14 +214,14 @@ let effect =
 
 let pres_stack =
   (* test preservation of stack elements for all opcodes *)
-  List.map all_of_instr
-    ~f:(fun oc -> "preservation of stack elements by " ^ [%show: instr] oc
+  List.map Instruction.all
+    ~f:(fun oc -> "preservation of stack elements by " ^ [%show: Instruction.t] oc
                   >:: (fun _ -> test_stack_pres oc))
 
 let stack_ctr =
   (* test all instructions manipulate stack counter correctly *)
-  List.map all_of_instr
-    ~f:(fun oc -> "stack_ctr is changed correctly by " ^ [%show: instr] oc
+  List.map Instruction.all
+    ~f:(fun oc -> "stack_ctr is changed correctly by " ^ [%show: Instruction.t] oc
                   >:: (fun _ -> test_stack_ctr [oc])) @
   [
     "test a program leading to an empty stack">:: (fun _ ->
@@ -234,12 +235,12 @@ let stack_ctr =
 
 let exc_halt =
   (* test all instructions preserve exceptional halting *)
-  List.map all_of_instr
-    ~f:(fun oc -> "exc_halt is preserved by " ^ [%show: instr] oc
+  List.map Instruction.all
+    ~f:(fun oc -> "exc_halt is preserved by " ^ [%show: Instruction.t] oc
                   >:: (fun _ -> test_exc_halt_pres [oc])) @
   (* test no exceptional halting due to stack underflow *)
-  List.map all_of_instr
-    ~f:(fun oc -> "no exc_halt due to stack underflow by "  ^ [%show: instr] oc
+  List.map Instruction.all
+    ~f:(fun oc -> "no exc_halt due to stack underflow by "  ^ [%show: Instruction.t] oc
                   >:: (fun _ -> test_no_exc_halt [oc])) @
   [
     "valid program does not halt exceptionally">:: (fun _ ->
@@ -383,7 +384,7 @@ let misc =
 
     "encoding and decoding an opcode is the identity">:: (fun _ ->
         let ea = mk_enc_consts [] (`User [SUB; ADD; POP]) in
-        assert_equal ~cmp:[%eq: instr] ~printer:[%show: instr]
+        assert_equal ~cmp:[%eq: Instruction.t] ~printer:[%show: Instruction.t]
           ADD (dec_opcode ea (enc_opcode ea ADD))
       );
 
@@ -428,7 +429,7 @@ let misc =
           3 (stack_depth p)
       );
 
-    (* sis_of_progr / all_of_instr *)
+    (* sis_of_progr / Instruction.all *)
 
     "compute instruction set of given program" >::(fun _ ->
         let p = [SUB; PUSH (Val 1); PUSH (Val 1); ADD; ADD; PUSH (Val 2); POP] in
@@ -439,7 +440,7 @@ let misc =
     "list of all instructions" >::(fun _ ->
         assert_bool "not all instructions present"
           (List.for_all [ADD; MUL; PUSH Tmpl; POP; SUB]
-             ~f:(fun i -> List.mem all_of_instr i ~equal:[%eq: instr]))
+             ~f:(fun i -> List.mem Instruction.all i ~equal:[%eq: Instruction.t]))
       );
 
 ]
