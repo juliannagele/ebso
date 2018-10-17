@@ -41,9 +41,9 @@ type t =
   (* 60s & 70s:  Push Operations *)
   | PUSH of stackarg [@printer fun fmt x -> fprintf fmt "PUSH %s" (show_stackarg x)]
   (* 80s:  Duplication Operations *)
-  | DUP of idx
+  | DUP of idx [@printer fun fmt i -> fprintf fmt "DUP%i" (idx_to_enum i)]
   (* 90s:  Exchange Operations *)
-  | SWAP of idx
+  | SWAP of idx [@printer fun fmt i -> fprintf fmt "SWAP%i" (idx_to_enum i)]
   (* a0s:  Logging Operations *)
   | LOG0 | LOG1 | LOG2 | LOG3 | LOG4
   (* b0s: EIP 615 *)
