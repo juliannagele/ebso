@@ -137,6 +137,33 @@ let suite =
            PUSH (Val 0); SUB; PUSH (Val 42); ADD; SWAP I; JUMP; STOP]
           (parse_hex buf)
       );
+
+    "parse contract from bytecode including metadata tail produced by solc" >:: (fun _ ->
+        let s =
+          "608060405234801561001057600080fd5b5060a68061001f6000396000f300608060\
+           405260043610603e5763ffffffff6000350416633120d43481146043575b600080fd\
+           5b348015604e57600080fd5b50605b60ff600435166071565b6040805160ff909216\
+           8252519081900360200190f35b600003602a01905600a165627a7a72305820468832\
+           51ed324a0644496b72d47a9394c6638c1a7f2bbdaa62e9a26b64b041800029"
+        in
+        let buf = Latin1.from_string s in
+        assert_equal ~cmp:[%eq: Instruction.t list] ~printer:[%show: Instruction.t list]
+          [PUSH (Val 128); PUSH (Val 64); MSTORE; CALLVALUE; DUP I; ISZERO;
+           PUSH (Val 16); JUMPI; PUSH (Val 0); DUP I; REVERT; JUMPDEST; POP;
+           PUSH (Val 166); DUP I; PUSH (Val 31); PUSH (Val 0); CODECOPY;
+           PUSH (Val 0); RETURN; STOP; PUSH (Val 128); PUSH (Val 64); MSTORE;
+           PUSH (Val 4); CALLDATASIZE; LT; PUSH (Val 62); JUMPI;
+           PUSH (Val 4294967295); PUSH (Val 0); CALLDATALOAD; DIV; AND;
+           PUSH (Val 824235060); DUP II; EQ; PUSH (Val 67); JUMPI; JUMPDEST;
+           PUSH (Val 0); DUP I; REVERT; JUMPDEST; CALLVALUE; DUP I; ISZERO;
+           PUSH (Val 78); JUMPI; PUSH (Val 0); DUP I; REVERT; JUMPDEST; POP;
+           PUSH (Val 91); PUSH (Val 255); PUSH (Val 4); CALLDATALOAD; AND;
+           PUSH (Val 113); JUMP; JUMPDEST; PUSH (Val 64); DUP I; MLOAD;
+           PUSH (Val 255); SWAP I; SWAP III; AND; DUP III; MSTORE; MLOAD; SWAP I;
+           DUP II; SWAP I; SUB; PUSH (Val 32); ADD; SWAP I; RETURN; JUMPDEST;
+           PUSH (Val 0); SUB; PUSH (Val 42); ADD; SWAP I; JUMP; STOP]
+          (parse_hex buf)
+      );
   ]
 
 let () =

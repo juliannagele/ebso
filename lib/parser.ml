@@ -55,6 +55,9 @@ let parse_hex_bytes n buf =
 let parse_hex buf =
   let rec parse_token acc =
     match%sedlex buf with
+    (* solc adds hash of contract metadata behin conract like so:
+       0xa1 0x65 'b' 'z' 'z' 'r' '0' 0x58 0x20 <32 bytes swarm hash> 0x00 0x29 *)
+    | "a165627a7a72305820", Rep (hexdigit, 64), "0029" -> parse_token acc
     | "00" -> parse_token (STOP :: acc)
     | "01" -> parse_token (ADD :: acc)
     | "02" -> parse_token (MUL :: acc)
