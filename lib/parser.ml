@@ -116,7 +116,7 @@ let parse_hex buf =
     | "56" -> parse_token (JUMP :: acc)
     | "57" -> parse_token (JUMPI :: acc)
     | "58" -> parse_token (PC :: acc)
-    | "59" -> parse_token (MSIZE       :: acc)
+    | "59" -> parse_token (MSIZE :: acc)
     | "5a" -> parse_token (GAS :: acc)
     | "5b" -> parse_token (JUMPDEST :: acc)
     | ('6' | '7'), hexdigit ->
