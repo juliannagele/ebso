@@ -15,25 +15,25 @@ let parse_idx prefix s =
   Option.value_exn ~message:("parse " ^ prefix ^ " index failed") idxo
 
 let parse buf =
-  let rec parse_token acc buf =
+  let rec parse_token acc =
     match%sedlex buf with
-    | white_space -> parse_token acc buf
-    | "ADD" -> parse_token (ADD :: acc) buf
-    | "MUL" -> parse_token (MUL :: acc) buf
-    | "POP" -> parse_token (POP :: acc) buf
-    | "PUSH", Opt re32 -> parse_stackarg acc buf
-    | "SUB" -> parse_token (SUB :: acc) buf
+    | white_space -> parse_token acc
+    | "ADD" -> parse_token (ADD :: acc)
+    | "MUL" -> parse_token (MUL :: acc)
+    | "POP" -> parse_token (POP :: acc)
+    | "PUSH", Opt re32 -> parse_stackarg acc
+    | "SUB" -> parse_token (SUB :: acc)
     | "SWAP", re16 ->
       let idx = parse_idx "SWAP" (Latin1.lexeme buf) in
-      parse_token (SWAP idx :: acc) buf
+      parse_token (SWAP idx :: acc)
     | eof -> acc
     | _ -> raise (SyntaxError (lexeme_start buf))
-  and parse_stackarg acc buf =
+  and parse_stackarg acc =
     match%sedlex buf with
-    | "Tmpl" -> parse_token (PUSH Tmpl :: acc) buf
+    | "Tmpl" -> parse_token (PUSH Tmpl :: acc)
     | "0x", Plus hexdigit | Plus digit ->
       let i = Int.of_string @@ Latin1.lexeme buf in
-      parse_token (PUSH (Val i) :: acc) buf
+      parse_token (PUSH (Val i) :: acc)
     | _ -> raise (SyntaxError (lexeme_start buf))
   in
-  parse_token [] buf |> List.rev
+  parse_token [] |> List.rev
