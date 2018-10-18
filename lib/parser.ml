@@ -27,13 +27,13 @@ let parse buf =
       let idx = parse_idx "SWAP" (Latin1.lexeme buf) in
       parse_token (SWAP idx :: acc) buf
     | eof -> acc
-    | _ -> raise (SyntaxError (Sedlexing.lexeme_start buf))
+    | _ -> raise (SyntaxError (lexeme_start buf))
   and parse_stackarg acc buf =
     match%sedlex buf with
     | "Tmpl" -> parse_token (PUSH Tmpl :: acc) buf
     | "0x", Plus hexdigit | Plus digit ->
       let i = Int.of_string @@ Latin1.lexeme buf in
       parse_token (PUSH (Val i) :: acc) buf
-    | _ -> raise (SyntaxError (Sedlexing.lexeme_start buf))
+    | _ -> raise (SyntaxError (lexeme_start buf))
   in
   parse_token [] buf |> List.rev
