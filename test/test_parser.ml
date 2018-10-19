@@ -40,6 +40,14 @@ let suite =
           (parse buf)
       );
 
+    "parse all instructions" >:: (fun _ ->
+        let s = Program.show Instruction.all in
+        let buf = Latin1.from_string s in
+        assert_equal ~cmp:[%eq: Instruction.t list] ~printer:[%show: Instruction.t list]
+          Instruction.all
+          (parse buf)
+      );
+
     "parse instruction list fail B" >:: (fun _ ->
         let buf = Latin1.from_string "ADD B SWAP1" in
         assert_raises (SyntaxError 4)
