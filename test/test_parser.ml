@@ -33,7 +33,7 @@ let suite =
       );
 
     "parse instruction list" >:: (fun _ ->
-        let s = List.to_string ~f:Instruction.show Instruction.encodable in
+        let s = Program.show Instruction.encodable in
         let buf = Latin1.from_string s in
         assert_equal ~cmp:[%eq: Instruction.t list] ~printer:[%show: Instruction.t list]
           Instruction.encodable
