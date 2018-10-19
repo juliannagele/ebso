@@ -54,7 +54,7 @@ type t =
   (* EIP 1014 *)
   | CREATE2
   | STATICCALL | REVERT | INVALID | SELFDESTRUCT
-[@@deriving show, eq, enumerate, sexp]
+[@@deriving show {with_path = false}, eq, enumerate, sexp]
 
 (* list of instructions that are encodable, i.e., can be super optimized *)
 let encodable = [
