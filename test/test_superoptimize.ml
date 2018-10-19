@@ -222,7 +222,7 @@ let suite =
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: progr] ~printer:[%show: progr]
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
           [PUSH (Val 2)] (dec_super_opt ea m)
       );
 
@@ -232,7 +232,7 @@ let suite =
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: progr] ~printer:[%show: progr]
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
           [] (dec_super_opt ea m)
       );
 
@@ -242,7 +242,7 @@ let suite =
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: progr] ~printer:[%show: progr]
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
           [POP; PUSH (Val 0)] (dec_super_opt ea m)
       );
 
@@ -252,7 +252,7 @@ let suite =
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: progr] ~printer:[%show: progr]
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
           [] (dec_super_opt ea m)
       );
 
@@ -262,7 +262,7 @@ let suite =
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: progr] ~printer:[%show: progr]
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
           [PUSH (Val 2)] (dec_super_opt ea m)
       );
 
@@ -274,7 +274,7 @@ let suite =
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: progr] ~printer:[%show: progr]
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
           [] (dec_super_opt ea m)
       );
 
@@ -284,7 +284,7 @@ let suite =
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: progr] ~printer:[%show: progr]
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
           [ADD] (dec_super_opt ea m)
       );
 
@@ -294,7 +294,7 @@ let suite =
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: progr] ~printer:[%show: progr]
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
           [PUSH (Val 3); SUB] (dec_super_opt ea m)
       );
 

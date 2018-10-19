@@ -1,6 +1,7 @@
 open Core
 open Z3util
 open Instruction
+open Program
 
 (* stack address size; design decision/quick fix: the slot 2^sas - 1 is reserved
    for exception handling, otherwise the stack counter wraps around
@@ -14,20 +15,8 @@ let sanum n = Z3.Expr.mk_numeral_int !ctxt n !sasort
 let seconst s = Z3.Expr.mk_const_s !ctxt s !sesort
 let saconst s = Z3.Expr.mk_const_s !ctxt s !sasort
 
-type progr = Instruction.t list [@@deriving show { with_path = false }, eq, sexp]
-
-let sis_of_progr p =
-  List.map p ~f:(function | PUSH _ -> PUSH Tmpl | i -> i) |> List.stable_dedup
-
-let stack_depth p =
-  Int.abs @@ Tuple.T2.get2 @@ List.fold_left ~init:(0, 0) p
-    ~f:(fun (sc, sd) is ->
-        let (d, a) = delta_alpha is in (sc - d + a, min sd (sc - d)))
-
-let total_gas_cost = List.fold ~init:0 ~f:(fun gc i -> gc + gas_cost i)
-
 type enc_consts = {
-  p : progr;
+  p : Program.t;
   sis : Instruction.t list;
   kt : Z3.Expr.expr;
   fis : Z3.FuncDecl.func_decl;

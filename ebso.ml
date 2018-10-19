@@ -59,9 +59,9 @@ let () =
         let progr =
           if direct then progr else In_channel.read_all progr
         in
-        let p = Sexp.of_string progr |> progr_of_sexp in
+        let p = Sexp.of_string progr |> Program.t_of_sexp in
         super_optimize p `All p_model p_constr p_smt
-        |> show_progr
+        |> Program.show
         |> print_string
     ]
   |> Command.run ~version:"0.1"

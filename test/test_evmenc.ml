@@ -2,6 +2,7 @@ open Core
 open OUnit2
 open Z3util
 open Instruction
+open Program
 open Evmenc
 
 (* set low for fast testing *)
@@ -433,7 +434,7 @@ let misc =
 
     "compute instruction set of given program" >::(fun _ ->
         let p = [SUB; PUSH (Val 1); PUSH (Val 1); ADD; ADD; PUSH (Val 2); POP] in
-        assert_equal ~cmp:[%eq: progr] ~printer:[%show: progr]
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
           [SUB; PUSH Tmpl; ADD; POP] (sis_of_progr p)
       );
 

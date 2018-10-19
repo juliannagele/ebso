@@ -73,42 +73,42 @@ let suite =
 
     "parse PUSH1 from bytexode" >:: (fun _ ->
         let buf = Latin1.from_string "6080" in
-        assert_equal ~cmp:[%eq: Instruction.t list] ~printer:[%show: Instruction.t list]
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
           [PUSH (Val 128)] (parse_hex buf)
       );
 
     "parse PUSH32 from bytexode" >:: (fun _ ->
         let s = "7f0000000000000000000000000000000000000000000000000000000000000010" in
         let buf = Latin1.from_string s in
-        assert_equal ~cmp:[%eq: Instruction.t list] ~printer:[%show: Instruction.t list]
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
           [PUSH (Val 16)] (parse_hex buf)
       );
 
     "parse DUP1 from bytexode" >:: (fun _ ->
         let s = "80" in
         let buf = Latin1.from_string s in
-        assert_equal ~cmp:[%eq: Instruction.t list] ~printer:[%show: Instruction.t list]
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
           [DUP I] (parse_hex buf)
       );
 
     "parse DUP16 from bytexode" >:: (fun _ ->
         let s = "8f" in
         let buf = Latin1.from_string s in
-        assert_equal ~cmp:[%eq: Instruction.t list] ~printer:[%show: Instruction.t list]
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
           [DUP XVI] (parse_hex buf)
       );
 
     "parse SWAP1 from bytexode" >:: (fun _ ->
         let s = "90" in
         let buf = Latin1.from_string s in
-        assert_equal ~cmp:[%eq: Instruction.t list] ~printer:[%show: Instruction.t list]
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
           [SWAP I] (parse_hex buf)
       );
 
     "parse SWAP16 from bytexode" >:: (fun _ ->
         let s = "9f" in
         let buf = Latin1.from_string s in
-        assert_equal ~cmp:[%eq: Instruction.t list] ~printer:[%show: Instruction.t list]
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
           [SWAP XVI] (parse_hex buf)
       );
 
@@ -120,7 +120,7 @@ let suite =
            8252519081900360200190f35b600003602a01905600"
         in
         let buf = Latin1.from_string s in
-        assert_equal ~cmp:[%eq: Instruction.t list] ~printer:[%show: Instruction.t list]
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
           [PUSH (Val 128); PUSH (Val 64); MSTORE; CALLVALUE; DUP I; ISZERO;
            PUSH (Val 16); JUMPI; PUSH (Val 0); DUP I; REVERT; JUMPDEST; POP;
            PUSH (Val 166); DUP I; PUSH (Val 31); PUSH (Val 0); CODECOPY;
@@ -147,7 +147,7 @@ let suite =
            51ed324a0644496b72d47a9394c6638c1a7f2bbdaa62e9a26b64b041800029"
         in
         let buf = Latin1.from_string s in
-        assert_equal ~cmp:[%eq: Instruction.t list] ~printer:[%show: Instruction.t list]
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
           [PUSH (Val 128); PUSH (Val 64); MSTORE; CALLVALUE; DUP I; ISZERO;
            PUSH (Val 16); JUMPI; PUSH (Val 0); DUP I; REVERT; JUMPDEST; POP;
            PUSH (Val 166); DUP I; PUSH (Val 31); PUSH (Val 0); CODECOPY;
