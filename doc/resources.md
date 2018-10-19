@@ -41,3 +41,7 @@
   * contracts might store data after the code, see
     [stackexchange](https://ethereum.stackexchange.com/questions/15050/extra-byte-in-the-thedao-v1-bytecode/15289#15289)
     and [go-ethereum issue](https://github.com/ethereum/go-ethereum/issues/14376)
+
+* Related Work
+  * [Under-Optimized Smart Contracts Devour Your Money](https://arxiv.org/pdf/1703.03994.pdf)
+  * [Towards saving money in using smart contracts](https://dl.acm.org/citation.cfm?id=3183420&dl=ACM&coll=DL)
