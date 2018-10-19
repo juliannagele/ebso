@@ -30,6 +30,7 @@ let parse buf =
     | _ -> raise (SyntaxError (lexeme_start buf))
   and parse_stackarg acc =
     match%sedlex buf with
+    | white_space -> parse_stackarg acc
     | "Tmpl" -> parse_token (PUSH Tmpl :: acc)
     | "0x", Plus hexdigit | Plus digit ->
       let i = Int.of_string @@ Latin1.lexeme buf in
