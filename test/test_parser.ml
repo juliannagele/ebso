@@ -106,6 +106,13 @@ let suite =
           (parse buf)
       );
 
+    "parse program starting with PUSH in sexplist format" >:: (fun _ ->
+        let buf = Latin1.from_string "((PUSH 1) (PUSH 1) ADD)" in
+        assert_equal ~cmp:[%eq: Instruction.t list] ~printer:[%show: Instruction.t list]
+          [PUSH (Val 1); PUSH (Val 1); ADD]
+          (parse buf)
+      );
+
     (* hex parsing *)
 
     "parse_hex_idx DUP1" >:: (fun _ ->

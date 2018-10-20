@@ -148,7 +148,7 @@ let parse buf =
   | white_spaces, '[', white_spaces, ']', white_spaces, eof -> []
   | white_spaces, '[', white_spaces -> parse_ocamllist ([parse_instruction buf])
   | white_spaces, '(', white_spaces, ')', white_spaces, eof -> []
-  | white_spaces, '(', white_spaces -> parse_sexplist ([parse_instruction buf])
+  | white_spaces, '(', white_spaces -> parse_sexplist ([])
   | white_spaces -> parse_wslist []
   | _ -> raise (SyntaxError (lexeme_start buf))
 
