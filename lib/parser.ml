@@ -8,121 +8,149 @@ let digit = [%sedlex.regexp? '0'..'9']
 let hexdigit = [%sedlex.regexp? digit | 'a' .. 'f']
 let re32 = [%sedlex.regexp? '4' .. '9' | '1' .. '2', Opt digit | '3', Opt '0' .. '2']
 let re16 = [%sedlex.regexp? '2' .. '9' | '1', Opt '0' .. '6']
+let reXVI = [%sedlex.regexp? 'I',Opt('I'|"II"|'V'|'X') | 'V',Opt('I'|"II"|"III") | 'X',Opt('I'|"II"|"III"|"IV"|"V"|"VI")]
+let white_spaces = [%sedlex.regexp? Star white_space]
 
 let parse_idx prefix s =
   let s = String.chop_prefix_exn ~prefix:prefix s in
   let idxo = idx_of_enum @@ Int.of_string s in
   Option.value_exn ~message:("parse " ^ prefix ^ " index failed") idxo
 
+let parse_idxI prefix s =
+  let s = String.chop_prefix_exn ~prefix:prefix s in
+  idx_of_sexp (Atom s)
+
+let rec parse_stackarg buf =
+  match%sedlex buf with
+  | white_space -> parse_stackarg buf
+  | "Tmpl" -> Tmpl
+  | "0x", Plus hexdigit | Plus digit -> Val (Int.of_string @@ Latin1.lexeme buf)
+  | _ -> raise (SyntaxError (lexeme_start buf))
+
+let  parse_instruction buf =
+  match%sedlex buf with
+  | "STOP" -> STOP
+  | "ADD" -> ADD
+  | "MUL" -> MUL
+  | "SUB" -> SUB
+  | "DIV" -> DIV
+  | "SDIV" -> SDIV
+  | "MOD" -> MOD
+  | "SMOD" -> SMOD
+  | "ADDMOD" -> ADDMOD
+  | "MULMOD" -> MULMOD
+  | "EXP" -> EXP
+  | "SIGNEXTEND" -> SIGNEXTEND
+  | "LT" -> LT
+  | "GT" -> GT
+  | "SLT" -> SLT
+  | "SGT" -> SGT
+  | "EQ" -> EQ
+  | "ISZERO" -> ISZERO
+  | "AND" -> AND
+  | "OR" -> OR
+  | "XOR" -> XOR
+  | "NOT" -> NOT
+  | "BYTE" -> BYTE
+  | "SHL" -> SHL
+  | "SHR" -> SHR
+  | "SAR" -> SAR
+  | "SHA3" -> SHA3
+  | "ADDRESS" -> ADDRESS
+  | "BALANCE" -> BALANCE
+  | "ORIGIN" -> ORIGIN
+  | "CALLER" -> CALLER
+  | "CALLVALUE" -> CALLVALUE
+  | "CALLDATALOAD" -> CALLDATALOAD
+  | "CALLDATASIZE" -> CALLDATASIZE
+  | "CALLDATACOPY" -> CALLDATACOPY
+  | "CODESIZE" -> CODESIZE
+  | "CODECOPY" -> CODECOPY
+  | "GASPRICE" -> GASPRICE
+  | "EXTCODESIZE" -> EXTCODESIZE
+  | "EXTCODECOPY" -> EXTCODECOPY
+  | "RETURNDATASIZE" -> RETURNDATASIZE
+  | "RETURNDATACOPY" -> RETURNDATACOPY
+  | "EXTCODEHASH" -> EXTCODEHASH
+  | "BLOCKHASH" -> BLOCKHASH
+  | "COINBASE" -> COINBASE
+  | "TIMESTAMP" -> TIMESTAMP
+  | "NUMBER" -> NUMBER
+  | "DIFFICULTY" -> DIFFICULTY
+  | "GASLIMIT" -> GASLIMIT
+  | "POP" -> POP
+  | "MLOAD" -> MLOAD
+  | "MSTORE" -> MSTORE
+  | "MSTORE8" -> MSTORE8
+  | "SLOAD" -> SLOAD
+  | "SSTORE" -> SSTORE
+  | "JUMP" -> JUMP
+  | "JUMPI" -> JUMPI
+  | "PC" -> PC
+  | "MSIZE" -> MSIZE
+  | "GAS" -> GAS
+  | "JUMPDEST" -> JUMPDEST
+  | "PUSH", Opt re32 -> PUSH (parse_stackarg buf)
+  | "DUP", re16 -> DUP (parse_idx "DUP" (Latin1.lexeme buf))
+  | "DUP ", reXVI -> DUP (parse_idxI "DUP " (Latin1.lexeme buf))
+  | "SWAP", re16 -> SWAP (parse_idx "SWAP" (Latin1.lexeme buf))
+  | "SWAP ", reXVI -> SWAP (parse_idxI "SWAP " (Latin1.lexeme buf))
+  | "LOG0" -> LOG0
+  | "LOG1" -> LOG1
+  | "LOG2" -> LOG2
+  | "LOG3" -> LOG3
+  | "LOG4" -> LOG4
+  | "JUMPTO" -> JUMPTO
+  | "JUMPIF" -> JUMPIF
+  | "JUMPV" -> JUMPV
+  | "JUMPSUB" -> JUMPSUB
+  | "JUMPSUBV" -> JUMPSUBV
+  | "BEGINSUB" -> BEGINSUB
+  | "BEGINDATA" -> BEGINDATA
+  | "RETURNSUB" -> RETURNSUB
+  | "PUTLOCAL" -> PUTLOCAL
+  | "GETLOCAL" -> GETLOCAL
+  | "CREATE" -> CREATE
+  | "CALL" -> CALL
+  | "CALLCODE" -> CALLCODE
+  | "RETURN" -> RETURN
+  | "DELEGATECALL" -> DELEGATECALL
+  | "CREATE2" -> CREATE2
+  | "STATICCALL" -> STATICCALL
+  | "REVERT" -> REVERT
+  | "INVALID" -> INVALID
+  | "SELFDESTRUCT" -> SELFDESTRUCT
+  | _ -> raise (SyntaxError (lexeme_start buf))
+
 let parse buf =
-  let rec parse_token acc =
+  let rec parse_wslist acc =
     match%sedlex buf with
-    | white_space -> parse_token acc
-    | "STOP" -> parse_token (STOP :: acc)
-    | "ADD" -> parse_token (ADD :: acc)
-    | "MUL" -> parse_token (MUL :: acc)
-    | "SUB" -> parse_token (SUB :: acc)
-    | "DIV" -> parse_token (DIV :: acc)
-    | "SDIV" -> parse_token (SDIV :: acc)
-    | "MOD" -> parse_token (MOD :: acc)
-    | "SMOD" -> parse_token (SMOD :: acc)
-    | "ADDMOD" -> parse_token (ADDMOD :: acc)
-    | "MULMOD" -> parse_token (MULMOD :: acc)
-    | "EXP" -> parse_token (EXP :: acc)
-    | "SIGNEXTEND" -> parse_token (SIGNEXTEND :: acc)
-    | "LT" -> parse_token (LT :: acc)
-    | "GT" -> parse_token (GT :: acc)
-    | "SLT" -> parse_token (SLT :: acc)
-    | "SGT" -> parse_token (SGT :: acc)
-    | "EQ" -> parse_token (EQ :: acc)
-    | "ISZERO" -> parse_token (ISZERO :: acc)
-    | "AND" -> parse_token (AND :: acc)
-    | "OR" -> parse_token (OR :: acc)
-    | "XOR" -> parse_token (XOR :: acc)
-    | "NOT" -> parse_token (NOT :: acc)
-    | "BYTE" -> parse_token (BYTE :: acc)
-    | "SHL" -> parse_token (SHL :: acc)
-    | "SHR" -> parse_token (SHR :: acc)
-    | "SAR" -> parse_token (SAR :: acc)
-    | "SHA3" -> parse_token (SHA3 :: acc)
-    | "ADDRESS" -> parse_token (ADDRESS :: acc)
-    | "BALANCE" -> parse_token (BALANCE :: acc)
-    | "ORIGIN" -> parse_token (ORIGIN :: acc)
-    | "CALLER" -> parse_token (CALLER :: acc)
-    | "CALLVALUE" -> parse_token (CALLVALUE :: acc)
-    | "CALLDATALOAD" -> parse_token (CALLDATALOAD :: acc)
-    | "CALLDATASIZE" -> parse_token (CALLDATASIZE :: acc)
-    | "CALLDATACOPY" -> parse_token (CALLDATACOPY :: acc)
-    | "CODESIZE" -> parse_token (CODESIZE :: acc)
-    | "CODECOPY" -> parse_token (CODECOPY :: acc)
-    | "GASPRICE" -> parse_token (GASPRICE :: acc)
-    | "EXTCODESIZE" -> parse_token (EXTCODESIZE :: acc)
-    | "EXTCODECOPY" -> parse_token (EXTCODECOPY :: acc)
-    | "RETURNDATASIZE" -> parse_token (RETURNDATASIZE :: acc)
-    | "RETURNDATACOPY" -> parse_token (RETURNDATACOPY :: acc)
-    | "EXTCODEHASH" -> parse_token (EXTCODEHASH :: acc)
-    | "BLOCKHASH" -> parse_token (BLOCKHASH :: acc)
-    | "COINBASE" -> parse_token (COINBASE :: acc)
-    | "TIMESTAMP" -> parse_token (TIMESTAMP :: acc)
-    | "NUMBER" -> parse_token (NUMBER :: acc)
-    | "DIFFICULTY" -> parse_token (DIFFICULTY :: acc)
-    | "GASLIMIT" -> parse_token (GASLIMIT :: acc)
-    | "POP" -> parse_token (POP :: acc)
-    | "MLOAD" -> parse_token (MLOAD :: acc)
-    | "MSTORE" -> parse_token (MSTORE :: acc)
-    | "MSTORE8" -> parse_token (MSTORE8 :: acc)
-    | "SLOAD" -> parse_token (SLOAD :: acc)
-    | "SSTORE" -> parse_token (SSTORE :: acc)
-    | "JUMP" -> parse_token (JUMP :: acc)
-    | "JUMPI" -> parse_token (JUMPI :: acc)
-    | "PC" -> parse_token (PC :: acc)
-    | "MSIZE" -> parse_token (MSIZE :: acc)
-    | "GAS" -> parse_token (GAS :: acc)
-    | "JUMPDEST" -> parse_token (JUMPDEST :: acc)
-    | "PUSH", Opt re32 -> parse_stackarg acc
-    | "DUP", re16 ->
-      let idx = parse_idx "DUP" (Latin1.lexeme buf) in
-      parse_token (DUP idx :: acc)
-    | "SWAP", re16 ->
-      let idx = parse_idx "SWAP" (Latin1.lexeme buf) in
-      parse_token (SWAP idx :: acc)
-    | "LOG0" -> parse_token (LOG0 :: acc)
-    | "LOG1" -> parse_token (LOG1 :: acc)
-    | "LOG2" -> parse_token (LOG2 :: acc)
-    | "LOG3" -> parse_token (LOG3 :: acc)
-    | "LOG4" -> parse_token (LOG4 :: acc)
-    | "JUMPTO" -> parse_token (JUMPTO :: acc)
-    | "JUMPIF" -> parse_token (JUMPIF :: acc)
-    | "JUMPV" -> parse_token (JUMPV :: acc)
-    | "JUMPSUB" -> parse_token (JUMPSUB :: acc)
-    | "JUMPSUBV" -> parse_token (JUMPSUBV :: acc)
-    | "BEGINSUB" -> parse_token (BEGINSUB :: acc)
-    | "BEGINDATA" -> parse_token (BEGINDATA :: acc)
-    | "RETURNSUB" -> parse_token (RETURNSUB :: acc)
-    | "PUTLOCAL" -> parse_token (PUTLOCAL :: acc)
-    | "GETLOCAL" -> parse_token (GETLOCAL :: acc)
-    | "CREATE" -> parse_token (CREATE :: acc)
-    | "CALL" -> parse_token (CALL :: acc)
-    | "CALLCODE" -> parse_token (CALLCODE :: acc)
-    | "RETURN" -> parse_token (RETURN :: acc)
-    | "DELEGATECALL" -> parse_token (DELEGATECALL :: acc)
-    | "CREATE2" -> parse_token (CREATE2 :: acc)
-    | "STATICCALL" -> parse_token (STATICCALL :: acc)
-    | "REVERT" -> parse_token (REVERT :: acc)
-    | "INVALID" -> parse_token (INVALID :: acc)
-    | "SELFDESTRUCT" -> parse_token (SELFDESTRUCT :: acc)
-    | eof -> acc
-    | _ -> raise (SyntaxError (lexeme_start buf))
-  and parse_stackarg acc =
-    match%sedlex buf with
-    | white_space -> parse_stackarg acc
-    | "Tmpl" -> parse_token (PUSH Tmpl :: acc)
-    | "0x", Plus hexdigit | Plus digit ->
-      let i = Int.of_string @@ Latin1.lexeme buf in
-      parse_token (PUSH (Val i) :: acc)
+    | white_spaces -> parse_wslist (parse_instruction buf :: acc)
+    | eof -> List.rev acc
     | _ -> raise (SyntaxError (lexeme_start buf))
   in
-  parse_token [] |> List.rev
+  let rec parse_ocamllist acc =
+    match%sedlex buf with
+    | white_spaces, ';', white_spaces ->
+      parse_ocamllist (parse_instruction buf :: acc)
+    | ']', white_spaces, eof -> List.rev acc
+    | _ -> raise (SyntaxError (lexeme_start buf))
+  in
+  let rec parse_sexplist acc =
+    match%sedlex buf with
+    | white_spaces, Opt ')', white_spaces, Opt '(', white_spaces ->
+      parse_sexplist (parse_instruction buf :: acc)
+    | ')', white_spaces, eof -> List.rev acc
+    | _ -> raise (SyntaxError (lexeme_start buf))
+  in
+  match%sedlex buf with
+  | white_spaces, eof -> []
+  | white_spaces, '[', white_spaces, ']', white_spaces, eof -> []
+  | white_spaces, '[', white_spaces -> parse_ocamllist ([parse_instruction buf])
+  | white_spaces, '(', white_spaces, ')', white_spaces, eof -> []
+  | white_spaces, '(', white_spaces -> parse_sexplist ([parse_instruction buf])
+  | white_spaces -> parse_wslist []
+  | _ -> raise (SyntaxError (lexeme_start buf))
 
 let parse_hex_idx s n =
   let idxo = idx_of_enum @@ Int.of_string ("0x" ^ s) - n in

@@ -54,6 +54,58 @@ let suite =
           (fun () -> parse buf)
       );
 
+    "parse empty program" >:: (fun _ ->
+        let s = Program.show [] in
+        let buf = Latin1.from_string s in
+        assert_equal ~cmp:[%eq: Instruction.t list] ~printer:[%show: Instruction.t list]
+          []
+          (parse buf)
+      );
+
+    "parse all instructions in ocamllist format" >:: (fun _ ->
+        let s =
+          Program.pp_ocamllist Format.str_formatter Instruction.all
+          |> Format.flush_str_formatter
+        in
+        let buf = Latin1.from_string s in
+        assert_equal ~cmp:[%eq: Instruction.t list] ~printer:[%show: Instruction.t list]
+          Instruction.all
+          (parse buf)
+      );
+
+    "parse empty program in ocamllist format" >:: (fun _ ->
+        let s =
+          Program.pp_ocamllist Format.str_formatter []
+          |> Format.flush_str_formatter
+        in
+        let buf = Latin1.from_string s in
+        assert_equal ~cmp:[%eq: Instruction.t list] ~printer:[%show: Instruction.t list]
+          []
+          (parse buf)
+      );
+
+    "parse all instructions in sexplist format" >:: (fun _ ->
+        let s =
+          Program.pp_sexplist Format.str_formatter Instruction.all
+          |> Format.flush_str_formatter
+        in
+        let buf = Latin1.from_string s in
+        assert_equal ~cmp:[%eq: Instruction.t list] ~printer:[%show: Instruction.t list]
+          Instruction.all
+          (parse buf)
+      );
+
+    "parse empty program in sexplist format" >:: (fun _ ->
+        let s =
+          Program.pp_sexplist Format.str_formatter []
+          |> Format.flush_str_formatter
+        in
+        let buf = Latin1.from_string s in
+        assert_equal ~cmp:[%eq: Instruction.t list] ~printer:[%show: Instruction.t list]
+          []
+          (parse buf)
+      );
+
     (* hex parsing *)
 
     "parse_hex_idx DUP1" >:: (fun _ ->
