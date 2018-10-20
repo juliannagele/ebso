@@ -45,3 +45,6 @@
 * Related Work
   * [Under-Optimized Smart Contracts Devour Your Money](https://arxiv.org/pdf/1703.03994.pdf)
   * [Towards saving money in using smart contracts](https://dl.acm.org/citation.cfm?id=3183420&dl=ACM&coll=DL)
+
+* Data sets
+  * [Gas Golf](https://g.solidity.cc/)
