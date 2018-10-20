@@ -19,6 +19,7 @@ let pp_ocamllist fmt p =
   Format.fprintf fmt "@[<hov>[";
   pp_aux "%a;@ %a" fmt p;
   Format.fprintf fmt "]@]"
+let pp_sexplist fmt p = sexp_of_t p |> Sexp.pp fmt
 let pp = pp_v
 let show p = pp Format.str_formatter p |> Format.flush_str_formatter
 
