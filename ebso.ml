@@ -56,12 +56,12 @@ let () =
           | Some stackas -> sasort := bv_sort stackas
         end;
         begin if nobv then (sesort := int_sort; sasort := int_sort) else () end;
-        let progr =
-          if direct then progr else In_channel.read_all progr
+        let buf =
+          if direct then Sedlexing.Latin1.from_string progr
+          else Sedlexing.Latin1.from_channel (In_channel.create progr)
         in
-        let p = Sexp.of_string progr |> Program.t_of_sexp in
-        super_optimize p `All p_model p_constr p_smt
-        |> Program.show
-        |> print_string
+        let p = Parser.parse buf in
+        let p_opt = super_optimize p `All p_model p_constr p_smt in
+        Program.pp Format.std_formatter p_opt
     ]
   |> Command.run ~version:"0.1"
