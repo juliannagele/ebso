@@ -125,8 +125,8 @@ let  parse_instruction buf =
 let parse buf =
   let rec parse_wslist acc =
     match%sedlex buf with
+    | white_spaces, eof -> List.rev acc
     | white_spaces -> parse_wslist (parse_instruction buf :: acc)
-    | eof -> List.rev acc
     | _ -> raise (SyntaxError (lexeme_start buf))
   in
   let rec parse_ocamllist acc =
