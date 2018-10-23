@@ -13,6 +13,7 @@ depends: [
   "ocamlfind"
   "z3"
   "core"
+  "sedlex"
   "ounit" {with-test}
   "ppx_sexp_conv"
   "ppx_enumerate"
