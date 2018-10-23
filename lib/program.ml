@@ -32,3 +32,46 @@ let stack_depth p =
         let (d, a) = delta_alpha is in (sc - d + a, min sd (sc - d)))
 
 let total_gas_cost = List.fold ~init:0 ~f:(fun gc i -> gc + gas_cost i)
+
+(* basic blocks -- we classify basic blockss into 2 kinds:
+- Terminal if the last instruction of the block interrupts control flow,
+  by JUMP(I)ing, CALLing, or interrupting execution;
+- Next otherwise, i.e. control passes from the last instruction of the block
+  to the first instruction of the following block *)
+type bb = Terminal of t * Instruction.t | Next of t
+[@@deriving show {with_path = false}, eq]
+
+(* instructions that terminate a basic block *)
+let terminal =
+  [ STOP
+  ; JUMP
+  ; JUMPI
+  ; JUMPTO
+  ; JUMPV
+  ; JUMPSUB
+  ; JUMPSUBV
+  ; RETURNSUB
+  ; CREATE
+  ; CALL
+  ; CALLCODE
+  ; RETURN
+  ; DELEGATECALL
+  ; CREATE2
+  ; STATICCALL
+  ; REVERT
+  ; INVALID
+  ; SELFDESTRUCT
+  ]
+
+let split_into_bbs p =
+  let rec split bb bbs = function
+    | [] -> (if not (List.is_empty bb) then Next bb :: bbs else bbs) |> List.rev
+    | i :: is -> match i with
+      (* JUMPDEST and BEGINSUB mark the beginning of a new BB *)
+      | JUMPDEST | BEGINSUB -> split [i] (Next bb :: bbs) is
+      (* an instruction in terminal marks the end of a BB *)
+      | _ when List.mem terminal i ~equal:Instruction.equal ->
+        split [] (Terminal (bb, i) :: bbs) is
+      | _ -> split (bb @ [i]) bbs is
+  in
+  split [] [] p

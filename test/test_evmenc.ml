@@ -444,6 +444,37 @@ let misc =
              ~f:(fun i -> List.mem Instruction.all i ~equal:[%eq: Instruction.t]))
       );
 
+    (* splitting programs into basic blocks *)
+
+    "program with nothing to split" >:: (fun _ ->
+        assert_equal ~cmp:[%eq: Program.bb list] ~printer:[%show: Program.bb list]
+          [Next [ADD; SUB; POP]]
+          (split_into_bbs [ADD; SUB; POP])
+      );
+
+    "split at JUMPDEST" >:: (fun _ ->
+        assert_equal ~cmp:[%eq: Program.bb list] ~printer:[%show: Program.bb list]
+          [Next [ADD]; Next [JUMPDEST; SUB]]
+          (split_into_bbs [ADD; JUMPDEST; SUB])
+      );
+
+    "split at JUMP" >:: (fun _ ->
+        assert_equal ~cmp:[%eq: Program.bb list] ~printer:[%show: Program.bb list]
+          [Terminal ([ADD], JUMP); Next [SUB]]
+          (split_into_bbs [ADD; JUMP; SUB])
+      );
+
+    "split program at multiple locations" >::(fun _ ->
+        let p =
+          [OR; ADD; SWAP I; JUMPDEST; MLOAD; POP; JUMP; DUP III;
+           PUSH (Val 0); ISZERO; JUMPI; POP; RETURN]
+        in
+        assert_equal ~cmp:[%eq: Program.bb list] ~printer:[%show: Program.bb list]
+          [Next [OR; ADD; SWAP I]; Terminal ([JUMPDEST; MLOAD; POP], JUMP);
+           Terminal ([DUP III; PUSH (Val 0); ISZERO], JUMPI);
+           Terminal ([POP], RETURN)]
+          (split_into_bbs p)
+      );
 ]
 
 let suite =
