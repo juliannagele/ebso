@@ -33,9 +33,9 @@ let stack_depth p =
 
 let total_gas_cost = List.fold ~init:0 ~f:(fun gc i -> gc + gas_cost i)
 
-(* basic blocks -- we classify basic blockss into 2 kinds:
+(* basic blocks -- we classify basic blocks into 2 kinds:
 - Terminal if the last instruction of the block interrupts control flow,
-  by JUMP(I)ing, CALLing, or interrupting execution;
+  by JUMPing, CALLing, or interrupting execution;
 - Next otherwise, i.e. control passes from the last instruction of the block
   to the first instruction of the following block *)
 type bb = Terminal of t * Instruction.t | Next of t
