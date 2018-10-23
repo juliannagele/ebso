@@ -14,7 +14,7 @@ let pp_h fmt p =
 let pp_v fmt p =
   Format.fprintf fmt "@,@[<v>";
   pp_aux "%a@,%a" fmt p;
-  Format.fprintf fmt "@]"
+  Format.fprintf fmt "@]@,"
 let pp_ocamllist fmt p =
   Format.fprintf fmt "@[<hov>[";
   pp_aux "%a;@ %a" fmt p;
