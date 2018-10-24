@@ -64,6 +64,7 @@ let encodable = [
   ; SUB
 ] @ List.map all_of_stackarg ~f:(fun a -> PUSH a)
   @ List.map all_of_idx ~f:(fun i -> SWAP i)
+  @ List.map all_of_idx ~f:(fun i -> DUP i)
 
 let delta_alpha = function
   | ADD -> (2, 1)
@@ -72,6 +73,7 @@ let delta_alpha = function
   | POP -> (1, 0)
   | SUB -> (2, 1)
   | SWAP i -> (idx_to_enum i + 1, idx_to_enum i + 1)
+  | DUP i -> (idx_to_enum i, idx_to_enum i + 1)
   | _ -> failwith "not implemented"
 
 let gas_cost = function
@@ -81,4 +83,5 @@ let gas_cost = function
   | POP -> 2
   | SUB -> 3
   | SWAP _ -> 3
+  | DUP _ -> 3
   | _ -> failwith "not implemented"

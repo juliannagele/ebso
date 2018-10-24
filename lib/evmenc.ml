@@ -130,6 +130,19 @@ let enc_swap ea st j idx =
       let sc_iidx = sanum (Int.(-) idx i) in
       (sk' (sc' - sc_iidx) == sk (sc - sc_iidx))))
 
+let enc_dup ea st j idx =
+  let sc_idx = sanum idx in
+  let open Z3Ops in
+  let sk n = st.stack @@ (ea.xs @ [j; n])
+  and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
+  let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
+  (* the new top element is the 1+idx'th from the old stack *)
+  (sk' (sc' - sanum 1) == sk (sc - sc_idx)) &&
+  (* all other stack elements are not touched *)
+  conj (List.init idx ~f:(fun i ->
+      let sc_iidx = sanum (Int.(-) idx i) in
+      (sk' (sc - sc_iidx) == sk (sc - sc_iidx))))
+
 (* effect of instruction on state st after j steps *)
 let enc_instruction ea st j is =
   let enc_effect =
@@ -140,6 +153,7 @@ let enc_instruction ea st j is =
     | SUB -> enc_sub ea st j
     | MUL -> enc_mul ea st j
     | SWAP idx -> enc_swap ea st j (idx_to_enum idx)
+    | DUP idx -> enc_dup ea st j (idx_to_enum idx)
     | _ -> failwith "not implemented"
   in
   let (d, a) = delta_alpha is in let diff = (a - d) in
