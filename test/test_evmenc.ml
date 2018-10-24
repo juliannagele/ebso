@@ -136,7 +136,7 @@ let effect =
       );
 
     "divide 4 by 2" >::(fun _ ->
-        let p = [PUSH (Val 4); PUSH (Val 2); DIV] in
+        let p = [PUSH (Val 2); PUSH (Val 4); DIV] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -146,7 +146,7 @@ let effect =
       );
 
     "divide 5 by 2" >::(fun _ ->
-        let p = [PUSH (Val 5); PUSH (Val 2); DIV] in
+        let p = [PUSH (Val 2); PUSH (Val 5); DIV] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -156,7 +156,7 @@ let effect =
       );
 
     "divide 2 by 4" >::(fun _ ->
-        let p = [PUSH (Val 2); PUSH (Val 4); DIV] in
+        let p = [PUSH (Val 4); PUSH (Val 2); DIV] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -166,7 +166,7 @@ let effect =
       );
 
     "divide 2 by 0" >::(fun _ ->
-        let p = [PUSH (Val 2); PUSH (Val 0); DIV] in
+        let p = [PUSH (Val 0); PUSH (Val 2); DIV] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
