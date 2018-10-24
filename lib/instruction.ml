@@ -60,8 +60,9 @@ type t =
 let encodable = [
     ADD
   ; MUL
-  ; POP
   ; SUB
+  ; DIV
+  ; POP
 ] @ List.map all_of_stackarg ~f:(fun a -> PUSH a)
   @ List.map all_of_idx ~f:(fun i -> SWAP i)
   @ List.map all_of_idx ~f:(fun i -> DUP i)
@@ -69,9 +70,10 @@ let encodable = [
 let delta_alpha = function
   | ADD -> (2, 1)
   | MUL -> (2, 1)
+  | SUB -> (2, 1)
+  | DIV -> (2, 1)
   | PUSH _ -> (0, 1)
   | POP -> (1, 0)
-  | SUB -> (2, 1)
   | SWAP i -> (idx_to_enum i + 1, idx_to_enum i + 1)
   | DUP i -> (idx_to_enum i, idx_to_enum i + 1)
   | _ -> failwith "not implemented"
@@ -79,9 +81,10 @@ let delta_alpha = function
 let gas_cost = function
   | ADD -> 3
   | MUL -> 5
+  | SUB -> 3
+  | DIV -> 5
   | PUSH _ -> 3
   | POP -> 2
-  | SUB -> 3
   | SWAP _ -> 3
   | DUP _ -> 3
   | _ -> failwith "not implemented"

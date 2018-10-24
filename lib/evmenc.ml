@@ -114,6 +114,10 @@ let enc_binop ea st j op =
 let enc_add ea st j = enc_binop ea st j (<+>)
 let enc_sub ea st j = enc_binop ea st j (<->)
 let enc_mul ea st j = enc_binop ea st j (<*>)
+let enc_div ea st j =
+  (* EVM defines x / 0 = 0, Z3 says it's undefined *)
+  let div num denom = ite (denom <==> senum 0) (senum 0) (udiv num denom) in
+  enc_binop ea st j div
 
 let enc_swap ea st j idx =
   let sc_idx = sanum (idx + 1) in
@@ -152,6 +156,7 @@ let enc_instruction ea st j is =
     | ADD -> enc_add ea st j
     | SUB -> enc_sub ea st j
     | MUL -> enc_mul ea st j
+    | DIV -> enc_div ea st j
     | SWAP idx -> enc_swap ea st j (idx_to_enum idx)
     | DUP idx -> enc_dup ea st j (idx_to_enum idx)
     | _ -> failwith "not implemented"

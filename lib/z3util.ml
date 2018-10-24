@@ -43,6 +43,8 @@ let (~!) x =
   | BOOL_SORT -> Boolean.mk_not !ctxt x
   | _ -> failwith "not implemented for this sort"
 
+let ite = Boolean.mk_ite !ctxt
+
 let (<@@>) fn x = FuncDecl.apply fn x
 
 let (<<<>) x y = BitVector.mk_shl !ctxt x y
@@ -59,6 +61,8 @@ let (<+>) = mk_bin_op BitVector.mk_add (fun ctxt x y -> Arithmetic.mk_add ctxt [
 let (<->) = mk_bin_op BitVector.mk_sub (fun ctxt x y -> Arithmetic.mk_sub ctxt [x; y])
 
 let (<*>) = mk_bin_op BitVector.mk_mul (fun ctxt x y -> Arithmetic.mk_mul ctxt [x; y])
+
+let udiv = BitVector.mk_udiv !ctxt
 
 let no_overflow is_signed op1 op2 = function
   | `Add -> BitVector.mk_add_no_overflow !ctxt op1 op2 is_signed
