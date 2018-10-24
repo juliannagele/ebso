@@ -63,6 +63,7 @@ let (<->) = mk_bin_op BitVector.mk_sub (fun ctxt x y -> Arithmetic.mk_sub ctxt [
 let (<*>) = mk_bin_op BitVector.mk_mul (fun ctxt x y -> Arithmetic.mk_mul ctxt [x; y])
 
 let udiv = BitVector.mk_udiv !ctxt
+let umod = BitVector.mk_urem !ctxt
 
 let no_overflow is_signed op1 op2 = function
   | `Add -> BitVector.mk_add_no_overflow !ctxt op1 op2 is_signed
