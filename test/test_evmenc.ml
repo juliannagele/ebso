@@ -211,7 +211,66 @@ let effect =
           [eval_stack st m (List.length p) 1;
            eval_stack st m (List.length p) 2;]
       );
-  ]
+
+    (* dup *)
+
+    "duplicate top element" >:: (fun _ ->
+        let p = [PUSH (Val 1); DUP I] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t list]
+          ~printer:(List.to_string ~f:Z3.Expr.to_string)
+          [senum 1; senum 1]
+          [eval_stack st m (List.length p) 0;
+           eval_stack st m (List.length p) 1;]
+      );
+
+    "DUP I with no elements" >::(fun _ ->
+        let p = [DUP I] in
+        let ea = mk_enc_consts p `All in
+        let st = mk_state ea "" in
+        (* allow to instantiate variables when evaluating model *)
+        let c = foralls ea.xs (enc_program ea st) in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t list]
+          ~printer:(List.to_string ~f:Z3.Expr.to_string)
+          [senum 1; senum 1]
+          [(eval_stack ~xs:[senum 1] st m (List.length p) 0);
+           (eval_stack ~xs:[senum 1] st m (List.length p) 1)]
+      );
+  ] @
+  (List.map all_of_idx ~f:(fun idx ->
+       "effect of DUP " ^ show_idx idx >:: (fun _ ->
+           let i = idx_to_enum idx in
+           let ip = List.init i ~f:(fun n -> PUSH (Val n)) in
+           let p = ip @ [DUP idx] in
+           let ea = mk_enc_consts p (`User []) in
+           let st = mk_state ea "" in
+           let c = enc_program ea st in
+           let m = solve_model_exn [c] in
+           assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+             (eval_stack st m (List.length p) i)
+             (eval_stack st m (List.length p) 0)
+         ))) @
+  (List.map all_of_idx ~f:(fun idx ->
+       "preservation of elements between DUP " ^ show_idx idx >:: (fun _ ->
+           let i = idx_to_enum idx in
+           let ip = List.init i ~f:(fun n -> PUSH (Val n)) in
+           let p = ip @ [DUP idx] in
+           let ea = mk_enc_consts p (`User []) in
+           let st = mk_state ea "" in
+           let c = enc_program ea st in
+           let m = solve_model_exn [c] in
+           assert_equal
+             ~cmp:[%eq: Z3.Expr.t list]
+             ~printer:(List.to_string ~f:Z3.Expr.to_string)
+             (List.init (i - 1) ~f:(fun k -> (eval_stack st m (List.length p) (k + 1))))
+             (List.init (i - 1) ~f:(fun k -> (eval_stack st m 0 (k + 1))))
+         )))
 
 let pres_stack =
   (* test preservation of stack elements for all opcodes *)
