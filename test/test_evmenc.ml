@@ -269,7 +269,7 @@ let effect =
              ~cmp:[%eq: Z3.Expr.t list]
              ~printer:(List.to_string ~f:Z3.Expr.to_string)
              (List.init (i - 1) ~f:(fun k -> (eval_stack st m (List.length p) (k + 1))))
-             (List.init (i - 1) ~f:(fun k -> (eval_stack st m 0 (k + 1))))
+             (List.init (i - 1) ~f:(fun k -> (eval_stack st m (List.length ip) (k + 1))))
          )))
 
 let pres_stack =
