@@ -45,6 +45,7 @@
 * Related Work
   * [Under-Optimized Smart Contracts Devour Your Money](https://arxiv.org/pdf/1703.03994.pdf)
   * [Towards saving money in using smart contracts](https://dl.acm.org/citation.cfm?id=3183420&dl=ACM&coll=DL)
+  * [Vandal: A Scalable Security Analysis Framework for Smart Contracts](https://arxiv.org/abs/1809.03981)
 
 * Data sets
   * [Gas Golf](https://g.solidity.cc/)
