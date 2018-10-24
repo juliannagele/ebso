@@ -123,6 +123,68 @@ let effect =
           (senum 1) (eval_stack st m (List.length p) 0)
       );
 
+    (* div *)
+
+    "divide 1 by 1" >::(fun _ ->
+        let p = [PUSH (Val 1); PUSH (Val 1); DIV] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 1) (eval_stack st m (List.length p) 0)
+      );
+
+    "divide 4 by 2" >::(fun _ ->
+        let p = [PUSH (Val 4); PUSH (Val 2); DIV] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 2) (eval_stack st m (List.length p) 0)
+      );
+
+    "divide 5 by 2" >::(fun _ ->
+        let p = [PUSH (Val 5); PUSH (Val 2); DIV] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 2) (eval_stack st m (List.length p) 0)
+      );
+
+    "divide 2 by 4" >::(fun _ ->
+        let p = [PUSH (Val 2); PUSH (Val 4); DIV] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 0) (eval_stack st m (List.length p) 0)
+      );
+
+    "divide 2 by 0" >::(fun _ ->
+        let p = [PUSH (Val 2); PUSH (Val 0); DIV] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 0) (eval_stack st m (List.length p) 0)
+      );
+
+    "divide 0 by 0" >::(fun _ ->
+        let p = [PUSH (Val 0); PUSH (Val 0); DIV] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 0) (eval_stack st m (List.length p) 0)
+      );
+
     (* push *)
 
     "top of the stack is the pushed element after a PUSH">:: (fun _ ->
