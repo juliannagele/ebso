@@ -125,7 +125,7 @@ let enc_swap ea st j idx =
   (sk' (sc' - sanum 1) == sk (sc - sc_idx)) &&
   (* the new 1+idx'th element is the top from the old stack*)
   (sk' (sc' - sc_idx) == sk (sc - sanum 1)) &&
-  (* all other stack elements are not touched *)
+  (* the stack elements between top and idx+1 are not touched *)
   conj (List.init (Int.pred idx) ~f:(fun i ->
       let sc_iidx = sanum (Int.(-) idx i) in
       (sk' (sc' - sc_iidx) == sk (sc - sc_iidx))))
@@ -136,9 +136,9 @@ let enc_dup ea st j idx =
   let sk n = st.stack @@ (ea.xs @ [j; n])
   and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
-  (* the new top element is the 1+idx'th from the old stack *)
+  (* the new top element is the idx'th from the old stack *)
   (sk' (sc' - sanum 1) == sk (sc - sc_idx)) &&
-  (* all other stack elements are not touched *)
+  (* all stack elements down to idx are not touched *)
   conj (List.init idx ~f:(fun i ->
       let sc_iidx = sanum (Int.(-) idx i) in
       (sk' (sc - sc_iidx) == sk (sc - sc_iidx))))
