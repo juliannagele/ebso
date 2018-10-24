@@ -185,6 +185,68 @@ let effect =
           (senum 0) (eval_stack st m (List.length p) 0)
       );
 
+    (* mod *)
+
+    "2 modulo 1" >::(fun _ ->
+        let p = [PUSH (Val 1); PUSH (Val 2); MOD] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 0) (eval_stack st m (List.length p) 0)
+      );
+
+    "4 modulo 2" >::(fun _ ->
+        let p = [PUSH (Val 2); PUSH (Val 4); MOD] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 0) (eval_stack st m (List.length p) 0)
+      );
+
+    "5 modulo 2" >::(fun _ ->
+        let p = [PUSH (Val 2); PUSH (Val 5); MOD] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 1) (eval_stack st m (List.length p) 0)
+      );
+
+    "2 modulo 4" >::(fun _ ->
+        let p = [PUSH (Val 4); PUSH (Val 2); MOD] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 2) (eval_stack st m (List.length p) 0)
+      );
+
+    "2 modulo 0" >::(fun _ ->
+        let p = [PUSH (Val 0); PUSH (Val 2); MOD] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 0) (eval_stack st m (List.length p) 0)
+      );
+
+    "0 modulo 0" >::(fun _ ->
+        let p = [PUSH (Val 0); PUSH (Val 0); MOD] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 0) (eval_stack st m (List.length p) 0)
+      );
+
     (* push *)
 
     "top of the stack is the pushed element after a PUSH">:: (fun _ ->
