@@ -1,4 +1,6 @@
-# ebso: An EVM Byte code Super Optimizer
+![ebso](doc/logo/logo.svg?sanitize=true)
+
+# An EVM Byte code Super Optimizer
 
 We aim to apply unbounded super optimization in the style of [Jangda & Yorsh,
  2017](http://www.eecs.qmul.ac.uk/~gretay/papers/onward2017.pdf) to
