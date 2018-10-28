@@ -1,5 +1,12 @@
 (executable (name ebso)
+ (modules ebso)
  (libraries core z3 sedlex ebso)
  (preprocess (pps ppx_jane ppx_deriving.std))
  (public_name ebso)
+)
+
+(executable (name countinstr)
+ (modules countinstr)
+ (libraries core sedlex ebso zarith)
+ (preprocess (pps ppx_jane ppx_deriving.std))
 )
