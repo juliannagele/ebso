@@ -24,7 +24,7 @@ let rec parse_stackarg buf =
   match%sedlex buf with
   | white_space -> parse_stackarg buf
   | "Tmpl" -> Tmpl
-  | "0x", Plus hexdigit | Plus digit -> Val (Int.of_string @@ Latin1.lexeme buf)
+  | "0x", Plus hexdigit | Plus digit -> Val (Latin1.lexeme buf)
   | _ -> raise (SyntaxError (lexeme_start buf))
 
 let  parse_instruction buf =
@@ -164,7 +164,7 @@ let parse_hex_bytes n buf =
       | Rep (hexdigit, 2) -> parse_hex_bytes (n - 1) (acc ^ Latin1.lexeme buf)
       | _ -> raise (SyntaxError (lexeme_start buf))
   in
-  Int.of_string @@ parse_hex_bytes n "0x"
+  parse_hex_bytes n "0x"
 
 let parse_hex buf =
   let rec parse_token acc =

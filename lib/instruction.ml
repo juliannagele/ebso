@@ -1,12 +1,20 @@
 open Core
 
+let num_string_to_dec x = Z.of_string x |> Z.to_string
+
 type stackarg =
-  | Val of int [@printer fun fmt x -> fprintf fmt "%i" x]
+  (* string either in hexadecimal format starting with 0x or in decimal format *)
+  | Val of string [@printer fun fmt x -> fprintf fmt "%s" (num_string_to_dec x)]
   | Tmpl
-[@@deriving show { with_path = false }, eq, sexp, compare]
+[@@deriving show { with_path = false }, sexp, compare]
+
+let equal_stackarg x y = match (x, y) with
+  | Val x, Val y -> Z.equal (Z.of_string x) (Z.of_string y)
+  | Tmpl, Tmpl -> true
+  | _, _ -> false
 
 let stackarg_of_sexp s = match s with
-  | Sexp.Atom i -> if String.equal i "Tmpl" then Tmpl else Val (Int.of_string i)
+  | Sexp.Atom i -> if String.equal i "Tmpl" then Tmpl else Val i
   | Sexp.List _ -> failwith "could not parse argument of PUSH"
 
 let all_of_stackarg = [Tmpl]

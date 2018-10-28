@@ -11,7 +11,7 @@ let ses = 3 and sas = 6
 let test_stack_pres oc =
   let (d, _) = delta_alpha oc in
   (* create program that initializes stack with d + 2 values *)
-  let ip = List.init (d + 2) ~f:(fun i -> PUSH (Val i)) in
+  let ip = List.init (d + 2) ~f:(fun i -> PUSH (Val (Int.to_string i))) in
   let p = ip @ [oc] in
   let ea = mk_enc_consts p (`User []) in
   let st = mk_state ea "" in
@@ -26,7 +26,7 @@ let test_stack_pres oc =
 let test_stack_ctr p =
   let d = stack_depth p in
   (* create program that initializes stack with d values *)
-  let ip = List.init d ~f:(fun i -> PUSH (Val i)) in
+  let ip = List.init d ~f:(fun i -> PUSH (Val (Int.to_string i))) in
   let p = ip @ p in
   let ea = mk_enc_consts p (`User []) in
   let st = mk_state ea "" in
@@ -41,7 +41,7 @@ let test_stack_ctr p =
 let test_no_exc_halt p =
   let d = stack_depth p in
   (* create program that initializes stack with d values *)
-  let ip = List.init d ~f:(fun i -> PUSH (Val i)) in
+  let ip = List.init d ~f:(fun i -> PUSH (Val (Int.to_string i))) in
   let p = ip @ p in
   let ea = mk_enc_consts p (`User []) in
   let st = mk_state ea "" in
@@ -54,7 +54,7 @@ let test_no_exc_halt p =
 
 let test_exc_halt_pres p =
   let max = Int.pow 2 sas in
-  let ip = List.init max ~f:(fun _ -> PUSH (Val 1)) in
+  let ip = List.init max ~f:(fun _ -> PUSH (Val "1")) in
   let p = ip @ p in
   let ea = mk_enc_consts p (`User []) in
   let st = mk_state ea "" in
@@ -71,7 +71,7 @@ let effect =
     (* add *)
 
     "add two elements on the stack">:: (fun _ ->
-        let p = [PUSH (Val 4); PUSH (Val 5); ADD] in
+        let p = [PUSH (Val "4"); PUSH (Val "5"); ADD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -86,7 +86,7 @@ let effect =
     (* sub *)
 
     "subtract two elements on the stack">:: (fun _ ->
-        let p = [PUSH (Val 3); PUSH (Val 8); SUB] in
+        let p = [PUSH (Val "3"); PUSH (Val "8"); SUB] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -99,7 +99,7 @@ let effect =
       );
 
     "subtract two elements on the stack with negative result">:: (fun _ ->
-        let p = [PUSH (Val 13); PUSH (Val 8); SUB] in
+        let p = [PUSH (Val "13"); PUSH (Val "8"); SUB] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -114,7 +114,7 @@ let effect =
     (* add and sub *)
 
     "combine add and sub">:: (fun _ ->
-        let p = [PUSH (Val 3); PUSH (Val 2); PUSH (Val 2); ADD; SUB] in
+        let p = [PUSH (Val "3"); PUSH (Val "2"); PUSH (Val "2"); ADD; SUB] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -126,7 +126,7 @@ let effect =
     (* div *)
 
     "divide 1 by 1" >::(fun _ ->
-        let p = [PUSH (Val 1); PUSH (Val 1); DIV] in
+        let p = [PUSH (Val "1"); PUSH (Val "1"); DIV] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -136,7 +136,7 @@ let effect =
       );
 
     "divide 4 by 2" >::(fun _ ->
-        let p = [PUSH (Val 2); PUSH (Val 4); DIV] in
+        let p = [PUSH (Val "2"); PUSH (Val "4"); DIV] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -146,7 +146,7 @@ let effect =
       );
 
     "divide 5 by 2" >::(fun _ ->
-        let p = [PUSH (Val 2); PUSH (Val 5); DIV] in
+        let p = [PUSH (Val "2"); PUSH (Val "5"); DIV] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -156,7 +156,7 @@ let effect =
       );
 
     "divide 2 by 4" >::(fun _ ->
-        let p = [PUSH (Val 4); PUSH (Val 2); DIV] in
+        let p = [PUSH (Val "4"); PUSH (Val "2"); DIV] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -166,7 +166,7 @@ let effect =
       );
 
     "divide 2 by 0" >::(fun _ ->
-        let p = [PUSH (Val 0); PUSH (Val 2); DIV] in
+        let p = [PUSH (Val "0"); PUSH (Val "2"); DIV] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -176,7 +176,7 @@ let effect =
       );
 
     "divide 0 by 0" >::(fun _ ->
-        let p = [PUSH (Val 0); PUSH (Val 0); DIV] in
+        let p = [PUSH (Val "0"); PUSH (Val "0"); DIV] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -188,7 +188,7 @@ let effect =
     (* mod *)
 
     "2 modulo 1" >::(fun _ ->
-        let p = [PUSH (Val 1); PUSH (Val 2); MOD] in
+        let p = [PUSH (Val "1"); PUSH (Val "2"); MOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -198,7 +198,7 @@ let effect =
       );
 
     "4 modulo 2" >::(fun _ ->
-        let p = [PUSH (Val 2); PUSH (Val 4); MOD] in
+        let p = [PUSH (Val "2"); PUSH (Val "4"); MOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -208,7 +208,7 @@ let effect =
       );
 
     "5 modulo 2" >::(fun _ ->
-        let p = [PUSH (Val 2); PUSH (Val 5); MOD] in
+        let p = [PUSH (Val "2"); PUSH (Val "5"); MOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -218,7 +218,7 @@ let effect =
       );
 
     "2 modulo 4" >::(fun _ ->
-        let p = [PUSH (Val 4); PUSH (Val 2); MOD] in
+        let p = [PUSH (Val "4"); PUSH (Val "2"); MOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -228,7 +228,7 @@ let effect =
       );
 
     "2 modulo 0" >::(fun _ ->
-        let p = [PUSH (Val 0); PUSH (Val 2); MOD] in
+        let p = [PUSH (Val "0"); PUSH (Val "2"); MOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -238,7 +238,7 @@ let effect =
       );
 
     "0 modulo 0" >::(fun _ ->
-        let p = [PUSH (Val 0); PUSH (Val 0); MOD] in
+        let p = [PUSH (Val "0"); PUSH (Val "0"); MOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -250,7 +250,7 @@ let effect =
     (* push *)
 
     "top of the stack is the pushed element after a PUSH">:: (fun _ ->
-        let p = [PUSH (Val 5)] in
+        let p = [PUSH (Val "5")] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -265,7 +265,7 @@ let effect =
     (* SWAP *)
 
     "swap I two elements on stack" >::(fun _ ->
-        let p = [PUSH (Val 1); PUSH (Val 2); SWAP I] in
+        let p = [PUSH (Val "1"); PUSH (Val "2"); SWAP I] in
         let ea = mk_enc_consts p `All in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -278,7 +278,7 @@ let effect =
       );
 
     "swap I with only one element" >::(fun _ ->
-        let p = [PUSH (Val 1); SWAP I] in
+        let p = [PUSH (Val "1"); SWAP I] in
         let ea = mk_enc_consts p `All in
         let st = mk_state ea "" in
         (* allow to instantiate variables when evaluating model *)
@@ -308,7 +308,7 @@ let effect =
       );
 
      "elements after swap II" >::(fun _ ->
-        let p = [PUSH (Val 1); PUSH (Val 2); PUSH (Val 3); SWAP II] in
+        let p = [PUSH (Val "1"); PUSH (Val "2"); PUSH (Val "3"); SWAP II] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -323,7 +323,7 @@ let effect =
       );
 
      "preserve elements between swap III" >::(fun _ ->
-        let p = [PUSH (Val 1); PUSH (Val 2); PUSH (Val 3); PUSH (Val 4); SWAP III] in
+        let p = [PUSH (Val "1"); PUSH (Val "2"); PUSH (Val "3"); PUSH (Val "4"); SWAP III] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -339,7 +339,7 @@ let effect =
     (* dup *)
 
     "duplicate top element" >:: (fun _ ->
-        let p = [PUSH (Val 1); DUP I] in
+        let p = [PUSH (Val "1"); DUP I] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -370,7 +370,7 @@ let effect =
   (List.map all_of_idx ~f:(fun idx ->
        "effect of DUP " ^ show_idx idx >:: (fun _ ->
            let i = idx_to_enum idx in
-           let ip = List.init i ~f:(fun n -> PUSH (Val n)) in
+           let ip = List.init i ~f:(fun n -> PUSH (Val (Int.to_string n))) in
            let p = ip @ [DUP idx] in
            let ea = mk_enc_consts p (`User []) in
            let st = mk_state ea "" in
@@ -383,7 +383,7 @@ let effect =
   (List.map all_of_idx ~f:(fun idx ->
        "preservation of elements between DUP " ^ show_idx idx >:: (fun _ ->
            let i = idx_to_enum idx in
-           let ip = List.init i ~f:(fun n -> PUSH (Val n)) in
+           let ip = List.init i ~f:(fun n -> PUSH (Val (Int.to_string n))) in
            let p = ip @ [DUP idx] in
            let ea = mk_enc_consts p (`User []) in
            let st = mk_state ea "" in
@@ -409,7 +409,7 @@ let stack_ctr =
                   >:: (fun _ -> test_stack_ctr [oc])) @
   [
     "test a program leading to an empty stack">:: (fun _ ->
-        test_stack_ctr [PUSH (Val 1); PUSH (Val 1); ADD; POP]
+        test_stack_ctr [PUSH (Val "1"); PUSH (Val "1"); ADD; POP]
       );
 
     "test stack counter for empty program">:: (fun _ ->
@@ -433,7 +433,7 @@ let exc_halt =
 
     "PUSHing too many elements leads to a stack overflow">:: (fun _ ->
         let max = Int.pow 2 sas in
-        let p = List.init max ~f:(fun _ -> PUSH (Val 1)) in
+        let p = List.init max ~f:(fun _ -> PUSH (Val "1")) in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -446,7 +446,7 @@ let exc_halt =
       );
 
     "exceptional halt persists for multiple instructions">:: (fun _ ->
-        test_exc_halt_pres [SUB; PUSH (Val 3)]
+        test_exc_halt_pres [SUB; PUSH (Val "3")]
       );
   ]
 
@@ -454,7 +454,7 @@ let forced_stack_underflow =
   (* test below use hack to erase xs to start from emtpy stack *)
   [
     "add with only one element">:: (fun _ ->
-        let p = [PUSH (Val 3); ADD] in
+        let p = [PUSH (Val "3"); ADD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state {ea with p = []} "" in
         let c =
@@ -485,7 +485,7 @@ let forced_stack_underflow =
       );
 
     "SUB with only one element">:: (fun _ ->
-        let p = [PUSH (Val 3); SUB] in
+        let p = [PUSH (Val "3"); SUB] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state {ea with p = []} "" in
         let c =
@@ -549,7 +549,7 @@ let gas_cost =
       );
 
     "after some instruction some gas has been used">::(fun _ ->
-        let p = [PUSH (Val 6); PUSH (Val 2); ADD] in
+        let p = [PUSH (Val "6"); PUSH (Val "2"); ADD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -590,7 +590,7 @@ let misc =
     (* stack_depth *)
 
     "No negative stack depth, sufficient arguments" >::(fun _ ->
-        let p = [PUSH (Val 1); PUSH (Val 1); PUSH (Val 1); SUB] in
+        let p = [PUSH (Val "1"); PUSH (Val "1"); PUSH (Val "1"); SUB] in
         assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
           0 (stack_depth p)
       );
@@ -602,13 +602,13 @@ let misc =
       );
 
     "Stack depth of exactly enough arguments" >::(fun _ ->
-        let p = [PUSH (Val 1); PUSH (Val 1); SUB] in
+        let p = [PUSH (Val "1"); PUSH (Val "1"); SUB] in
         assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
           0 (stack_depth p)
       );
 
     "Stack depth when starting with SUB, go positive, but then go deeper" >::(fun _ ->
-        let p = [SUB; PUSH (Val 1); PUSH (Val 1); ADD; ADD; ADD] in
+        let p = [SUB; PUSH (Val "1"); PUSH (Val "1"); ADD; ADD; ADD] in
         assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
           3 (stack_depth p)
       );
@@ -616,7 +616,7 @@ let misc =
     (* sis_of_progr / Instruction.all *)
 
     "compute instruction set of given program" >::(fun _ ->
-        let p = [SUB; PUSH (Val 1); PUSH (Val 1); ADD; ADD; PUSH (Val 2); POP] in
+        let p = [SUB; PUSH (Val "1"); PUSH (Val "1"); ADD; ADD; PUSH (Val "2"); POP] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
           [SUB; PUSH Tmpl; ADD; POP] (sis_of_progr p)
       );
@@ -650,11 +650,11 @@ let misc =
     "split program at multiple locations" >::(fun _ ->
         let p =
           [OR; ADD; SWAP I; JUMPDEST; MLOAD; POP; JUMP; DUP III;
-           PUSH (Val 0); ISZERO; JUMPI; POP; RETURN]
+           PUSH (Val "0"); ISZERO; JUMPI; POP; RETURN]
         in
         assert_equal ~cmp:[%eq: Program.bb list] ~printer:[%show: Program.bb list]
           [Next [OR; ADD; SWAP I]; Terminal ([JUMPDEST; MLOAD; POP], JUMP);
-           Terminal ([DUP III; PUSH (Val 0); ISZERO], JUMPI);
+           Terminal ([DUP III; PUSH (Val "0"); ISZERO], JUMPI);
            Terminal ([POP], RETURN)]
           (split_into_bbs p)
       );

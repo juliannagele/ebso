@@ -15,8 +15,8 @@ let suite =
     (* enc_search_space *)
 
     "search for 1 instruction program">::(fun _ ->
-        let p = [PUSH (Val 1)] in
-        let sis = `User [PUSH (Val 1)] in
+        let p = [PUSH (Val "1")] in
+        let sis = `User [PUSH (Val "1")] in
         let ea = mk_enc_consts p sis in
         let st = mk_state ea "" in
         let c =
@@ -28,13 +28,13 @@ let suite =
         assert_equal
           ~cmp:[%eq: int]
           ~printer:[%show: int]
-          (enc_opcode ea (PUSH (Val 1)))
+          (enc_opcode ea (PUSH (Val "1")))
           (eval_fis ea m 0)
       );
 
     "search for 3 instruction program">::(fun _ ->
-        let p = [PUSH (Val 1); PUSH (Val 1); ADD] in
-        let sis = `User [PUSH (Val 1); ADD] in
+        let p = [PUSH (Val "1"); PUSH (Val "1"); ADD] in
+        let sis = `User [PUSH (Val "1"); ADD] in
         let ea = mk_enc_consts p sis in
         let st = mk_state ea "" in
         let c =
@@ -46,16 +46,16 @@ let suite =
         assert_equal
           ~cmp:[%eq: int list]
           ~printer:[%show: int list]
-          [enc_opcode ea (PUSH (Val 1))
-          ; enc_opcode ea (PUSH (Val 1))
+          [enc_opcode ea (PUSH (Val "1"))
+          ; enc_opcode ea (PUSH (Val "1"))
           ; enc_opcode ea ADD
           ]
           [eval_fis ea m 0; eval_fis ea m 1; eval_fis ea m 2]
       );
 
     "sis contains unused instructions ">::(fun _ ->
-        let p = [PUSH (Val 1)] in
-        let sis = `User [PUSH (Val 1); PUSH (Val 2); ADD; SUB] in
+        let p = [PUSH (Val "1")] in
+        let sis = `User [PUSH (Val "1"); PUSH (Val "2"); ADD; SUB] in
         let ea = mk_enc_consts p sis in
         let st = mk_state ea "" in
         let c =
@@ -67,12 +67,12 @@ let suite =
         assert_equal
           ~cmp:[%eq: int]
           ~printer:[%show: int]
-          (enc_opcode ea (PUSH (Val 1)))
+          (enc_opcode ea (PUSH (Val "1")))
           (eval_fis ea m 0)
       );
 
     "sis does not contain required instruction">::(fun _ ->
-        let p = [PUSH (Val 1)] in
+        let p = [PUSH (Val "1")] in
         let sis = `User [ADD; SUB] in
         let ea = mk_enc_consts p sis in
         let st = mk_state ea "" in
@@ -91,8 +91,8 @@ let suite =
     (* enc_equivalence *)
 
     "search for 1 instruction program with equivalence constraint">::(fun _ ->
-        let p = [PUSH (Val 1)] in
-        let sis = `User [PUSH (Val 1)] in
+        let p = [PUSH (Val "1")] in
+        let sis = `User [PUSH (Val "1")] in
         let ea = mk_enc_consts p sis in
         let st = mk_state ea "" in
         let c =
@@ -104,13 +104,13 @@ let suite =
         assert_equal
           ~cmp:[%eq: int]
           ~printer:[%show: int]
-          (enc_opcode ea (PUSH (Val 1)))
+          (enc_opcode ea (PUSH (Val "1")))
           (eval_fis ea m 0)
       );
 
     "search for 3 instruction program with equivalence constraint">::(fun _ ->
-        let p = [PUSH (Val 1); PUSH (Val 1); ADD] in
-        let sis = `User [PUSH (Val 1); ADD] in
+        let p = [PUSH (Val "1"); PUSH (Val "1"); ADD] in
+        let sis = `User [PUSH (Val "1"); ADD] in
         let ea = mk_enc_consts p sis in
         let st = mk_state ea "" in
         let c =
@@ -122,8 +122,8 @@ let suite =
         assert_equal
           ~cmp:[%eq: int list]
           ~printer:[%show: int list]
-          [enc_opcode ea (PUSH (Val 1))
-          ; enc_opcode ea (PUSH (Val 1))
+          [enc_opcode ea (PUSH (Val "1"))
+          ; enc_opcode ea (PUSH (Val "1"))
           ; enc_opcode ea ADD
           ]
           [eval_fis ea m 0; eval_fis ea m 1; eval_fis ea m 2]
@@ -146,7 +146,7 @@ let suite =
     (* template argument for PUSH *)
 
     "search for 1 instruction program with template (fis)">::(fun _ ->
-        let p = [PUSH (Val 1)] in
+        let p = [PUSH (Val "1")] in
         let sis = `User [PUSH Tmpl] in
         let ea = mk_enc_consts p sis in
         let st = mk_state ea "" in
@@ -164,7 +164,7 @@ let suite =
       );
 
     "search for 1 instruction program with template (a)">::(fun _ ->
-        let p = [PUSH (Val 1)] in
+        let p = [PUSH (Val "1")] in
         let sis = `User [PUSH Tmpl] in
         let ea = mk_enc_consts p sis in
         let st = mk_state ea "" in
@@ -174,12 +174,12 @@ let suite =
           (ea.kt <==> (num (List.length p)))
         in
         let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
-          1 (eval_a ea m 0)
+        assert_equal ~cmp:[%eq: string] ~printer:[%show: string]
+          "1" (eval_a ea m 0)
       );
 
     "search for 3 instruction program with template (fis)">::(fun _ ->
-        let p = [PUSH (Val 1); PUSH (Val 1); ADD] in
+        let p = [PUSH (Val "1"); PUSH (Val "1"); ADD] in
         let sis = `User [PUSH Tmpl; ADD] in
         let ea = mk_enc_consts p sis in
         let st = mk_state ea "" in
@@ -200,7 +200,7 @@ let suite =
       );
 
     "search for 3 instruction program with template (a)">::(fun _ ->
-        let p = [PUSH (Val 1); PUSH (Val 1); ADD] in
+        let p = [PUSH (Val "1"); PUSH (Val "1"); ADD] in
         let sis = `User [PUSH Tmpl; ADD] in
         let ea = mk_enc_consts p sis in
         let st = mk_state ea "" in
@@ -210,24 +210,24 @@ let suite =
           (ea.kt <==> (num (List.length p)))
         in
         let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: int list] ~printer:[%show: int list]
-          [1; 1] [eval_a ea m 0; eval_a ea m 1]
+        assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
+          ["1"; "1"] [eval_a ea m 0; eval_a ea m 1]
       );
 
     (* super optimize *)
 
     "super optimize PUSH PUSH ADD to PUSH" >::(fun _ ->
-        let p = [PUSH (Val 1); PUSH (Val 1); ADD] in
-        let sis = `User [PUSH (Val 2); PUSH (Val 1); ADD; SUB] in
+        let p = [PUSH (Val "1"); PUSH (Val "1"); ADD] in
+        let sis = `User [PUSH (Val "2"); PUSH (Val "1"); ADD; SUB] in
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [PUSH (Val 2)] (dec_super_opt ea m)
+          [PUSH (Val "2")] (dec_super_opt ea m)
       );
 
     "super optimize PUSH and POP" >::(fun _ ->
-        let p = [PUSH (Val 1); POP;] in
+        let p = [PUSH (Val "1"); POP;] in
         let sis = `User [PUSH Tmpl; POP;] in
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
@@ -237,17 +237,17 @@ let suite =
       );
 
     "super optimize x * 0 to POP; PUSH 0" >::(fun _ ->
-        let p = [PUSH (Val 0); MUL] in
+        let p = [PUSH (Val "0"); MUL] in
         let sis = `User [PUSH Tmpl; POP; MUL; ADD] in
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [POP; PUSH (Val 0)] (dec_super_opt ea m)
+          [POP; PUSH (Val "0")] (dec_super_opt ea m)
       );
 
     "super optimize x * 1 to x" >::(fun _ ->
-        let p = [PUSH (Val 1); MUL] in
+        let p = [PUSH (Val "1"); MUL] in
         let sis = `User [PUSH Tmpl; POP; MUL; ADD] in
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
@@ -257,19 +257,19 @@ let suite =
       );
 
     "super optimize PUSH PUSH ADD to PUSH with template" >::(fun _ ->
-        let p = [PUSH (Val 1); PUSH (Val 1); ADD] in
+        let p = [PUSH (Val "1"); PUSH (Val "1"); ADD] in
         let sis = `User [PUSH Tmpl; ADD; SUB] in
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [PUSH (Val 2)] (dec_super_opt ea m)
+          [PUSH (Val "2")] (dec_super_opt ea m)
       );
 
     (* enc_super_opt with init stack elements *)
 
     "super optimize x + 0 with one init stack element" >::(fun _ ->
-        let p = [PUSH (Val 0); ADD] in
+        let p = [PUSH (Val "0"); ADD] in
         let sis = `User [PUSH Tmpl; ADD] in
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
@@ -279,7 +279,7 @@ let suite =
       );
 
     "super optimize with two init stack elements" >: test_case ~length:Long (fun _ ->
-        let p = [ADD; PUSH (Val 0); ADD] in
+        let p = [ADD; PUSH (Val "0"); ADD] in
         let sis = `User [ADD] in
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
@@ -289,13 +289,13 @@ let suite =
       );
 
     "super optimize 3 + (0 - x) to (3 - x) " >::(fun _ ->
-        let p = [PUSH (Val 0); SUB; PUSH (Val 3); ADD;] in
+        let p = [PUSH (Val "0"); SUB; PUSH (Val "3"); ADD;] in
         let sis = `User [PUSH Tmpl; ADD; SUB;] in
         let ea = mk_enc_consts p sis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [PUSH (Val 3); SUB] (dec_super_opt ea m)
+          [PUSH (Val "3"); SUB] (dec_super_opt ea m)
       );
 
   ]

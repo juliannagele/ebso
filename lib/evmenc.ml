@@ -89,7 +89,8 @@ let init ea st =
 
 (* TODO: check data layout on stack *)
 let enc_stackarg ea j = function
-  | Val x -> senum x
+  (* careful: if x is to large for sesort leftmost bits are truncated *)
+  | Val x -> Z3.Expr.mk_numeral_string !ctxt (num_string_to_dec x) !sesort
   | Tmpl -> ea.a <@@> [j]
 
 let enc_push ea st j x =
@@ -257,7 +258,7 @@ let eval_gas st m i = eval_func_decl m i st.used_gas
 
 let eval_fis ea m j = eval_func_decl m j ea.fis |> Z3.Arithmetic.Integer.get_int
 
-let eval_a ea m j = eval_func_decl m j ea.a |> Z3.Arithmetic.Integer.get_int
+let eval_a ea m j = eval_func_decl m j ea.a |> Z3.Arithmetic.Integer.numeral_to_string
 
 let dec_instr ea m j =
   let i = eval_fis ea m j |> dec_opcode ea in
