@@ -3,7 +3,7 @@ open Core
 type stackarg =
   | Val of int [@printer fun fmt x -> fprintf fmt "%i" x]
   | Tmpl
-[@@deriving show { with_path = false }, eq, sexp]
+[@@deriving show { with_path = false }, eq, sexp, compare]
 
 let stackarg_of_sexp s = match s with
   | Sexp.Atom i -> if String.equal i "Tmpl" then Tmpl else Val (Int.of_string i)
@@ -15,7 +15,7 @@ type idx =
   | I [@value 1] | II | III | IV | V
   | VI | VII | VIII | IX | X
   | XI | XII | XIII | XIV | XV | XVI
-[@@deriving show { with_path = false }, eq, enum, enumerate, sexp]
+[@@deriving show { with_path = false }, eq, enum, enumerate, sexp, compare]
 
 type t =
   (* 0s:  Stop and Arithmetic Operations *)
@@ -54,7 +54,11 @@ type t =
   (* EIP 1014 *)
   | CREATE2
   | STATICCALL | REVERT | INVALID | SELFDESTRUCT
-[@@deriving show {with_path = false}, eq, enumerate, sexp]
+[@@deriving show {with_path = false}, eq, enumerate, sexp, compare]
+
+let compare i i2 = match (i, i2) with
+  | (PUSH _, PUSH _) -> 0
+  | _ -> [%compare: t] i i2
 
 (* list of instructions that are encodable, i.e., can be super optimized *)
 let encodable = [
