@@ -124,6 +124,13 @@ let enc_mod ea st j =
   let evmmod num denom = ite (denom <==> senum 0) (senum 0) (umod num denom) in
   enc_binop ea st j evmmod
 
+let enc_iszero ea st j =
+  let open Z3Ops in
+  let sk n = st.stack @@ (ea.xs @ [j; n])
+  and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
+  let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
+  (* if the old top element is 0 then the new top element is 1 and 0 otherwise *)
+  (sk' (sc' - sanum 1) == ite (sk (sc - sanum 1) == (senum 0)) (senum 1) (senum 0))
 
 let enc_swap ea st j idx =
   let sc_idx = sanum (idx + 1) in
@@ -164,6 +171,7 @@ let enc_instruction ea st j is =
     | MUL -> enc_mul ea st j
     | DIV -> enc_div ea st j
     | MOD -> enc_mod ea st j
+    | ISZERO -> enc_iszero ea st j
     | SWAP idx -> enc_swap ea st j (idx_to_enum idx)
     | DUP idx -> enc_dup ea st j (idx_to_enum idx)
     | _ -> failwith "not implemented"
