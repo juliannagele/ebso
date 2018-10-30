@@ -125,6 +125,7 @@ let enc_mod ea st j =
   enc_binop ea st j evmmod
 
 let enc_and ea st j = enc_binop ea st j (Z3.BitVector.mk_and !ctxt)
+let enc_or ea st j = enc_binop ea st j (Z3.BitVector.mk_or !ctxt)
 
 let enc_iszero ea st j =
   let open Z3Ops in
@@ -175,6 +176,7 @@ let enc_instruction ea st j is =
     | MOD -> enc_mod ea st j
     | ISZERO -> enc_iszero ea st j
     | AND -> enc_and ea st j
+    | OR -> enc_or ea st j
     | SWAP idx -> enc_swap ea st j (idx_to_enum idx)
     | DUP idx -> enc_dup ea st j (idx_to_enum idx)
     | _ -> failwith "not implemented"
