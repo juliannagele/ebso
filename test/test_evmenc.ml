@@ -341,6 +341,68 @@ let effect =
           (senum 4) (eval_stack st m (List.length p) 0)
       );
 
+    (* or *)
+
+    "0 | 1 is 1" >::(fun _ ->
+        let p = [PUSH (Val "0"); PUSH (Val "1"); OR] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 1) (eval_stack st m (List.length p) 0)
+      );
+
+    "1 | 1 is 1" >::(fun _ ->
+        let p = [PUSH (Val "1"); PUSH (Val "1"); OR] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 1) (eval_stack st m (List.length p) 0)
+      );
+
+    "0 | 0 is 0" >::(fun _ ->
+        let p = [PUSH (Val "0"); PUSH (Val "0"); OR] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 0) (eval_stack st m (List.length p) 0)
+      );
+
+    "1 | 0 is 1" >::(fun _ ->
+        let p = [PUSH (Val "1"); PUSH (Val "0"); OR] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 1) (eval_stack st m (List.length p) 0)
+      );
+
+    "OR is idempotent (0b101)" >::(fun _ ->
+        let p = [PUSH (Val "0b101"); PUSH (Val "0b101"); OR] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 5) (eval_stack st m (List.length p) 0)
+      );
+
+    "0b001 | 0b100 is 0b101" >::(fun _ ->
+        let p = [PUSH (Val "0b001"); PUSH (Val "0b100"); OR] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 5) (eval_stack st m (List.length p) 0)
+      );
+
     (* push *)
 
     "top of the stack is the pushed element after a PUSH">:: (fun _ ->
