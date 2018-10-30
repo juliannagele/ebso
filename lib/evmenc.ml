@@ -124,6 +124,8 @@ let enc_mod ea st j =
   let evmmod num denom = ite (denom <==> senum 0) (senum 0) (umod num denom) in
   enc_binop ea st j evmmod
 
+let enc_and ea st j = enc_binop ea st j (Z3.BitVector.mk_and !ctxt)
+
 let enc_iszero ea st j =
   let open Z3Ops in
   let sk n = st.stack @@ (ea.xs @ [j; n])
@@ -172,6 +174,7 @@ let enc_instruction ea st j is =
     | DIV -> enc_div ea st j
     | MOD -> enc_mod ea st j
     | ISZERO -> enc_iszero ea st j
+    | AND -> enc_and ea st j
     | SWAP idx -> enc_swap ea st j (idx_to_enum idx)
     | DUP idx -> enc_dup ea st j (idx_to_enum idx)
     | _ -> failwith "not implemented"

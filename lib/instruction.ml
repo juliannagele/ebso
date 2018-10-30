@@ -76,6 +76,7 @@ let encodable = [
   ; DIV
   ; MOD
   ; ISZERO
+  ; AND
   ; POP
 ] @ List.map all_of_stackarg ~f:(fun a -> PUSH a)
   @ List.map all_of_idx ~f:(fun i -> SWAP i)
@@ -88,6 +89,7 @@ let delta_alpha = function
   | DIV -> (2, 1)
   | MOD -> (2, 1)
   | ISZERO -> (1, 1)
+  | AND -> (2, 1)
   | PUSH _ -> (0, 1)
   | POP -> (1, 0)
   | SWAP i -> (idx_to_enum i + 1, idx_to_enum i + 1)
@@ -101,6 +103,7 @@ let gas_cost = function
   | DIV -> 5
   | MOD -> 5
   | ISZERO -> 3
+  | AND -> 3
   | PUSH _ -> 3
   | POP -> 2
   | SWAP _ -> 3
