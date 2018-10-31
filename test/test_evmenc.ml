@@ -316,6 +316,58 @@ let effect =
           (senum 0) (eval_stack st m (List.length p) 0)
       );
 
+    (* mulmod *)
+
+    "(2 * 1) mod 2 = 0" >::(fun _ ->
+        let p = [PUSH (Val "2"); PUSH (Val "1"); PUSH (Val "2"); MULMOD] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 0) (eval_stack st m (List.length p) 0)
+      );
+
+    "(7 * 7) mod 2 = 1 (overflow happens)" >::(fun _ ->
+        let p = [PUSH (Val "2"); PUSH (Val "7"); PUSH (Val "7"); MULMOD] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 1) (eval_stack st m (List.length p) 0)
+      );
+
+    "(7 * 6) mod 7 = 0 (overflow happens)" >::(fun _ ->
+        let p = [PUSH (Val "7"); PUSH (Val "6"); PUSH (Val "7"); MULMOD] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 0) (eval_stack st m (List.length p) 0)
+      );
+
+    "(2 * 1) mod 0 = 0" >::(fun _ ->
+        let p = [PUSH (Val "0"); PUSH (Val "1"); PUSH (Val "2"); MULMOD] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 0) (eval_stack st m (List.length p) 0)
+      );
+
+    "(0 * 5) mod 2 = 0" >::(fun _ ->
+        let p = [PUSH (Val "2"); PUSH (Val "5"); PUSH (Val "0"); MULMOD] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 0) (eval_stack st m (List.length p) 0)
+      );
+
     (* iszero *)
 
     "0 iszero is true" >::(fun _ ->
