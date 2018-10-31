@@ -74,6 +74,7 @@ let encodable = [
   ; MUL
   ; SUB
   ; DIV
+  ; SDIV
   ; MOD
   ; SMOD
   ; ADDMOD
@@ -98,6 +99,7 @@ let delta_alpha = function
   | MUL -> (2, 1)
   | SUB -> (2, 1)
   | DIV -> (2, 1)
+  | SDIV -> (2, 1)
   | MOD -> (2, 1)
   | SMOD -> (2, 1)
   | ADDMOD -> (3, 1)
@@ -123,6 +125,7 @@ let gas_cost = function
   | MUL -> 5
   | SUB -> 3
   | DIV -> 5
+  | SDIV -> 5
   | MOD -> 5
   | SMOD -> 5
   | ADDMOD -> 8

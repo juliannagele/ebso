@@ -63,6 +63,7 @@ let (<->) = mk_bin_op BitVector.mk_sub (fun ctxt x y -> Arithmetic.mk_sub ctxt [
 let (<*>) = mk_bin_op BitVector.mk_mul (fun ctxt x y -> Arithmetic.mk_mul ctxt [x; y])
 
 let udiv = BitVector.mk_udiv !ctxt
+let sdiv = BitVector.mk_sdiv !ctxt
 let urem = BitVector.mk_urem !ctxt
 let srem = BitVector.mk_srem !ctxt
 
