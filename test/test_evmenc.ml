@@ -182,6 +182,88 @@ let effect =
           (senum 0) (eval_stack st m (List.length p) 0)
       );
 
+    (* sdiv *)
+
+    "1 sdiv 0 = 0" >::(fun _ ->
+        let p = [PUSH (Val "0"); PUSH (Val "1"); SDIV] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 0) (eval_stack st m (List.length p) 0)
+      );
+
+    "3 sdiv 2 = 1" >::(fun _ ->
+        let p = [PUSH (Val "2"); PUSH (Val "3"); SDIV] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 1) (eval_stack st m (List.length p) 0)
+      );
+
+    "-3 sdiv 2 = -1" >::(fun _ ->
+        let p = [PUSH (Val "2"); PUSH (Val "-3"); SDIV] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum (-1)) (eval_stack st m (List.length p) 0)
+      );
+
+    "3 sdiv -2 = -1" >::(fun _ ->
+        let p = [PUSH (Val "-2"); PUSH (Val "3"); SDIV] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum (-1)) (eval_stack st m (List.length p) 0)
+      );
+
+    "-3 sdiv -2 = 1" >::(fun _ ->
+        let p = [PUSH (Val "-2"); PUSH (Val "-3"); SDIV] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 1) (eval_stack st m (List.length p) 0)
+      );
+
+    "-1 sdiv -1 = 1" >::(fun _ ->
+        let p = [PUSH (Val "-1"); PUSH (Val "-1"); SDIV] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 1) (eval_stack st m (List.length p) 0)
+      );
+
+    "-1 sdiv 2 = 0" >::(fun _ ->
+        let p = [PUSH (Val "2"); PUSH (Val "-1"); SDIV] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 0) (eval_stack st m (List.length p) 0)
+      );
+
+    "-2^(ses - 1) sdiv -1 = -2^(ses - 1), wraps to negative" >::(fun _ ->
+        let p = [PUSH (Val "-1"); PUSH (Val "0b100"); SDIV] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum (-4)) (eval_stack st m (List.length p) 0)
+      );
+
     (* mod *)
 
     "2 modulo 1" >::(fun _ ->
