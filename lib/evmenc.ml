@@ -123,7 +123,7 @@ let enc_div ea st j =
   enc_binop ea st j div
 let enc_mod ea st j =
   (* EVM defines x mod 0 = 0, Z3 says it's undefined *)
-  let evmmod num denom = ite (denom <==> senum 0) (senum 0) (umod num denom) in
+  let evmmod num denom = ite (denom <==> senum 0) (senum 0) (urem num denom) in
   enc_binop ea st j evmmod
 let enc_smod ea st j =
   (* Z3 has srem and smod; srem takes sign from dividend (= num),
@@ -164,7 +164,7 @@ let enc_addmod ea st j =
     (* truncate back to ses, safe because mod denom brings us back to range *)
     extract (Int.pred !ses) 0
       (* requires non overflowing add, pad with 0s to avoid overflow *)
-      (umod ((zeroext 1 y) + (zeroext 1 x)) (zeroext 1 denom)))
+      (urem ((zeroext 1 y) + (zeroext 1 x)) (zeroext 1 denom)))
 
 let enc_mulmod ea st j =
   let open Z3Ops in
@@ -178,7 +178,7 @@ let enc_mulmod ea st j =
     (* truncate back to ses, safe because mod denom brings us back to range *)
     extract (Int.pred !ses) 0
       (* requires non overflowing mul, pad with 0s to avoid overflow *)
-      (umod ((zeroext !ses y) * (zeroext !ses x)) (zeroext !ses denom)))
+      (urem ((zeroext !ses y) * (zeroext !ses x)) (zeroext !ses denom)))
 
 let enc_not ea st j =
   let open Z3Ops in
