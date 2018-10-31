@@ -133,6 +133,9 @@ let enc_gt ea st j =
 let enc_slt ea st j =
   let bvslt x y = ite (x <<> y) (senum 1) (senum 0) in
   enc_binop ea st j bvslt
+let enc_sgt ea st j =
+  let bvsgt x y = ite (x <>> y) (senum 1) (senum 0) in
+  enc_binop ea st j bvsgt
 let enc_eq ea st j =
   let bveq x y = ite (x <==> y) (senum 1) (senum 0) in
   enc_binop ea st j bveq
@@ -199,6 +202,7 @@ let enc_instruction ea st j is =
     | LT -> enc_lt ea st j
     | GT -> enc_gt ea st j
     | SLT -> enc_slt ea st j
+    | SGT -> enc_sgt ea st j
     | EQ -> enc_eq ea st j
     | ISZERO -> enc_iszero ea st j
     | AND -> enc_and ea st j
