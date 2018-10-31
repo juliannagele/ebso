@@ -6,9 +6,11 @@ open Program
 (* stack address size; design decision/quick fix: the slot 2^sas - 1 is reserved
    for exception handling, otherwise the stack counter wraps around
    --> max stack size 2^sas - 1 *)
-let sasort = ref (bv_sort 5)
+let sas = ref 5
 (* stack element size *)
-let sesort = ref (bv_sort 3)
+let ses = ref 3
+let sasort = ref (bv_sort !sas)
+let sesort = ref (bv_sort !ses)
 
 let senum n = Z3.Expr.mk_numeral_int !ctxt n !sesort
 let sanum n = Z3.Expr.mk_numeral_int !ctxt n !sasort
@@ -154,7 +156,7 @@ let enc_addmod ea st j =
   (* EVM defines (x + y) mod 0 = 0 as 0, Z3 says it's undefined *)
   ite (denom == senum 0) (senum 0) (
     (* 2 because we want to have 3 bits in total which is stack argument size *)
-    extract 2 0
+    extract (Int.pred !ses) 0
       (* requires non overflowing add, pad with 0s to avoid overflow *)
       (umod ((zeroext 1 y) + (zeroext 1 x)) (zeroext 1 denom)))
 

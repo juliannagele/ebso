@@ -48,12 +48,12 @@ let () =
         begin
           match stackes with
           | None -> ()
-          | Some stackes -> sesort := bv_sort stackes
+          | Some stackes -> ses := stackes; sesort := bv_sort !ses
         end;
         begin
           match stackas with
           | None -> ()
-          | Some stackas -> sasort := bv_sort stackas
+          | Some stackas -> sas := stackas; sasort := bv_sort !sas
         end;
         begin if nobv then (sesort := int_sort; sasort := int_sort) else () end;
         let buf =

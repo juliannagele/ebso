@@ -5,9 +5,6 @@ open Instruction
 open Program
 open Evmenc
 
-(* set low for fast testing *)
-let ses = 3 and sas = 6
-
 let test_stack_pres oc =
   let (d, _) = delta_alpha oc in
   (* create program that initializes stack with d + 2 values *)
@@ -53,7 +50,7 @@ let test_no_exc_halt p =
     (eval_exc_halt st m (List.length p))
 
 let test_exc_halt_pres p =
-  let max = Int.pow 2 sas in
+  let max = Int.pow 2 !sas in
   let ip = List.init max ~f:(fun _ -> PUSH (Val "1")) in
   let p = ip @ p in
   let ea = mk_enc_consts p (`User []) in
@@ -1014,7 +1011,7 @@ let exc_halt =
       );
 
     "PUSHing too many elements leads to a stack overflow">:: (fun _ ->
-        let max = Int.pow 2 sas in
+        let max = Int.pow 2 !sas in
         let p = List.init max ~f:(fun _ -> PUSH (Val "1")) in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
@@ -1161,7 +1158,7 @@ let misc =
         let st = mk_state ea "" in
         let c = init ea st in
         let m = solve_model_exn [c] in
-        let sk_size = (Int.pow 2 sas) - 1 in
+        let sk_size = (Int.pow 2 !sas) - 1 in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t list]
           ~printer:(List.to_string ~f:Z3.Expr.to_string)
@@ -1243,8 +1240,10 @@ let misc =
 ]
 
 let suite =
-  sesort := bv_sort ses;
-  sasort := bv_sort sas;
+  (* set low for fast testing *)
+  ses := 3; sas := 6;
+  sesort := bv_sort !ses;
+  sasort := bv_sort !sas;
   "suite" >:::
   effect @ pres_stack @ stack_ctr @ exc_halt @ forced_stack_underflow
   @ gas_cost @ misc
