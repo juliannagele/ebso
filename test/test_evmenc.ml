@@ -621,6 +621,58 @@ let effect =
           (senum 1) (eval_stack st m (List.length p) 0)
       );
 
+    (* slt *)
+
+    "0 <_signed 0 is 0" >::(fun _ ->
+        let p = [PUSH (Val "0"); PUSH (Val "0"); SLT] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 0) (eval_stack st m (List.length p) 0)
+      );
+
+    "1 <_signed 0 is 0" >::(fun _ ->
+        let p = [PUSH (Val "0"); PUSH (Val "1"); SLT] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 0) (eval_stack st m (List.length p) 0)
+      );
+
+    "0 <_signed 1 is 1" >::(fun _ ->
+        let p = [PUSH (Val "1"); PUSH (Val "0"); SLT] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 1) (eval_stack st m (List.length p) 0)
+      );
+
+    "1 <_signed -1 is 0" >::(fun _ ->
+        let p = [PUSH (Val "-1"); PUSH (Val "1"); SLT] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 0) (eval_stack st m (List.length p) 0)
+      );
+
+    "-1 <_signed 1 is 1" >::(fun _ ->
+        let p = [PUSH (Val "1"); PUSH (Val "-1"); SLT] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 1) (eval_stack st m (List.length p) 0)
+      );
+
     (* not *)
 
     "not 0b001 is 0b110" >::(fun _ ->
