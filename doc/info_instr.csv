@@ -36,7 +36,7 @@
 "NOT",153445,"Y",
 "RETURNDATASIZE",134898,,
 "STOP",131270,"N","terminal"
-"GT",121395,,
+"GT",121395,"Y",
 "INVALID",117623,"N","terminal"
 "DUP7",105189,"Y",
 "DUP8",99195,"Y",
