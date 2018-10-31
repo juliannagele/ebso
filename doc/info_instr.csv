@@ -98,5 +98,5 @@ ADDMOD,31,Y,
 LOG0,31,,needs memory
 SWAP16,21,Y,
 EXTCODECOPY,14,,mystery
-SMOD,4,,
+SMOD,4,Y,
 CALLCODE,1,N,terminal

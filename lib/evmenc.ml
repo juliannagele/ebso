@@ -125,6 +125,12 @@ let enc_mod ea st j =
   (* EVM defines x mod 0 = 0, Z3 says it's undefined *)
   let evmmod num denom = ite (denom <==> senum 0) (senum 0) (umod num denom) in
   enc_binop ea st j evmmod
+let enc_smod ea st j =
+  (* Z3 has srem and smod; srem takes sign from dividend (= num),
+     smod from divisor (= denom); EVM takes the latter *)
+  (* EVM defines x smod 0 = 0, Z3 says it's undefined *)
+  let evmsmod num denom = ite (denom <==> senum 0) (senum 0) (srem num denom) in
+  enc_binop ea st j evmsmod
 
 let enc_lt ea st j =
   let bvlt x y = ite (Z3.BitVector.mk_ult !ctxt x y) (senum 1) (senum 0) in
@@ -229,6 +235,7 @@ let enc_instruction ea st j is =
     | MUL -> enc_mul ea st j
     | DIV -> enc_div ea st j
     | MOD -> enc_mod ea st j
+    | SMOD -> enc_smod ea st j
     | ADDMOD -> enc_addmod ea st j
     | MULMOD -> enc_mulmod ea st j
     | LT -> enc_lt ea st j

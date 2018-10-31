@@ -64,6 +64,7 @@ let (<*>) = mk_bin_op BitVector.mk_mul (fun ctxt x y -> Arithmetic.mk_mul ctxt [
 
 let udiv = BitVector.mk_udiv !ctxt
 let umod = BitVector.mk_urem !ctxt
+let srem = BitVector.mk_srem !ctxt
 
 let zeroext k bv = Z3.BitVector.mk_zero_ext !ctxt k bv
 
