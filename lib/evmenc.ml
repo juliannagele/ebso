@@ -155,7 +155,7 @@ let enc_addmod ea st j =
   sk' (sc' - sanum 1) ==
   (* EVM defines (x + y) mod 0 = 0 as 0, Z3 says it's undefined *)
   ite (denom == senum 0) (senum 0) (
-    (* 2 because we want to have 3 bits in total which is stack argument size *)
+    (* truncate back to ses, safe because mod denom brings us back to range *)
     extract (Int.pred !ses) 0
       (* requires non overflowing add, pad with 0s to avoid overflow *)
       (umod ((zeroext 1 y) + (zeroext 1 x)) (zeroext 1 denom)))
