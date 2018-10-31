@@ -160,6 +160,20 @@ let enc_addmod ea st j =
       (* requires non overflowing add, pad with 0s to avoid overflow *)
       (umod ((zeroext 1 y) + (zeroext 1 x)) (zeroext 1 denom)))
 
+let enc_mulmod ea st j =
+  let open Z3Ops in
+  let sk n = st.stack @@ (ea.xs @ [j; n])
+  and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
+  let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
+  let denom = sk (sc - sanum 3) and x =  sk (sc - sanum 2) and y =  sk (sc - sanum 1) in
+  sk' (sc' - sanum 1) ==
+  (* EVM defines (x + y) mod 0 = 0 as 0, Z3 says it's undefined *)
+  ite (denom == senum 0) (senum 0) (
+    (* truncate back to ses, safe because mod denom brings us back to range *)
+    extract (Int.pred !ses) 0
+      (* requires non overflowing mul, pad with 0s to avoid overflow *)
+      (umod ((zeroext !ses y) * (zeroext !ses x)) (zeroext !ses denom)))
+
 let enc_not ea st j =
   let open Z3Ops in
   let sk n = st.stack @@ (ea.xs @ [j; n])
@@ -216,6 +230,7 @@ let enc_instruction ea st j is =
     | DIV -> enc_div ea st j
     | MOD -> enc_mod ea st j
     | ADDMOD -> enc_addmod ea st j
+    | MULMOD -> enc_mulmod ea st j
     | LT -> enc_lt ea st j
     | GT -> enc_gt ea st j
     | SLT -> enc_slt ea st j
