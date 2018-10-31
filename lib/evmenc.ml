@@ -135,6 +135,14 @@ let enc_and ea st j = enc_binop ea st j (Z3.BitVector.mk_and !ctxt)
 let enc_or ea st j = enc_binop ea st j (Z3.BitVector.mk_or !ctxt)
 let enc_xor ea st j = enc_binop ea st j (Z3.BitVector.mk_xor !ctxt)
 
+let enc_not ea st j =
+  let open Z3Ops in
+  let sk n = st.stack @@ (ea.xs @ [j; n])
+  and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
+  let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
+  (* the new top element is the bitwise negation of the old top element *)
+  (sk' (sc' - sanum 1) == Z3.BitVector.mk_not !ctxt (sk (sc - sanum 1)))
+
 let enc_iszero ea st j =
   let open Z3Ops in
   let sk n = st.stack @@ (ea.xs @ [j; n])
@@ -188,6 +196,7 @@ let enc_instruction ea st j is =
     | AND -> enc_and ea st j
     | OR -> enc_or ea st j
     | XOR -> enc_xor ea st j
+    | NOT -> enc_not ea st j
     | SWAP idx -> enc_swap ea st j (idx_to_enum idx)
     | DUP idx -> enc_dup ea st j (idx_to_enum idx)
     | _ -> failwith "not implemented"
