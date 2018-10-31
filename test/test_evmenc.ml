@@ -569,6 +569,38 @@ let effect =
           (senum 0) (eval_stack st m (List.length p) 0)
       );
 
+    (* not *)
+
+    "not 0b001 is 0b110" >::(fun _ ->
+        let p = [PUSH (Val "1"); NOT] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 6) (eval_stack st m (List.length p) 0)
+      );
+
+    "not 0b000 is 0b111" >::(fun _ ->
+        let p = [PUSH (Val "0"); NOT] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 7) (eval_stack st m (List.length p) 0)
+      );
+
+    "not 0b101 is 0b010" >::(fun _ ->
+        let p = [PUSH (Val "0b101"); NOT] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 2) (eval_stack st m (List.length p) 0)
+      );
+
     (* push *)
 
     "top of the stack is the pushed element after a PUSH">:: (fun _ ->
