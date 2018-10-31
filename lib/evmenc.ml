@@ -144,6 +144,20 @@ let enc_and ea st j = enc_binop ea st j (Z3.BitVector.mk_and !ctxt)
 let enc_or ea st j = enc_binop ea st j (Z3.BitVector.mk_or !ctxt)
 let enc_xor ea st j = enc_binop ea st j (Z3.BitVector.mk_xor !ctxt)
 
+let enc_addmod ea st j =
+  let open Z3Ops in
+  let sk n = st.stack @@ (ea.xs @ [j; n])
+  and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
+  let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
+  let denom = sk (sc - sanum 3) and x =  sk (sc - sanum 2) and y =  sk (sc - sanum 1) in
+  sk' (sc' - sanum 1) ==
+  (* EVM defines (x + y) mod 0 = 0 as 0, Z3 says it's undefined *)
+  ite (denom == senum 0) (senum 0) (
+    (* 2 because we want to have 3 bits in total which is stack argument size *)
+    extract 2 0
+      (* requires non overflowing add, pad with 0s to avoid overflow *)
+      (umod ((zeroext 1 y) + (zeroext 1 x)) (zeroext 1 denom)))
+
 let enc_not ea st j =
   let open Z3Ops in
   let sk n = st.stack @@ (ea.xs @ [j; n])
@@ -199,6 +213,7 @@ let enc_instruction ea st j is =
     | MUL -> enc_mul ea st j
     | DIV -> enc_div ea st j
     | MOD -> enc_mod ea st j
+    | ADDMOD -> enc_addmod ea st j
     | LT -> enc_lt ea st j
     | GT -> enc_gt ea st j
     | SLT -> enc_slt ea st j
