@@ -130,6 +130,9 @@ let enc_lt ea st j =
 let enc_gt ea st j =
   let bvgt x y = ite (Z3.BitVector.mk_ugt !ctxt x y) (senum 1) (senum 0) in
   enc_binop ea st j bvgt
+let enc_slt ea st j =
+  let bvslt x y = ite (x <<> y) (senum 1) (senum 0) in
+  enc_binop ea st j bvslt
 let enc_eq ea st j =
   let bveq x y = ite (x <==> y) (senum 1) (senum 0) in
   enc_binop ea st j bveq
@@ -195,6 +198,7 @@ let enc_instruction ea st j is =
     | MOD -> enc_mod ea st j
     | LT -> enc_lt ea st j
     | GT -> enc_gt ea st j
+    | SLT -> enc_slt ea st j
     | EQ -> enc_eq ea st j
     | ISZERO -> enc_iszero ea st j
     | AND -> enc_and ea st j
