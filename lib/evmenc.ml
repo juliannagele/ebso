@@ -124,6 +124,10 @@ let enc_mod ea st j =
   let evmmod num denom = ite (denom <==> senum 0) (senum 0) (umod num denom) in
   enc_binop ea st j evmmod
 
+let enc_eq ea st j =
+  let bveq x y = ite (x <==> y) (senum 1) (senum 0) in
+  enc_binop ea st j bveq
+
 let enc_and ea st j = enc_binop ea st j (Z3.BitVector.mk_and !ctxt)
 let enc_or ea st j = enc_binop ea st j (Z3.BitVector.mk_or !ctxt)
 let enc_xor ea st j = enc_binop ea st j (Z3.BitVector.mk_xor !ctxt)
@@ -175,6 +179,7 @@ let enc_instruction ea st j is =
     | MUL -> enc_mul ea st j
     | DIV -> enc_div ea st j
     | MOD -> enc_mod ea st j
+    | EQ -> enc_eq ea st j
     | ISZERO -> enc_iszero ea st j
     | AND -> enc_and ea st j
     | OR -> enc_or ea st j
