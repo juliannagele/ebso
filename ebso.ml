@@ -11,20 +11,27 @@ let super_optimize p sis pm pc psmt =
   let log b s =
     if b then
       begin
-        Out_channel.output_string  Out_channel.stderr s;
+        Out_channel.output_string Out_channel.stderr s;
         Out_channel.flush Out_channel.stderr
       end
     else ()
   in
-  let ea = mk_enc_consts p sis in
-  let c = enc_super_opt ea in
-  log pc ("Constraint generated:\n" ^ Z3.Expr.to_string (Z3.Expr.simplify c None) ^ "\n\n");
-  log psmt ("SMT-LIB Benchmark generated:\n" ^
-            Z3.SMT.benchmark_to_smtstring !ctxt "" "" "unknown" "" []
-              (Z3.Expr.simplify c None) ^ "\n\n");
-  let m = solve_model_exn [c] in
-  log pm ("Model found:\n" ^ Z3.Model.to_string m ^ "\n\n");
-  (dec_super_opt ea m)
+  let rec sopt p gas_saved =
+    let ea = mk_enc_consts p sis in
+    let c = enc_super_opt ea in
+    log pc ("Constraint generated:\n" ^ Z3.Expr.to_string (Z3.Expr.simplify c None) ^ "\n\n");
+    log psmt ("SMT-LIB Benchmark generated:\n" ^
+              Z3.SMT.benchmark_to_smtstring !ctxt "" "" "unknown" "" []
+                (Z3.Expr.simplify c None) ^ "\n\n");
+    match solve_model [c] with
+    | Some m ->
+      log pm ("Model found:\n" ^ Z3.Model.to_string m ^ "\n\n");
+      let p' = dec_super_opt ea m in
+      let g = Program.total_gas_cost p - Program.total_gas_cost p' in
+      sopt p' (Option.merge gas_saved (Some g) ~f:(+))
+    | None -> (p, gas_saved)
+  in
+  sopt p None
 
 let () =
   let open Command.Let_syntax in
@@ -56,7 +63,7 @@ let () =
           else Sedlexing.Latin1.from_channel (In_channel.create progr)
         in
         let p = Parser.parse buf in
-        let p_opt = super_optimize p `All p_model p_constr p_smt in
+        let (p_opt, _) = super_optimize p `All p_model p_constr p_smt in
         Program.pp Format.std_formatter p_opt
     ]
   |> Command.run ~version:"0.1"
