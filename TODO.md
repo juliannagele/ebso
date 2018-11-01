@@ -12,9 +12,8 @@
 * Implement "normal" superoptimization: enumerate candidate programs and test
   for equivalence
 
-* Add bound on number of instructions in target program to allow solver to prove
-  optimally (easy bound: gas cost of input program divided by cost of cheapest
-  instruction)
+* Improve bound on number of instructions in target program to allow solver to prove
+  optimality (currently: gas cost of source program)
 
 * Collect benchmarks: SMT and EVM bytecode snippets
   * open Zeppelin: compile with and without optimization with solc

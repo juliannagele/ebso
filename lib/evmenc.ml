@@ -334,7 +334,10 @@ let enc_super_opt ea =
   (enc_program ea sts &&
    enc_search_space ea stt &&
    enc_equivalence ea sts stt &&
-   sts.used_gas @@ [num ks] > stt.used_gas @@ [ea.kt])
+   sts.used_gas @@ [num ks] > stt.used_gas @@ [ea.kt] &&
+   (* bound the number of instructions in the target; aids solver in showing
+      unsat, i.e., that program is optimal *)
+   ea.kt <= sts.used_gas @@ [num ks])
 
 let eval_stack ?(xs = []) st m i n =
   eval_func_decl m i ~n:[sanum n] ~xs:xs st.stack
