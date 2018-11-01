@@ -116,25 +116,20 @@ let solve_model cs =
   let () = Solver.add slvr cs in
   match Solver.check slvr [] with
   | Solver.SATISFIABLE ->
-    begin
-      match Solver.get_model slvr with
-      | Some m -> Some m
-      | None -> failwith "SAT but no model"
-    end
+    (* make sure there is a model *)
+    Some (Option.value_exn (Solver.get_model slvr) ~message:"SAT but no model")
   | Solver.UNSATISFIABLE -> None
   | Solver.UNKNOWN -> failwith (Solver.get_reason_unknown slvr)
 
 let solve_model_exn cs = Option.value_exn (solve_model cs) ~message:"UNSAT"
 
 let eval_func_decl m j ?(n = []) ?(xs = []) f =
-  match Z3.Model.eval m (f <@@> (xs @ [num j] @ n)) true with
-  | Some e -> e
-  | None -> failwith ("could not eval " ^ Z3.FuncDecl.to_string f)
+  Option.value_exn (Model.eval m (f <@@> (xs @ [num j] @ n)) true)
+    ~message:("could not eval " ^ Z3.FuncDecl.to_string f)
 
 let eval_const m k =
-  match Z3.Model.eval m k true with
-  | Some e -> e
-  | None -> failwith ("could not eval " ^ Z3.Expr.to_string k)
+  Option.value_exn (Model.eval m k true)
+    ~message:("could not eval " ^ Z3.Expr.to_string k)
 
 module Z3Ops = struct
   let (@@) = (<@@>)
