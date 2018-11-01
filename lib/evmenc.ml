@@ -6,7 +6,7 @@ open Program
 (* stack address size; design decision/quick fix: the slot 2^sas - 1 is reserved
    for exception handling, otherwise the stack counter wraps around
    --> max stack size 2^sas - 1 *)
-let sas = ref 5
+let sas = ref 6
 (* stack element size *)
 let ses = ref 3
 let sasort = ref (bv_sort !sas)
