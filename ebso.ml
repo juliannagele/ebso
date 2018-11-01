@@ -3,16 +3,8 @@ open Z3util
 open Evmenc
 
 let set_options stackes stackas nobv =
-  begin
-    match stackes with
-    | None -> ()
-    | Some stackes -> ses := stackes; sesort := bv_sort !ses
-  end;
-  begin
-    match stackas with
-    | None -> ()
-    | Some stackas -> sas := stackas; sasort := bv_sort !sas
-  end;
+  Option.iter stackes ~f:(fun stackes -> ses := stackes; sesort := bv_sort !ses);
+  Option.iter stackas ~f:(fun stackas -> sas := stackas; sasort := bv_sort !sas);
   if nobv then (sesort := int_sort; sasort := int_sort) else ()
 
 let super_optimize p sis pm pc psmt =
