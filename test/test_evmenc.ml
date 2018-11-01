@@ -1346,10 +1346,8 @@ let gas_cost =
         let st = mk_state ea "" in
         let c = init ea st in
         let m = solve_model_exn [c] in
-        assert_equal
-          ~cmp:[%eq: Z3.Expr.t]
-          ~printer:Z3.Expr.to_string
-          (num 0)
+        assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
+          0
           (eval_gas st m 0)
       );
 
@@ -1359,10 +1357,8 @@ let gas_cost =
         let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
-        assert_equal
-          ~cmp:[%eq: Z3.Expr.t]
-          ~printer:Z3.Expr.to_string
-          (num @@ total_gas_cost p)
+        assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
+          (total_gas_cost p)
           (eval_gas st m (List.length p))
       );
   ]

@@ -346,7 +346,7 @@ let eval_stack_ctr st m i = eval_func_decl m i st.stack_ctr
 
 let eval_exc_halt st m i = eval_func_decl m i st.exc_halt
 
-let eval_gas st m i = eval_func_decl m i st.used_gas
+let eval_gas st m i = eval_func_decl m i st.used_gas |> Z3.Arithmetic.Integer.get_int
 
 let eval_fis ea m j = eval_func_decl m j ea.fis |> Z3.Arithmetic.Integer.get_int
 
