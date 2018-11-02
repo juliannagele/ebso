@@ -1,6 +1,7 @@
 open Core
 
 let num_string_to_dec x = Z.of_string x |> Z.to_string
+let num_string_to_hex x = Z.of_string x |> Z.format "x"
 
 type stackarg =
   (* string either in hexadecimal format starting with 0x or in decimal format *)
@@ -19,11 +20,19 @@ let stackarg_of_sexp s = match s with
 
 let all_of_stackarg = [Tmpl]
 
+let show_stackarg_hex = function
+  | Val x ->
+    let hx = num_string_to_hex x in
+    if Int.rem (String.length hx) 2 = 1 then "0" ^ hx else hx
+  | Tmpl -> failwith "hex output not supported for template"
+
 type idx =
   | I [@value 1] | II | III | IV | V
   | VI | VII | VIII | IX | X
   | XI | XII | XIII | XIV | XV | XVI
 [@@deriving show { with_path = false }, eq, enum, enumerate, sexp, compare]
+
+let show_idx_hex idx = Z.format "x" (Z.of_int (idx_to_enum idx - 1))
 
 type t =
   (* 0s:  Stop and Arithmetic Operations *)
@@ -145,3 +154,97 @@ let gas_cost = function
   | SWAP _ -> 3
   | DUP _ -> 3
   | _ -> failwith "not implemented"
+
+let show_hex = function
+  | STOP -> "00"
+  | ADD -> "01"
+  | MUL -> "02"
+  | SUB -> "03"
+  | DIV -> "04"
+  | SDIV -> "05"
+  | MOD -> "06"
+  | SMOD -> "07"
+  | ADDMOD -> "08"
+  | MULMOD -> "09"
+  | EXP -> "0a"
+  | SIGNEXTEND -> "0b"
+  | LT -> "10"
+  | GT -> "11"
+  | SLT -> "12"
+  | SGT -> "13"
+  | EQ -> "14"
+  | ISZERO -> "15"
+  | AND -> "16"
+  | OR -> "17"
+  | XOR -> "18"
+  | NOT -> "19"
+  | BYTE -> "1a"
+  | SHL -> "1b"
+  | SHR -> "1c"
+  | SAR -> "1d"
+  | SHA3 -> "20"
+  | ADDRESS -> "30"
+  | BALANCE -> "31"
+  | ORIGIN -> "32"
+  | CALLER -> "33"
+  | CALLVALUE -> "34"
+  | CALLDATALOAD -> "35"
+  | CALLDATASIZE -> "36"
+  | CALLDATACOPY -> "37"
+  | CODESIZE -> "38"
+  | CODECOPY -> "39"
+  | GASPRICE -> "3a"
+  | EXTCODESIZE -> "3b"
+  | EXTCODECOPY -> "3c"
+  | RETURNDATASIZE -> "3d"
+  | RETURNDATACOPY -> "3e"
+  | EXTCODEHASH -> "3f"
+  | BLOCKHASH -> "40"
+  | COINBASE -> "41"
+  | TIMESTAMP -> "42"
+  | NUMBER -> "43"
+  | DIFFICULTY -> "44"
+  | GASLIMIT -> "45"
+  | POP -> "50"
+  | MLOAD -> "51"
+  | MSTORE -> "52"
+  | MSTORE8 -> "53"
+  | SLOAD -> "54"
+  | SSTORE -> "55"
+  | JUMP -> "56"
+  | JUMPI -> "57"
+  | PC -> "58"
+  | MSIZE -> "59"
+  | GAS -> "5a"
+  | JUMPDEST -> "5b"
+  | PUSH x ->
+    let hx = show_stackarg_hex x in
+    (* 96 = 0x60, so 95 + number of bytes is the bytecode we need *)
+    Z.format "x" (Z.of_int (95 + (String.length hx / 2))) ^ hx
+  | DUP idx -> "8" ^ show_idx_hex idx
+  | SWAP idx -> "9" ^ show_idx_hex idx
+  | LOG0 -> "a0"
+  | LOG1 -> "a1"
+  | LOG2 -> "a2"
+  | LOG3 -> "a3"
+  | LOG4 -> "a4"
+  | JUMPTO -> "b0"
+  | JUMPIF -> "b1"
+  | JUMPV -> "b2"
+  | JUMPSUB -> "b3"
+  | JUMPSUBV -> "b4"
+  | BEGINSUB -> "b5"
+  | BEGINDATA -> "b6"
+  | RETURNSUB -> "b7"
+  | PUTLOCAL -> "b8"
+  | GETLOCAL -> "b9"
+  | CREATE -> "f0"
+  | CALL -> "f1"
+  | CALLCODE -> "f2"
+  | RETURN -> "f3"
+  | DELEGATECALL -> "f4"
+  | CREATE2 -> "f5"
+  | STATICCALL -> "fa"
+  | REVERT -> "fd"
+  | INVALID -> "fe"
+  | SELFDESTRUCT -> "ff"
