@@ -33,12 +33,14 @@ let stack_depth p =
 
 let total_gas_cost = List.fold ~init:0 ~f:(fun gc i -> gc + gas_cost i)
 
-(* basic blocks -- we classify basic blocks into 2 kinds:
+(* basic blocks -- we classify basic blocks into 3 kinds:
+- NotEncodable for instructions that are not yet supported
 - Terminal if the last instruction of the block interrupts control flow,
   by JUMPing, CALLing, or interrupting execution;
 - Next otherwise, i.e. control passes from the last instruction of the block
-  to the first instruction of the following block *)
-type bb = Terminal of t * Instruction.t | Next of t
+  to the first instruction of the following block
+*)
+type bb = Terminal of t * Instruction.t | Next of t | NotEncodable of t
 [@@deriving show {with_path = false}, eq]
 
 (* instructions that terminate a basic block *)
@@ -63,15 +65,27 @@ let terminal =
   ; SELFDESTRUCT
   ]
 
-let split_into_bbs p =
+let split_into_bbs ?(split_non_encodable=true) p =
+  let is_terminal i = List.mem terminal i ~equal:Instruction.equal in
+  let is_encodable i =
+    match i with
+    | PUSH _ -> true
+    | _ -> List.mem encodable i ~equal:Instruction.equal
+  in
   let rec split bb bbs = function
     | [] -> (if not (List.is_empty bb) then Next bb :: bbs else bbs) |> List.rev
     | i :: is -> match i with
+      (* a terminal instruction marks the end of a BB *)
+      | _ when is_terminal i ->  split [] (Terminal (bb, i) :: bbs) is
+      (* when splitting at non-encodable instructions
+         end current BB and collect non-encodable, non-terminal instructions *)
+      | _ when not (is_encodable i) && split_non_encodable ->
+        let (ne, is) =
+          List.split_while (i :: is) ~f:(fun i -> not @@ (is_encodable i || is_terminal i))
+        in
+        split [] (NotEncodable ne :: Next bb :: bbs) is
       (* JUMPDEST and BEGINSUB mark the beginning of a new BB *)
       | JUMPDEST | BEGINSUB -> split [i] (Next bb :: bbs) is
-      (* an instruction in terminal marks the end of a BB *)
-      | _ when List.mem terminal i ~equal:Instruction.equal ->
-        split [] (Terminal (bb, i) :: bbs) is
       | _ -> split (bb @ [i]) bbs is
   in
   split [] [] p
@@ -80,3 +94,4 @@ let rec concat_bbs = function
   | [] -> []
   | Next bb :: bbs -> bb @ concat_bbs bbs
   | Terminal (bb, i) :: bbs -> bb @ [i] @ concat_bbs bbs
+  | NotEncodable bb :: bbs -> bb @ concat_bbs bbs

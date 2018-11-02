@@ -1439,13 +1439,13 @@ let misc =
     "split at JUMPDEST" >:: (fun _ ->
         assert_equal ~cmp:[%eq: Program.bb list] ~printer:[%show: Program.bb list]
           [Next [ADD]; Next [JUMPDEST; SUB]]
-          (split_into_bbs [ADD; JUMPDEST; SUB])
+          (split_into_bbs ~split_non_encodable:false [ADD; JUMPDEST; SUB])
       );
 
     "split at JUMP" >:: (fun _ ->
         assert_equal ~cmp:[%eq: Program.bb list] ~printer:[%show: Program.bb list]
           [Terminal ([ADD], JUMP); Next [SUB]]
-          (split_into_bbs [ADD; JUMP; SUB])
+          (split_into_bbs ~split_non_encodable:false [ADD; JUMP; SUB])
       );
 
     "split program at multiple locations" >::(fun _ ->
@@ -1457,7 +1457,7 @@ let misc =
           [Next [OR; ADD; SWAP I]; Terminal ([JUMPDEST; MLOAD; POP], JUMP);
            Terminal ([DUP III; PUSH (Val "0"); ISZERO], JUMPI);
            Terminal ([POP], RETURN)]
-          (split_into_bbs p)
+          (split_into_bbs ~split_non_encodable:false p)
       );
 
     "splitting a program into BBs and then concatenating them back" >::(fun _ ->
@@ -1467,8 +1467,32 @@ let misc =
         in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
           p
+          (concat_bbs @@ split_into_bbs ~split_non_encodable:false p)
+      );
+
+    "split program at non-encodable instructions" >::(fun _ ->
+        let p =
+          [OR; ADD; SWAP I; JUMPDEST; MLOAD; POP; JUMP; DUP III;
+           PUSH (Val "0"); ISZERO; JUMPI; POP; RETURN]
+        in
+        assert_equal ~cmp:[%eq: Program.bb list] ~printer:[%show: Program.bb list]
+          [Next [OR; ADD; SWAP I]; NotEncodable [JUMPDEST; MLOAD];
+           Terminal ([POP], JUMP);
+           Terminal ([DUP III; PUSH (Val "0"); ISZERO], JUMPI);
+           Terminal ([POP], RETURN)]
+          (split_into_bbs p)
+      );
+
+    "splitting into BBs and concatenating back with non-encodable split" >::(fun _ ->
+        let p =
+          [OR; ADD; SWAP I; JUMPDEST; MLOAD; POP; JUMP; DUP III;
+           PUSH (Val "0"); ISZERO; JUMPI; POP; RETURN]
+        in
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
+          p
           (concat_bbs @@ split_into_bbs p)
       );
+
 ]
 
 let suite =
