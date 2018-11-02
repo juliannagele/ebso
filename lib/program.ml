@@ -75,3 +75,8 @@ let split_into_bbs p =
       | _ -> split (bb @ [i]) bbs is
   in
   split [] [] p
+
+let rec concat_bbs = function
+  | [] -> []
+  | Next bb :: bbs -> bb @ concat_bbs bbs
+  | Terminal (bb, i) :: bbs -> bb @ [i] @ concat_bbs bbs

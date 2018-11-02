@@ -1459,6 +1459,16 @@ let misc =
            Terminal ([POP], RETURN)]
           (split_into_bbs p)
       );
+
+    "splitting a program into BBs and then concatenating them back" >::(fun _ ->
+        let p =
+          [OR; ADD; SWAP I; JUMPDEST; MLOAD; POP; JUMP; DUP III;
+           PUSH (Val "0"); ISZERO; JUMPI; POP; RETURN]
+        in
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
+          p
+          (concat_bbs @@ split_into_bbs p)
+      );
 ]
 
 let suite =
