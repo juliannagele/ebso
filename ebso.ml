@@ -34,10 +34,12 @@ let super_optimize p sis pm pc psmt =
   sopt p None
 
 type opt_mode =
+  | NO
   | UNBOUNDED
 [@@deriving show { with_path = false }]
 
 let opt_mode_of_string = function
+  | "NO" -> NO
   | "UNBOUNDED" -> UNBOUNDED
   | _ -> failwith "Unknown optimization mode"
 
@@ -64,7 +66,7 @@ let () =
                 (stack-element-size and stack-address-size have no effect)"
       and opt_mode = flag "optimize"
           (optional_with_default UNBOUNDED (Arg_type.create opt_mode_of_string))
-          ~doc:"optimize UNBOUNDED"
+          ~doc:"optimize NO | UNBOUNDED"
       and progr = anon ("PROGRAM" %: string)
       in
       fun () ->
@@ -74,9 +76,11 @@ let () =
           else Sedlexing.Latin1.from_channel (In_channel.create progr)
         in
         let p = Parser.parse buf in
-        match opt_mode with
-        | UNBOUNDED ->
-          let (p_opt, _) = super_optimize p `All p_model p_constr p_smt in
-          Program.pp Format.std_formatter p_opt
+        let (p_opt, _) =
+          match opt_mode with
+          | UNBOUNDED -> super_optimize p `All p_model p_constr p_smt
+          | NO -> (p, None)
+        in
+        Program.pp Format.std_formatter p_opt
     ]
   |> Command.run ~version:"0.1"
