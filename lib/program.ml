@@ -21,6 +21,7 @@ let pp_ocamllist fmt p =
   Format.fprintf fmt "]@]"
 let pp_sexplist fmt p = sexp_of_t p |> Sexp.pp fmt
 let pp = pp_v
+let show_h p = pp_h Format.str_formatter p |> Format.flush_str_formatter
 let show p = pp Format.str_formatter p |> Format.flush_str_formatter
 
 let show_hex p = String.concat ~sep:"" (List.map p ~f:Instruction.show_hex)
