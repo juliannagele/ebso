@@ -122,36 +122,6 @@ let  parse_instruction buf =
   | "SELFDESTRUCT" -> SELFDESTRUCT
   | _ -> raise (SyntaxError (lexeme_start buf))
 
-let parse buf =
-  let rec parse_wslist acc =
-    match%sedlex buf with
-    | white_spaces, eof -> List.rev acc
-    | white_spaces -> parse_wslist (parse_instruction buf :: acc)
-    | _ -> raise (SyntaxError (lexeme_start buf))
-  in
-  let rec parse_ocamllist acc =
-    match%sedlex buf with
-    | white_spaces, ';', white_spaces ->
-      parse_ocamllist (parse_instruction buf :: acc)
-    | ']', white_spaces, eof -> List.rev acc
-    | _ -> raise (SyntaxError (lexeme_start buf))
-  in
-  let rec parse_sexplist acc =
-    match%sedlex buf with
-    | white_spaces, Opt ')', white_spaces, Opt '(', white_spaces ->
-      parse_sexplist (parse_instruction buf :: acc)
-    | ')', white_spaces, eof -> List.rev acc
-    | _ -> raise (SyntaxError (lexeme_start buf))
-  in
-  match%sedlex buf with
-  | white_spaces, eof -> []
-  | white_spaces, '[', white_spaces, ']', white_spaces, eof -> []
-  | white_spaces, '[', white_spaces -> parse_ocamllist ([parse_instruction buf])
-  | white_spaces, '(', white_spaces, ')', white_spaces, eof -> []
-  | white_spaces, '(', white_spaces -> parse_sexplist ([])
-  | white_spaces -> parse_wslist []
-  | _ -> raise (SyntaxError (lexeme_start buf))
-
 let parse_hex_idx s n =
   let idxo = idx_of_enum @@ Int.of_string ("0x" ^ s) - n in
   Option.value_exn ~message:("parse hex index failed") idxo
@@ -275,3 +245,34 @@ let parse_hex buf =
     | _ -> raise (SyntaxError (lexeme_start buf))
   in
   parse_token [] |> List.rev
+
+let parse buf =
+  let rec parse_wslist acc =
+    match%sedlex buf with
+    | white_spaces, eof -> List.rev acc
+    | white_spaces -> parse_wslist (parse_instruction buf :: acc)
+    | _ -> raise (SyntaxError (lexeme_start buf))
+  in
+  let rec parse_ocamllist acc =
+    match%sedlex buf with
+    | white_spaces, ';', white_spaces ->
+      parse_ocamllist (parse_instruction buf :: acc)
+    | ']', white_spaces, eof -> List.rev acc
+    | _ -> raise (SyntaxError (lexeme_start buf))
+  in
+  let rec parse_sexplist acc =
+    match%sedlex buf with
+    | white_spaces, Opt ')', white_spaces, Opt '(', white_spaces ->
+      parse_sexplist (parse_instruction buf :: acc)
+    | ')', white_spaces, eof -> List.rev acc
+    | _ -> raise (SyntaxError (lexeme_start buf))
+  in
+  match%sedlex buf with
+  | white_spaces, eof -> []
+  | white_spaces, '[', white_spaces, ']', white_spaces, eof -> []
+  | white_spaces, '[', white_spaces -> parse_ocamllist ([parse_instruction buf])
+  | white_spaces, '(', white_spaces, ')', white_spaces, eof -> []
+  | white_spaces, '(', white_spaces -> parse_sexplist ([])
+  | white_spaces -> parse_wslist []
+  | _ -> raise (SyntaxError (lexeme_start buf))
+
