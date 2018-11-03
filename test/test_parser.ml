@@ -242,7 +242,7 @@ let suite =
         let buf = Latin1.from_string s in
         assert_equal ~cmp:[%eq: string] ~printer:[%show: string]
           s
-          (Program.show_hex @@ parse_hex buf)
+          (Program.show_hex @@ parse buf)
       );
 
   ]

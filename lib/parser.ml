@@ -268,6 +268,7 @@ let parse buf =
     | _ -> raise (SyntaxError (lexeme_start buf))
   in
   match%sedlex buf with
+  | hexdigit -> rollback buf; parse_hex buf
   | white_spaces, eof -> []
   | white_spaces, '[', white_spaces, ']', white_spaces, eof -> []
   | white_spaces, '[', white_spaces -> parse_ocamllist ([parse_instruction buf])
