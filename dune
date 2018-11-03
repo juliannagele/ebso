@@ -1,6 +1,6 @@
 (executable (name ebso)
  (modules ebso)
- (libraries core z3 sedlex ebso)
+ (libraries core z3 sedlex csv ebso)
  (preprocess (pps ppx_jane ppx_deriving.std))
  (public_name ebso)
 )

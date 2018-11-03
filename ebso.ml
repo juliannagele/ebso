@@ -41,6 +41,16 @@ let super_optimize_bb sis pm pc psmt = function
     let (p', _) = super_optimize_encbl p sis pm pc psmt in Terminal (p', i)
   | NotEncodable p -> NotEncodable p
 
+let stats_bb bb =
+  let len p = Int.to_string (List.length p) in
+  match bb with
+  | Terminal (p, i) ->
+    [Program.show_hex (p @ [i]); Program.show_h (p @ [i]); "Terminal"; len (p @ [i])]
+  | Next p ->
+    [Program.show_hex p; Program.show_h p; "Next"; len p]
+  | NotEncodable p ->
+    [Program.show_hex p; Program.show_h p; "NotEncodable"; len p]
+
 type opt_mode =
   | NO
   | UNBOUNDED
@@ -75,6 +85,8 @@ let () =
       and opt_mode = flag "optimize"
           (optional_with_default UNBOUNDED (Arg_type.create opt_mode_of_string))
           ~doc:"mode optimize NO | UNBOUNDED"
+      and csv = flag "csv" (optional string)
+          ~doc:"filename write output to csv file"
       and progr = anon ("PROGRAM" %: string)
       in
       fun () ->
@@ -91,6 +103,10 @@ let () =
           | UNBOUNDED ->
             List.map bbs ~f:(super_optimize_bb `All p_model p_constr p_smt)
         in
-        Program.pp Format.std_formatter (concat_bbs bbs_opt)
+        match csv with
+        | None -> Program.pp Format.std_formatter (concat_bbs bbs_opt)
+        | Some fn -> Csv.save fn
+                       (["byte code";"op code";"type";"instruction count"] ::
+                         (List.map bbs ~f:stats_bb))
     ]
   |> Command.run ~version:"0.1"
