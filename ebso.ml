@@ -33,6 +33,14 @@ let super_optimize p sis pm pc psmt =
   in
   sopt p None
 
+type opt_mode =
+  | UNBOUNDED
+[@@deriving show { with_path = false }]
+
+let opt_mode_of_string = function
+  | "UNBOUNDED" -> UNBOUNDED
+  | _ -> failwith "Unknown optimization mode"
+
 let () =
   let open Command.Let_syntax in
   Command.basic ~summary:"ebso: An EVM Bytecode Super Optimizer"
@@ -54,6 +62,9 @@ let () =
       and nobv = flag "no-bitvectors" no_arg
           ~doc:"do not use bit vectors, but integers everywhere \
                 (stack-element-size and stack-address-size have no effect)"
+      and opt_mode = flag "optimize"
+          (optional_with_default UNBOUNDED (Arg_type.create opt_mode_of_string))
+          ~doc:"optimize UNBOUNDED"
       and progr = anon ("PROGRAM" %: string)
       in
       fun () ->
@@ -63,7 +74,9 @@ let () =
           else Sedlexing.Latin1.from_channel (In_channel.create progr)
         in
         let p = Parser.parse buf in
-        let (p_opt, _) = super_optimize p `All p_model p_constr p_smt in
-        Program.pp Format.std_formatter p_opt
+        match opt_mode with
+        | UNBOUNDED ->
+          let (p_opt, _) = super_optimize p `All p_model p_constr p_smt in
+          Program.pp Format.std_formatter p_opt
     ]
   |> Command.run ~version:"0.1"
