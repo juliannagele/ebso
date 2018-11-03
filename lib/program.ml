@@ -86,7 +86,8 @@ let split_into_bbs ?(split_non_encodable=true) p =
         let (ne, is) =
           List.split_while (i :: is) ~f:(fun i -> not @@ (is_encodable i || is_terminal i))
         in
-        split [] (NotEncodable ne :: Next bb :: bbs) is
+        let bbs = if List.is_empty bb then bbs else Next bb :: bbs in
+        split [] (NotEncodable ne :: bbs) is
       (* JUMPDEST and BEGINSUB mark the beginning of a new BB *)
       | JUMPDEST | BEGINSUB -> split [i] (Next bb :: bbs) is
       | _ -> split (bb @ [i]) bbs is
