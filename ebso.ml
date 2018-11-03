@@ -74,7 +74,7 @@ let () =
                 (stack-element-size and stack-address-size have no effect)"
       and opt_mode = flag "optimize"
           (optional_with_default UNBOUNDED (Arg_type.create opt_mode_of_string))
-          ~doc:"optimize NO | UNBOUNDED"
+          ~doc:"mode optimize NO | UNBOUNDED"
       and progr = anon ("PROGRAM" %: string)
       in
       fun () ->
