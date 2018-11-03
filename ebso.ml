@@ -1,5 +1,6 @@
 open Core
 open Z3util
+open Program
 open Evmenc
 
 let set_options stackes stackas nobv =
@@ -7,7 +8,7 @@ let set_options stackes stackas nobv =
   Option.iter stackas ~f:(fun stackas -> sas := stackas; sasort := bv_sort !sas);
   if nobv then (sesort := int_sort; sasort := int_sort) else ()
 
-let super_optimize p sis pm pc psmt =
+let super_optimize_encbl p sis pm pc psmt =
   let log b s =
     if b then
       begin
@@ -32,6 +33,13 @@ let super_optimize p sis pm pc psmt =
     | None -> (p, gas_saved)
   in
   sopt p None
+
+let super_optimize_bb sis pm pc psmt = function
+  | Next p ->
+    let (p', _) = super_optimize_encbl p sis pm pc psmt in Next p'
+  | Terminal (p, i) ->
+    let (p', _) = super_optimize_encbl p sis pm pc psmt in Terminal (p', i)
+  | NotEncodable p -> NotEncodable p
 
 type opt_mode =
   | NO
@@ -76,11 +84,13 @@ let () =
           else Sedlexing.Latin1.from_channel (In_channel.create progr)
         in
         let p = Parser.parse buf in
-        let (p_opt, _) =
+        let bbs = Program.split_into_bbs p in
+        let bbs_opt =
           match opt_mode with
-          | UNBOUNDED -> super_optimize p `All p_model p_constr p_smt
-          | NO -> (p, None)
+          | NO -> bbs
+          | UNBOUNDED ->
+            List.map bbs ~f:(super_optimize_bb `All p_model p_constr p_smt)
         in
-        Program.pp Format.std_formatter p_opt
+        Program.pp Format.std_formatter (concat_bbs bbs_opt)
     ]
   |> Command.run ~version:"0.1"
