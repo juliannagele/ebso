@@ -75,7 +75,8 @@ let () =
       and p_smt = flag "print-smt" no_arg
           ~doc:"print constraint given to solver in SMT-LIB format"
       and stackes = flag "stack-element-size" (optional int)
-          ~doc:"ses number of bits used for stack elements"
+          ~doc:"ses number of bits used for stack elements \
+                (fits arguments of PUSH by modulo 2^ses)"
       and stackas = flag "stack-address-size" (optional int)
           ~doc:"sas number of bits used for addressing stack elements \
                 (i.e. stack then has 2^sas elements)"
@@ -96,6 +97,7 @@ let () =
           else Sedlexing.Latin1.from_channel (In_channel.create progr)
         in
         let p = Parser.parse buf in
+        let p = if Option.is_some stackes then Program.mod_to_ses !ses p else p in
         let bbs = Program.split_into_bbs p in
         let bbs_opt =
           match opt_mode with
