@@ -26,6 +26,11 @@ let show_stackarg_hex = function
     if Int.rem (String.length hx) 2 = 1 then "0" ^ hx else hx
   | Tmpl -> failwith "hex output not supported for template"
 
+let mod_stackarg_to_ses ses = function
+  | Tmpl -> Tmpl
+  | Val i ->
+    Val (Z.(mod) (Z.abs (Z.of_string i)) (Z.pow (Z.of_int 2) ses) |> Z.to_string)
+
 type idx =
   | I [@value 1] | II | III | IV | V
   | VI | VII | VIII | IX | X
@@ -76,6 +81,10 @@ type t =
 let compare i i2 = match (i, i2) with
   | (PUSH _, PUSH _) -> 0
   | _ -> [%compare: t] i i2
+
+let mod_to_ses ses = function
+  | PUSH x -> PUSH (mod_stackarg_to_ses ses x)
+  | i -> i
 
 (* list of instructions that are encodable, i.e., can be super optimized *)
 let encodable = [

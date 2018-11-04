@@ -110,6 +110,29 @@ let suite =
           p
           (concat_bbs @@ split_into_bbs p)
       );
+
+    (* mod_to_ses *)
+
+    "stack elements is modulo-ed" >::(fun _ ->
+        let p = [PUSH (Val "17"); PUSH (Val "-9"); PUSH (Val "0x12")] in
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
+          [PUSH (Val "1"); PUSH (Val "9"); PUSH (Val "2")]
+          (mod_to_ses 4 p)
+      );
+
+    "stack elements are small enough" >::(fun _ ->
+        let p = [PUSH (Val "1"); PUSH (Val "0")] in
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
+          p
+          (mod_to_ses 4 p)
+      );
+
+    "program without PUSH remains unchanged by mod_to_ses" >:: (fun _ ->
+        let p = [ADD; SUB; EXP] in
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
+        p
+        (mod_to_ses 4 p)
+      );
   ]
 
 let () =
