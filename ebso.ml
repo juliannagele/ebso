@@ -3,39 +3,43 @@ open Z3util
 open Program
 open Evmenc
 
-let set_options stackes stackas nobv =
+type output_options =
+  { pmodel : bool
+  ; psmt : bool
+  ; pcnstrnt : bool
+  ; csv: string option
+  }
+
+let outputcfg = ref {pmodel = false; psmt = false; pcnstrnt = false; csv = None}
+
+let set_options stackes stackas nobv pm psmt pc csv =
+  outputcfg := {pmodel = pm; psmt = psmt; pcnstrnt = pc; csv = csv};
   Option.iter stackes ~f:(fun stackes -> ses := stackes; sesort := bv_sort !ses);
   Option.iter stackas ~f:(fun stackas -> sas := stackas; sasort := bv_sort !sas);
   if nobv then (sesort := int_sort; sasort := int_sort) else ()
 
-let log b e =
-  let log b s =
-    if b then
-      begin
-        Out_channel.output_string Out_channel.stderr s;
-        Out_channel.flush Out_channel.stderr
-      end
-    else ()
-  in
+let log e =
+  let open Out_channel in
+  let log b s = if b then (output_string stderr s; flush stderr) else () in
   match e with
   | `Constraint c ->
-    log b ("Constraint generated:\n" ^ Z3.Expr.to_string (Z3.Expr.simplify c None) ^ "\n\n")
+    log !outputcfg.pcnstrnt
+      ("Constraint generated:\n" ^ Z3.Expr.to_string (Z3.Expr.simplify c None) ^ "\n\n")
   | `SMT c ->
-    log b ("SMT-LIB Benchmark generated:\n" ^
-           Z3.SMT.benchmark_to_smtstring !ctxt "" "" "unknown" "" []
-             (Z3.Expr.simplify c None) ^ "\n\n")
-  | `Model m -> log b ("Model found:\n" ^ Z3.Model.to_string m ^ "\n\n")
+    log !outputcfg.psmt ("SMT-LIB Benchmark generated:\n" ^
+                         Z3.SMT.benchmark_to_smtstring !ctxt "" "" "unknown" "" []
+                           (Z3.Expr.simplify c None) ^ "\n\n")
+  | `Model m -> log !outputcfg.pmodel ("Model found:\n" ^ Z3.Model.to_string m ^ "\n\n")
 
-
-let super_optimize_encbl p sis pm pc psmt =
+let super_optimize_encbl p sis =
   let rec sopt p gas_saved =
     let ea = mk_enc_consts p sis in
     let c = enc_super_opt ea in
-    log pc (`Constraint c);
-    log psmt (`SMT c);
+    log (`Constraint c);
+    log (`SMT c);
     match solve_model [c] with
     | Some m ->
-      log pm (`Model m);
+      log (`Model m);
       let p' = dec_super_opt ea m in
       let g = Program.total_gas_cost p - Program.total_gas_cost p' in
       sopt p' (Option.merge gas_saved (Some g) ~f:(+))
@@ -43,11 +47,11 @@ let super_optimize_encbl p sis pm pc psmt =
   in
   sopt p None
 
-let super_optimize_bb sis pm pc psmt = function
+let super_optimize_bb sis = function
   | Next p ->
-    let (p', _) = super_optimize_encbl p sis pm pc psmt in Next p'
+    let (p', _) = super_optimize_encbl p sis in Next p'
   | Terminal (p, i) ->
-    let (p', _) = super_optimize_encbl p sis pm pc psmt in Terminal (p', i)
+    let (p', _) = super_optimize_encbl p sis in Terminal (p', i)
   | NotEncodable p -> NotEncodable p
 
 let stats_bb bb =
@@ -100,7 +104,7 @@ let () =
       and progr = anon ("PROGRAM" %: string)
       in
       fun () ->
-        set_options stackes stackas nobv;
+        set_options stackes stackas nobv p_model p_smt p_constr csv;
         let buf =
           if direct then Sedlexing.Latin1.from_string progr
           else Sedlexing.Latin1.from_channel (In_channel.create progr)
@@ -112,7 +116,7 @@ let () =
           match opt_mode with
           | NO -> bbs
           | UNBOUNDED ->
-            List.map bbs ~f:(super_optimize_bb `All p_model p_constr p_smt)
+            List.map bbs ~f:(super_optimize_bb `All)
         in
         match csv with
         | None -> Program.pp Format.std_formatter (concat_bbs bbs_opt)
