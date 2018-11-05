@@ -19,17 +19,16 @@ let set_options stackes stackas nobv pm psmt pc csv =
   if nobv then (sesort := int_sort; sasort := int_sort) else ()
 
 let log e =
-  let open Out_channel in
-  let log b s = if b then (output_string stderr s; flush stderr) else () in
+  let log b s = if b then Out_channel.prerr_endline s else () in
   match e with
   | `Constraint c ->
     log !outputcfg.pcnstrnt
-      ("Constraint generated:\n" ^ Z3.Expr.to_string (Z3.Expr.simplify c None) ^ "\n\n")
+      ("Constraint generated:\n" ^ Z3.Expr.to_string (Z3.Expr.simplify c None) ^ "\n")
   | `SMT c ->
     log !outputcfg.psmt ("SMT-LIB Benchmark generated:\n" ^
                          Z3.SMT.benchmark_to_smtstring !ctxt "" "" "unknown" "" []
-                           (Z3.Expr.simplify c None) ^ "\n\n")
-  | `Model m -> log !outputcfg.pmodel ("Model found:\n" ^ Z3.Model.to_string m ^ "\n\n")
+                           (Z3.Expr.simplify c None))
+  | `Model m -> log !outputcfg.pmodel ("Model found:\n" ^ Z3.Model.to_string m ^ "\n")
 
 let super_optimize_encbl p sis =
   let rec sopt p =
