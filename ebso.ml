@@ -7,13 +7,15 @@ type output_options =
   { pmodel : bool
   ; psmt : bool
   ; pcnstrnt : bool
+  ; pinter : bool
   ; csv: string option
   }
 
-let outputcfg = ref {pmodel = false; psmt = false; pcnstrnt = false; csv = None}
+let outputcfg =
+  ref {pmodel = false; psmt = false; pcnstrnt = false; pinter = false; csv = None}
 
-let set_options stackes stackas nobv pm psmt pc csv =
-  outputcfg := {pmodel = pm; psmt = psmt; pcnstrnt = pc; csv = csv};
+let set_options stackes stackas nobv pm psmt pc pinter csv =
+  outputcfg := {pmodel = pm; psmt = psmt; pcnstrnt = pc; pinter = pinter; csv = csv};
   Option.iter stackes ~f:(fun stackes -> ses := stackes; sesort := bv_sort !ses);
   Option.iter stackas ~f:(fun stackas -> sas := stackas; sasort := bv_sort !sas);
   if nobv then (sesort := int_sort; sasort := int_sort) else ()
@@ -30,8 +32,36 @@ let log e =
                            (Z3.Expr.simplify c None))
   | `Model m -> log !outputcfg.pmodel ("Model found:\n" ^ Z3.Model.to_string m ^ "\n")
 
-let super_optimize_encbl p sis =
-  let rec sopt p =
+type step = {input: Program.t; opt: Program.t; optimal: bool}
+
+let step_to_csv_string step =
+  let g = (total_gas_cost step.input - total_gas_cost step.opt) in
+  [show_hex step.input; show_hex step.opt; Int.to_string g; Bool.to_string step.optimal]
+
+let print_step step =
+  let g = (total_gas_cost step.input - total_gas_cost step.opt) in
+  if not !outputcfg.pinter && not step.optimal then ()
+  else
+    Out_channel.printf "Optimized\n%sto\n%sSaved %i gas"
+      (Program.show step.input) (Program.show step.opt) g;
+  if step.optimal then
+    Out_channel.print_endline ", this instruction sequence is optimal."
+  else Out_channel.print_endline "."
+
+let output_step hist hist_bbs =
+  match !outputcfg.csv with
+  | None -> print_step (List.hd_exn hist)
+  | Some fn ->
+    Csv.save fn (["input";"optimized";"gas saved"; "known optimal"] ::
+                 List.rev_map ~f:step_to_csv_string (hist @ List.concat hist_bbs))
+
+let add_step step = function
+  | h when !outputcfg.pinter -> step :: h
+  | s :: ss -> {step with input = s.input} :: ss
+  | [] -> [step]
+
+let super_optimize_encbl p sis hist_bbs =
+  let rec sopt p hist =
     let ea = mk_enc_consts p sis in
     let c = enc_super_opt ea in
     log (`Constraint c);
@@ -40,15 +70,20 @@ let super_optimize_encbl p sis =
     | Some m ->
       log (`Model m);
       let p' = dec_super_opt ea m in
-      sopt p'
-    | None -> p
+      let hist = add_step {input = p; opt = p'; optimal = false} hist in
+      output_step hist hist_bbs;
+      sopt p' hist
+    | None ->
+      let hist = add_step {input = p; opt = p; optimal = true} hist in
+      output_step hist hist_bbs;
+      hist :: hist_bbs
   in
-  sopt p
+  sopt p []
 
-let super_optimize_bb sis = function
-  | Next p -> Next (super_optimize_encbl p sis)
-  | Terminal (p, i) -> Terminal (super_optimize_encbl p sis, i)
-  | NotEncodable p -> NotEncodable p
+let super_optimize_bb sis hist_bbs = function
+  | Next p -> super_optimize_encbl p sis hist_bbs
+  | Terminal (p, _) -> super_optimize_encbl p sis hist_bbs
+  | NotEncodable _ -> hist_bbs
 
 let stats_bb bb =
   let len p = Int.to_string (List.length p) in
@@ -97,10 +132,12 @@ let () =
           ~doc:"mode optimize NO | UNBOUNDED"
       and csv = flag "csv" (optional string)
           ~doc:"filename write output to csv file"
+      and p_inter = flag "print-intermediate" no_arg
+          ~doc:"print intermediate results"
       and progr = anon ("PROGRAM" %: string)
       in
       fun () ->
-        set_options stackes stackas nobv p_model p_smt p_constr csv;
+        set_options stackes stackas nobv p_model p_smt p_constr p_inter csv;
         let buf =
           if direct then Sedlexing.Latin1.from_string progr
           else Sedlexing.Latin1.from_channel (In_channel.create progr)
@@ -108,16 +145,15 @@ let () =
         let p = Parser.parse buf in
         let p = if Option.is_some stackes then Program.mod_to_ses !ses p else p in
         let bbs = Program.split_into_bbs p in
-        let bbs_opt =
-          match opt_mode with
-          | NO -> bbs
-          | UNBOUNDED ->
-            List.map bbs ~f:(super_optimize_bb `All)
-        in
-        match csv with
-        | None -> Program.pp Format.std_formatter (concat_bbs bbs_opt)
-        | Some fn -> Csv.save fn
-                       (["byte code";"op code";"type";"instruction count"] ::
-                         (List.map bbs ~f:stats_bb))
+        match opt_mode with
+        | NO ->
+          begin
+            match csv with
+            | Some fn -> Csv.save fn
+                           (["byte code";"op code";"type";"instruction count"] ::
+                            (List.map bbs ~f:stats_bb))
+            | None -> Program.pp Format.std_formatter (concat_bbs bbs);
+          end
+        | UNBOUNDED -> List.fold_left bbs ~init:[] ~f:(super_optimize_bb `All) |> ignore
     ]
   |> Command.run ~version:"0.1"
