@@ -25,8 +25,7 @@ let log e =
   match e with
   | `Constraint c ->
     log !outputcfg.pcnstrnt
-      ("Constraint generated:\n" ^ Z3.Expr.to_string (Z3.Expr.simplify c None) ^ "\n")
-  | `SMT c ->
+      ("Constraint generated:\n" ^ Z3.Expr.to_string (Z3.Expr.simplify c None) ^ "\n");
     log !outputcfg.psmt ("SMT-LIB Benchmark generated:\n" ^
                          Z3.SMT.benchmark_to_smtstring !ctxt "" "" "unknown" "" []
                            (Z3.Expr.simplify c None))
@@ -65,7 +64,6 @@ let super_optimize_encbl p sis hist_bbs =
     let ea = mk_enc_consts p sis in
     let c = enc_super_opt ea in
     log (`Constraint c);
-    log (`SMT c);
     match solve_model [c] with
     | Some m ->
       log (`Model m);
