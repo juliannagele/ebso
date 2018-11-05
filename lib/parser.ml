@@ -241,7 +241,7 @@ let parse_hex buf =
     | "fd" -> parse_token (REVERT :: acc)
     | "fe" -> parse_token (INVALID :: acc)
     | "ff" -> parse_token (SELFDESTRUCT :: acc)
-    | eof -> acc
+    | white_spaces, eof -> acc
     | _ -> raise (SyntaxError (lexeme_start buf))
   in
   parse_token [] |> List.rev
