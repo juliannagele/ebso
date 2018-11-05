@@ -8,7 +8,7 @@ let set_options stackes stackas nobv =
   Option.iter stackas ~f:(fun stackas -> sas := stackas; sasort := bv_sort !sas);
   if nobv then (sesort := int_sort; sasort := int_sort) else ()
 
-let super_optimize_encbl p sis pm pc psmt =
+let log b e =
   let log b s =
     if b then
       begin
@@ -17,16 +17,25 @@ let super_optimize_encbl p sis pm pc psmt =
       end
     else ()
   in
+  match e with
+  | `Constraint c ->
+    log b ("Constraint generated:\n" ^ Z3.Expr.to_string (Z3.Expr.simplify c None) ^ "\n\n")
+  | `SMT c ->
+    log b ("SMT-LIB Benchmark generated:\n" ^
+           Z3.SMT.benchmark_to_smtstring !ctxt "" "" "unknown" "" []
+             (Z3.Expr.simplify c None) ^ "\n\n")
+  | `Model m -> log b ("Model found:\n" ^ Z3.Model.to_string m ^ "\n\n")
+
+
+let super_optimize_encbl p sis pm pc psmt =
   let rec sopt p gas_saved =
     let ea = mk_enc_consts p sis in
     let c = enc_super_opt ea in
-    log pc ("Constraint generated:\n" ^ Z3.Expr.to_string (Z3.Expr.simplify c None) ^ "\n\n");
-    log psmt ("SMT-LIB Benchmark generated:\n" ^
-              Z3.SMT.benchmark_to_smtstring !ctxt "" "" "unknown" "" []
-                (Z3.Expr.simplify c None) ^ "\n\n");
+    log pc (`Constraint c);
+    log psmt (`SMT c);
     match solve_model [c] with
     | Some m ->
-      log pm ("Model found:\n" ^ Z3.Model.to_string m ^ "\n\n");
+      log pm (`Model m);
       let p' = dec_super_opt ea m in
       let g = Program.total_gas_cost p - Program.total_gas_cost p' in
       sopt p' (Option.merge gas_saved (Some g) ~f:(+))
