@@ -32,7 +32,7 @@ let log e =
   | `Model m -> log !outputcfg.pmodel ("Model found:\n" ^ Z3.Model.to_string m ^ "\n\n")
 
 let super_optimize_encbl p sis =
-  let rec sopt p gas_saved =
+  let rec sopt p =
     let ea = mk_enc_consts p sis in
     let c = enc_super_opt ea in
     log (`Constraint c);
@@ -41,17 +41,14 @@ let super_optimize_encbl p sis =
     | Some m ->
       log (`Model m);
       let p' = dec_super_opt ea m in
-      let g = Program.total_gas_cost p - Program.total_gas_cost p' in
-      sopt p' (Option.merge gas_saved (Some g) ~f:(+))
-    | None -> (p, gas_saved)
+      sopt p'
+    | None -> p
   in
-  sopt p None
+  sopt p
 
 let super_optimize_bb sis = function
-  | Next p ->
-    let (p', _) = super_optimize_encbl p sis in Next p'
-  | Terminal (p, i) ->
-    let (p', _) = super_optimize_encbl p sis in Terminal (p', i)
+  | Next p -> Next (super_optimize_encbl p sis)
+  | Terminal (p, i) -> Terminal (super_optimize_encbl p sis, i)
   | NotEncodable p -> NotEncodable p
 
 let stats_bb bb =
