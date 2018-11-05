@@ -39,13 +39,15 @@ let step_to_csv_string step =
 
 let print_step step =
   let g = (total_gas_cost step.input - total_gas_cost step.opt) in
-  if not !outputcfg.pinter && not step.optimal then ()
-  else
-    Out_channel.printf "Optimized\n%sto\n%sSaved %i gas"
-      (Program.show step.input) (Program.show step.opt) g;
-  if step.optimal then
-    Out_channel.print_endline ", this instruction sequence is optimal."
-  else Out_channel.print_endline "."
+  if !outputcfg.pinter || not step.optimal then
+    begin
+      Out_channel.printf "Optimized\n%sto\n%sSaved %i gas"
+        (Program.show step.input) (Program.show step.opt) g;
+      if step.optimal then
+        Out_channel.print_endline ", this instruction sequence is optimal."
+      else Out_channel.print_endline "."
+    end
+  else ()
 
 let output_step hist hist_bbs =
   match !outputcfg.csv with
