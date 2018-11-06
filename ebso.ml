@@ -39,7 +39,7 @@ let step_to_csv_string step =
 
 let print_step step =
   let g = (total_gas_cost step.input - total_gas_cost step.opt) in
-  if !outputcfg.pinter || not step.optimal then
+  if !outputcfg.pinter || step.optimal then
     begin
       Out_channel.printf "Optimized\n%sto\n%sSaved %i gas"
         (Program.show step.input) (Program.show step.opt) g;
