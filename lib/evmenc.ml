@@ -346,6 +346,22 @@ let enc_super_opt ea =
       unsat, i.e., that program is optimal *)
    ea.kt <= sts.used_gas @@ [num ks])
 
+let enc_trans_val ea tp =
+  let open Z3Ops in
+  let sts = mk_state ea "_s" in
+  let stt = mk_state ea "_t" in
+  let kt = num (List.length tp) and ks = num (List.length ea.p) in
+  (* we're asking for inputs that distinguish the programs *)
+  existss ea.xs
+    (* encode source and target program *)
+    ((List.foldi tp ~init:(enc_program ea sts)
+        ~f:(fun j enc oc -> enc <&> enc_instruction ea stt (num j) oc)) &&
+     (* they start in the same state *)
+     (enc_equivalence_at ea sts stt (num 0) (num 0)) &&
+     sts.used_gas @@ [num 0] == stt.used_gas @@ [num 0] &&
+     (* but their final state is different *)
+     ~! (enc_equivalence_at ea sts stt ks kt))
+
 let eval_stack ?(xs = []) st m i n =
   eval_func_decl m i ~n:[sanum n] ~xs:xs st.stack
 

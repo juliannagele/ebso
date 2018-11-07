@@ -1,5 +1,5 @@
 (executables
- (names test_evmenc test_superoptimize test_parser test_program)
+ (names test_evmenc test_superoptimize test_parser test_program test_transval)
  (libraries core ebso oUnit z3)
  (preprocess (pps ppx_deriving.std))
 )
@@ -25,5 +25,11 @@
 (alias
  (name runtest)
  (deps (:x test_program.exe))
+ (action (run %{x}))
+)
+
+(alias
+ (name runtest)
+ (deps (:x test_transval.exe))
  (action (run %{x}))
 )
