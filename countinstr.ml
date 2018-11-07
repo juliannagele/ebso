@@ -8,8 +8,15 @@ let count_from_program m p =
   List.fold p ~init:m ~f:(fun m' i -> Map.update m' i ~f:up)
 
 let count_from_filepath m f =
-  let buf = Sedlexing.Latin1.from_channel (In_channel.create f) in
-  let p = Parser.parse_hex buf in
+  let ic = In_channel.create f in
+  let buf = Sedlexing.Latin1.from_channel ic in
+  let p =
+    try Parser.parse_hex buf
+    with Parser.SyntaxError i ->
+      print_string (f ^ ", " ^ Int.to_string i ^ "\n");
+      Out_channel.flush Out_channel.stdout; []
+  in
+  In_channel.close ic;
   count_from_program m p
 
 let show_instr = function
