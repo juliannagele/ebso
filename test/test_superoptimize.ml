@@ -4,12 +4,9 @@ open Z3util
 open Instruction
 open Evmenc
 
-(* set low for fast testing *)
-let ses = 3 and sas = 4
-
 let suite =
-  sesort := bv_sort ses;
-  sasort := bv_sort sas;
+  (* set low for fast testing *)
+  set_ses 3; set_sas 6;
   "suite" >:::
   [
     (* enc_search_space *)
@@ -135,7 +132,7 @@ let suite =
         let stt = mk_state ea "_t" in
         let c = init ea sts <&> enc_equivalence ea sts stt in
         let m = solve_model_exn [c] in
-        let sk_size = (Int.pow 2 sas) - 1 in
+        let sk_size = (Int.pow 2 !sas) - 1 in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t list]
           ~printer:(List.to_string ~f:Z3.Expr.to_string)

@@ -16,8 +16,8 @@ let outputcfg =
 
 let set_options stackes stackas nobv pm psmt pc pinter csv =
   outputcfg := {pmodel = pm; psmt = psmt; pcnstrnt = pc; pinter = pinter; csv = csv};
-  Option.iter stackes ~f:(fun stackes -> ses := stackes; sesort := bv_sort !ses);
-  Option.iter stackas ~f:(fun stackas -> sas := stackas; sasort := bv_sort !sas);
+  Option.iter stackes ~f:(fun stackes -> set_ses stackes);
+  Option.iter stackas ~f:(fun stackas -> set_sas stackas);
   if nobv then (sesort := int_sort; sasort := int_sort) else ()
 
 let log e =

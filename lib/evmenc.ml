@@ -12,6 +12,9 @@ let ses = ref 3
 let sasort = ref (bv_sort !sas)
 let sesort = ref (bv_sort !ses)
 
+let set_ses s = ses := s; sesort := bv_sort !ses
+let set_sas s = sas := s; sasort := bv_sort !sas
+
 let senum n = Z3.Expr.mk_numeral_int !ctxt n !sesort
 let sanum n = Z3.Expr.mk_numeral_int !ctxt n !sasort
 let seconst s = Z3.Expr.mk_const_s !ctxt s !sesort

@@ -1391,9 +1391,7 @@ let misc =
 
 let suite =
   (* set low for fast testing *)
-  ses := 3; sas := 6;
-  sesort := bv_sort !ses;
-  sasort := bv_sort !sas;
+  set_ses 3; set_sas 6;
   "suite" >:::
   effect @ pres_stack @ stack_ctr @ exc_halt @ forced_stack_underflow
   @ gas_cost @ misc
