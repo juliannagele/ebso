@@ -1,4 +1,3 @@
-* [Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf)
 
 * [Solidity Assembly Doc](https://solidity.readthedocs.io/en/develop/assembly.html#)
 
@@ -9,17 +8,7 @@
   * [CPP Paper](http://doi.org/10.1145/3167084)
 
 * [Ethereum Virtual Machine (EVM) Awesome List](https://github.com/ethereum/wiki/wiki/Ethereum-Virtual-Machine-(EVM)-Awesome-List)
-
-* Test beds
-
-  * [OpenZeppelin](https://github.com/OpenZeppelin/openzeppelin-solidity)
-    best practise Solidity contracts
   
-  * [Hive](https://github.com/karalabe/hive) 
-    provides tests for clients
-	
-  * [Google](https://cloud.google.com/blog/products/data-analytics/ethereum-bigquery-public-dataset-smart-contract-analytics)
-
 * possible reasons for unknown opcodes:
   * 0xfe is designated to be invalid:
     [EIP 141](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-141.md)
@@ -47,5 +36,3 @@
   * [Towards saving money in using smart contracts](https://dl.acm.org/citation.cfm?id=3183420&dl=ACM&coll=DL)
   * [Vandal: A Scalable Security Analysis Framework for Smart Contracts](https://arxiv.org/abs/1809.03981)
 
-* Data sets
-  * [Gas Golf](https://g.solidity.cc/)
