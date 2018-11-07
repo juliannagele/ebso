@@ -302,24 +302,28 @@ let enc_search_space ea st =
   forall j (((j < ea.kt) && (j >= (num 0))) ==> conj enc_sis && disj in_sis) &&
   ea.kt >= (num 0)
 
-(* we only demand equivalence at kt *)
-let enc_equivalence ea sts stt =
-  let ks = List.length ea.p and kt = ea.kt in
+let enc_equivalence_at ea sts stt js jt =
   let open Z3Ops in
   let n = saconst "n" in
-  (* intially source and target stack counter are equal *)
-  sts.stack_ctr @@ [num 0] == stt.stack_ctr @@ [num 0] &&
-  (* initally source and target stack are equal *)
-  (forall n (sts.stack @@ (ea.xs @ [num 0; n]) == stt.stack @@ (ea.xs @ [num 0; n]))) &&
+  (* source and target stack counter are equal *)
+  sts.stack_ctr @@ [js] == stt.stack_ctr @@ [jt] &&
+  (* source and target exceptional halting are equal *)
+  sts.exc_halt @@ [js] == stt.exc_halt @@ [jt] &&
+  (* source and target stack are equal below the stack counter;
+     note that it doesn't matter which stack counter is used, they are equal *)
+  (forall n ((n < stt.stack_ctr @@ [jt]) ==>
+      (sts.stack @@ (ea.xs @ [js; n]) == stt.stack @@ (ea.xs @ [jt; n]))))
+
+(* we only demand equivalence at kt *)
+let enc_equivalence ea sts stt =
+  let ks = num (List.length ea.p) and kt = ea.kt in
+  let open Z3Ops in
+  (* intially source and target states equal *)
+  enc_equivalence_at ea sts stt (num 0) (num 0) &&
   (* initally source and target gas are equal *)
   sts.used_gas @@ [num 0] == stt.used_gas @@ [num 0] &&
-  (* after the programs have run source and target stack counter are equal *)
-  sts.stack_ctr @@ [num ks] == stt.stack_ctr @@ [kt] &&
-  (* after the programs have run source and target stack are equal below the stack counter *)
-  (forall n ((n < stt.stack_ctr @@ [kt]) ==>
-             (sts.stack @@ (ea.xs @ [num ks; n]) == stt.stack @@ (ea.xs @ [kt; n])))) &&
-  (* after the programs have run source and target exceptional halting are equal *)
-  sts.exc_halt @@ [num ks] == stt.exc_halt @@ [kt]
+  (* after the programs have run source and target states equal *)
+  enc_equivalence_at ea sts stt ks kt
 
 let enc_program ea st =
   List.foldi ~init:(init ea st)
