@@ -29,8 +29,9 @@ let () =
   let open Command.Let_syntax in
   Command.basic ~summary:"count-instr: count instructions in bytecode"
     [%map_open
-      let fs = anon (sequence ("FILE" %: string)) in
+      let fns = anon ("FILENAMES" %: string) in
       fun () ->
+        let fs = In_channel.read_lines fns in
         let m' = List.fold fs ~init:m ~f:count_from_filepath in
         print_string "Instruction,Count\n";
         Map.iteri m' ~f:(fun ~key:k ~data:d ->
