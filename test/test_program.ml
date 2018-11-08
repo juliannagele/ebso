@@ -137,12 +137,13 @@ let suite =
     (* val_to_const *)
 
     "replace large val with const" >:: (fun _ ->
-        let p = [PUSH (Val "0b1011")] in
+        let v = "16" in
+        let p = [PUSH (Val v)] in
         assert_equal
-          ~cmp:[%eq: Program.t * const_val_map]
-          ~printer:[%show: Program.t * const_val_map]
+          ~cmp:[%eq: Program.t]
+          ~printer:[%show: Program.t]
           (val_to_const 2 p)
-          ([PUSH (Const "c1")], [("c1", "0b1011")])
+          [PUSH (Const "c16")]
       );
 
 
