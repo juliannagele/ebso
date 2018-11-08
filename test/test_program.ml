@@ -200,6 +200,60 @@ let suite =
           (val_to_const ses p)
           [PUSH (Const ("c" ^ v)); PUSH (Const ("c" ^ v)) ]
       );
+
+    (* const_to_val *)
+
+    "redeem val from const" >:: (fun _ ->
+        let v = "42" in
+        let p = [PUSH (Const ("c" ^ v))] in
+        assert_equal
+          ~cmp:[%eq: Program.t]
+          ~printer:[%show: Program.t]
+          (const_to_val p)
+          [PUSH (Val v)]
+      );
+
+    "redeem large binary val from const" >:: (fun _ ->
+        let v = "0b1001" in
+        let p = [PUSH (Const ("c" ^ v))] in
+        assert_equal
+          ~cmp:[%eq: Program.t]
+          ~printer:[%show: Program.t]
+          (const_to_val p)
+          [PUSH (Val v)]
+      );
+
+    "idempotent with fitting value" >:: (fun _ ->
+        let v = "1" in
+        let ses = 2 in
+        let p = [PUSH (Val v)] in
+        assert_equal
+          ~cmp:[%eq: Program.t]
+          ~printer:[%show: Program.t]
+          (const_to_val (val_to_const ses p))
+          p
+      );
+
+    "idempotent in large program" >:: (fun _ ->
+        let ses = 2 in
+        let p = [PUSH (Val "2"); PUSH (Val "17"); PUSH (Val "9"); ADD; PUSH (Val "100")] in
+        assert_equal
+          ~cmp:[%eq: Program.t]
+          ~printer:[%show: Program.t]
+          (const_to_val (val_to_const ses p))
+          p
+      );
+
+    "idempotent with same value in program" >:: (fun _ ->
+        let v = "42" in
+        let ses = 2 in
+        let p = [PUSH (Val v); PUSH (Val v)] in
+        assert_equal
+          ~cmp:[%eq: Program.t]
+          ~printer:[%show: Program.t]
+          (const_to_val (val_to_const ses p))
+          p
+      );
   ]
 
 let () =
