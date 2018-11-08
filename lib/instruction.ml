@@ -7,11 +7,13 @@ type stackarg =
   (* string either in hexadecimal format starting with 0x or in decimal format *)
   | Val of string [@printer fun fmt x -> fprintf fmt "%s" (num_string_to_dec x)]
   | Tmpl
+  | Const of string
 [@@deriving show { with_path = false }, sexp, compare]
 
 let equal_stackarg x y = match (x, y) with
   | Val x, Val y -> Z.equal (Z.of_string x) (Z.of_string y)
   | Tmpl, Tmpl -> true
+  | Const c, Const d -> String.equal c d
   | _, _ -> false
 
 let stackarg_of_sexp s = match s with
@@ -25,11 +27,13 @@ let show_stackarg_hex = function
     let hx = num_string_to_hex x in
     if Int.rem (String.length hx) 2 = 1 then "0" ^ hx else hx
   | Tmpl -> failwith "hex output not supported for template"
+  | Const _ -> failwith "hex output not supported for constant"
 
 let mod_stackarg_to_ses ses = function
   | Tmpl -> Tmpl
   | Val i ->
     Val (Z.(mod) (Z.abs (Z.of_string i)) (Z.pow (Z.of_int 2) ses) |> Z.to_string)
+  | Const c -> Const c
 
 type idx =
   | I [@value 1] | II | III | IV | V
