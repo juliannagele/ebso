@@ -31,11 +31,12 @@ let log e =
                            (Z3.Expr.simplify c None))
   | `Model m -> log !outputcfg.pmodel ("Model found:\n" ^ Z3.Model.to_string m ^ "\n")
 
-type step = {input: Program.t; opt: Program.t; optimal: bool}
+type step = {input: Program.t; opt: Program.t; optimal: bool; tval: bool option}
 
 let step_to_csv_string step =
   let g = (total_gas_cost step.input - total_gas_cost step.opt) in
   [show_hex step.input; show_hex step.opt; Int.to_string g; Bool.to_string step.optimal]
+  @ Option.to_list (Option.map step.tval ~f:Bool.to_string)
 
 let print_step step =
   let g = (total_gas_cost step.input - total_gas_cost step.opt) in
@@ -43,6 +44,9 @@ let print_step step =
     begin
       Out_channel.printf "Optimized\n%sto\n%sSaved %i gas"
         (Program.show step.input) (Program.show step.opt) g;
+      Option.iter step.tval ~f:(fun b ->
+          Out_channel.printf ", translation validation %s"
+            (if b then "succesful" else "failed"));
       if step.optimal then
         Out_channel.print_endline ", this instruction sequence is optimal."
       else Out_channel.print_endline "."
@@ -53,15 +57,27 @@ let output_step hist hist_bbs =
   match !outputcfg.csv with
   | None -> print_step (List.hd_exn hist)
   | Some fn ->
-    Csv.save fn (["input";"optimized";"gas saved"; "known optimal"] ::
+    Csv.save fn (["input";"optimized";"gas saved"; "known optimal"; "translation validation"] ::
                  List.rev_map ~f:step_to_csv_string (hist @ List.concat hist_bbs))
 
 let add_step step = function
   | h when !outputcfg.pinter -> step :: h
-  | s :: ss -> {step with input = s.input} :: ss
+  | s :: ss ->
+    {step with input = s.input; tval = Option.merge s.tval step.tval ~f:(&&)} :: ss
   | [] -> [step]
 
-let super_optimize_encbl p sis hist_bbs =
+let tvalidate sp tp sz =
+  let oses = !ses in
+  set_ses sz;
+  let c = enc_trans_val (mk_enc_consts sp (`User [])) tp in
+  let tv =
+    match solve_model [c] with
+    | None -> true
+    | Some _ -> false
+  in
+  set_ses oses; tv
+
+let super_optimize_encbl p sis tval hist_bbs =
   let rec sopt p hist =
     let ea = mk_enc_consts p sis in
     let c = enc_super_opt ea in
@@ -70,19 +86,22 @@ let super_optimize_encbl p sis hist_bbs =
     | Some m ->
       log (`Model m);
       let p' = dec_super_opt ea m in
-      let hist = add_step {input = p; opt = p'; optimal = false} hist in
+      let tv = Option.map tval ~f:(tvalidate ea.p p') in
+      let stp = {input = p; opt = p'; optimal = false; tval = tv} in
+      let hist = add_step stp hist in
       output_step hist hist_bbs;
       sopt p' hist
     | None ->
-      let hist = add_step {input = p; opt = p; optimal = true} hist in
+      let stp = {input = p; opt = p; optimal = true; tval = None} in
+      let hist = add_step stp hist in
       output_step hist hist_bbs;
       hist :: hist_bbs
   in
   sopt p []
 
-let super_optimize_bb sis hist_bbs = function
-  | Next p -> super_optimize_encbl p sis hist_bbs
-  | Terminal (p, _) -> super_optimize_encbl p sis hist_bbs
+let super_optimize_bb sis tval hist_bbs = function
+  | Next p -> super_optimize_encbl p sis tval hist_bbs
+  | Terminal (p, _) -> super_optimize_encbl p sis tval hist_bbs
   | NotEncodable _ -> hist_bbs
 
 let stats_bb bb =
@@ -134,6 +153,8 @@ let () =
           ~doc:"filename write output to csv file"
       and p_inter = flag "print-intermediate" no_arg
           ~doc:"print intermediate results"
+      and tval = flag "translation-validation" (optional int)
+          ~doc:"n do translation validation for word size n after optimization"
       and progr = anon ("PROGRAM" %: string)
       in
       fun () ->
@@ -154,6 +175,7 @@ let () =
                             (List.map bbs ~f:stats_bb))
             | None -> Program.pp Format.std_formatter (concat_bbs bbs);
           end
-        | UNBOUNDED -> List.fold_left bbs ~init:[] ~f:(super_optimize_bb `All) |> ignore
+        | UNBOUNDED ->
+          List.fold_left bbs ~init:[] ~f:(super_optimize_bb `All tval) |> ignore
     ]
   |> Command.run ~version:"0.1"
