@@ -35,6 +35,12 @@ let mod_stackarg_to_ses ses = function
     Val (Z.(mod) (Z.abs (Z.of_string i)) (Z.pow (Z.of_int 2) ses) |> Z.to_string)
   | Const c -> Const c
 
+type const_val_map = (string * string) list
+[@@deriving show { with_path = false }, eq]
+
+let val_to_const _ _ = failwith "not implemented"
+let const_to_val = failwith "not implemented"
+
 type idx =
   | I [@value 1] | II | III | IV | V
   | VI | VII | VIII | IX | X
