@@ -254,6 +254,18 @@ let suite =
           (const_to_val (val_to_const ses p))
           p
       );
+
+    (* consts *)
+
+    "get constants from program" >:: (fun _ ->
+        let c1 = "c123" and c2 = "c321" in
+        let p = [PUSH (Val "2"); PUSH (Const c1); PUSH (Const c1); PUSH (Const c2)] in
+        assert_equal
+          ~cmp:[%eq: string list]
+          ~printer:[%show: string list]
+          (consts p)
+          [c1; c2]
+      );
   ]
 
 let () =

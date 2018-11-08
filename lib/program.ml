@@ -42,6 +42,9 @@ let val_to_const ses p = List.map p ~f:(Instruction.val_to_const ses)
 
 let const_to_val p = List.map p ~f:Instruction.const_to_val
 
+let consts p = List.stable_dedup
+    (List.filter_map p ~f:(function | PUSH (Const c) -> Some c | _ -> None))
+
 (* basic blocks -- we classify basic blocks into 3 kinds:
 - NotEncodable for instructions that are not yet supported
 - Terminal if the last instruction of the block interrupts control flow,
