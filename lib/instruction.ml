@@ -35,9 +35,6 @@ let mod_stackarg_to_ses ses = function
     Val (Z.(mod) (Z.abs (Z.of_string i)) (Z.pow (Z.of_int 2) ses) |> Z.to_string)
   | Const c -> Const c
 
-let val_to_const _ _ = failwith "not implemented"
-let const_to_val = failwith "not implemented"
-
 type idx =
   | I [@value 1] | II | III | IV | V
   | VI | VII | VIII | IX | X
@@ -92,6 +89,16 @@ let compare i i2 = match (i, i2) with
 let mod_to_ses ses = function
   | PUSH x -> PUSH (mod_stackarg_to_ses ses x)
   | i -> i
+
+let val_to_const ses instr =
+  let max_repr = Z.pow (Z.of_int 2) ses in
+  match instr with
+  | PUSH (Val x) ->
+    let v = if Z.of_string x > max_repr then Const ("c" ^ x) else Val x in
+    PUSH v
+  | i -> i
+
+let const_to_val _ = failwith "not implemented"
 
 (* list of instructions that are encodable, i.e., can be super optimized *)
 let encodable = [

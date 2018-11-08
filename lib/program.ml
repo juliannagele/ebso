@@ -38,6 +38,8 @@ let total_gas_cost = List.fold ~init:0 ~f:(fun gc i -> gc + gas_cost i)
 
 let mod_to_ses ses p = List.map p ~f:(Instruction.mod_to_ses ses)
 
+let val_to_const ses p = List.map p ~f:(Instruction.val_to_const ses)
+
 (* basic blocks -- we classify basic blocks into 3 kinds:
 - NotEncodable for instructions that are not yet supported
 - Terminal if the last instruction of the block interrupts control flow,
