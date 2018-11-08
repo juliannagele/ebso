@@ -50,6 +50,15 @@ let suite =
         assert_bool "no model found" (Option.is_some m)
       );
 
+    "disprove equivalence that holds for 4 bit" >::(fun _ ->
+        let sp = [PUSH (Val "15"); NOT; ADD] in
+        let tp = [] in
+        let ea = mk_enc_consts sp `All in
+        let c = enc_trans_val ea tp in
+        let m = solve_model [c] in
+        assert_bool "no model found" (Option.is_some m)
+      );
+
   ]
 
 let () =
