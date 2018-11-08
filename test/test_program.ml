@@ -198,7 +198,7 @@ let suite =
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
           (val_to_const ses p)
-          [PUSH (Val v); PUSH (Val v)]
+          [PUSH (Const ("c" ^ v)); PUSH (Const ("c" ^ v)) ]
       );
   ]
 
