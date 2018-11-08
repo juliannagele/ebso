@@ -98,7 +98,11 @@ let val_to_const ses instr =
     PUSH v
   | i -> i
 
-let const_to_val _ = failwith "not implemented"
+let const_to_val = function
+  | PUSH (Const c) ->
+    let v =  String.chop_prefix_exn c ~prefix:"c" in
+    PUSH (Val v)
+  | i -> i
 
 (* list of instructions that are encodable, i.e., can be super optimized *)
 let encodable = [

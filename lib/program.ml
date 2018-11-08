@@ -40,6 +40,8 @@ let mod_to_ses ses p = List.map p ~f:(Instruction.mod_to_ses ses)
 
 let val_to_const ses p = List.map p ~f:(Instruction.val_to_const ses)
 
+let const_to_val p = List.map p ~f:Instruction.const_to_val
+
 (* basic blocks -- we classify basic blocks into 3 kinds:
 - NotEncodable for instructions that are not yet supported
 - Terminal if the last instruction of the block interrupts control flow,
