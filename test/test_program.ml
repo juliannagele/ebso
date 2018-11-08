@@ -133,6 +133,19 @@ let suite =
         p
         (mod_to_ses 4 p)
       );
+
+    (* val_to_const *)
+
+    "replace large val with const" >:: (fun _ ->
+        let p = [PUSH (Val "0b1011")] in
+        assert_equal
+          ~cmp:[%eq: Program.t * const_val_map]
+          ~printer:[%show: Program.t * const_val_map]
+          (val_to_const 2 p)
+          ([PUSH (Const "c1")], [("c1", "0b1011")])
+      );
+
+
   ]
 
 let () =

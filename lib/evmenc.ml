@@ -97,6 +97,7 @@ let enc_stackarg ea j = function
   (* careful: if x is to large for sesort leftmost bits are truncated *)
   | Val x -> Z3.Expr.mk_numeral_string !ctxt (num_string_to_dec x) !sesort
   | Tmpl -> ea.a <@@> [j]
+  | Const c -> seconst c
 
 let enc_push ea st j x =
   let open Z3Ops in
