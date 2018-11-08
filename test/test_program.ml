@@ -144,7 +144,7 @@ let suite =
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
           (val_to_const ses p)
-          [PUSH (Const "c16")]
+          [PUSH (Const ("c" ^ v))]
       );
 
     "replace large binary val with const" >:: (fun _ ->
@@ -155,7 +155,7 @@ let suite =
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
           (val_to_const ses p)
-          [PUSH (Const "c16")]
+          [PUSH (Const ("c" ^ v))]
       );
 
     "do not replace fitting val with const" >:: (fun _ ->
