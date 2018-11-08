@@ -130,23 +130,79 @@ let suite =
     "program without PUSH remains unchanged by mod_to_ses" >:: (fun _ ->
         let p = [ADD; SUB; EXP] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-        p
-        (mod_to_ses 4 p)
+          p
+          (mod_to_ses 4 p)
       );
 
     (* val_to_const *)
 
     "replace large val with const" >:: (fun _ ->
         let v = "16" in
+        let ses = 2 in
         let p = [PUSH (Val v)] in
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
-          (val_to_const 2 p)
+          (val_to_const ses p)
           [PUSH (Const "c16")]
       );
 
+    "replace large binary val with const" >:: (fun _ ->
+        let v = "0b1001" in
+        let ses = 2 in
+        let p = [PUSH (Val v)] in
+        assert_equal
+          ~cmp:[%eq: Program.t]
+          ~printer:[%show: Program.t]
+          (val_to_const ses p)
+          [PUSH (Const "c16")]
+      );
 
+    "do not replace fitting val with const" >:: (fun _ ->
+        let v = "1" in
+        let ses = 2 in
+        let p = [PUSH (Val v)] in
+        assert_equal
+          ~cmp:[%eq: Program.t]
+          ~printer:[%show: Program.t]
+          (val_to_const ses p)
+          [PUSH (Val v)]
+      );
+
+    "do not replace 0 with const" >:: (fun _ ->
+        let v = "0" in
+        let ses = 2 in
+        let p = [PUSH (Val v)] in
+        assert_equal
+          ~cmp:[%eq: Program.t]
+          ~printer:[%show: Program.t]
+          (val_to_const ses p)
+          [PUSH (Val v)]
+      );
+
+    "replace in program" >:: (fun _ ->
+        let ses = 2 in
+        let p = [PUSH (Val "2"); PUSH (Val "17"); PUSH (Val "9"); ADD; PUSH (Val "100")] in
+        assert_equal
+          ~cmp:[%eq: Program.t]
+          ~printer:[%show: Program.t]
+          (val_to_const ses p)
+          [PUSH (Val "2"); PUSH (Const "c17"); PUSH (Const "c9"); ADD; PUSH (Const "c100")]
+      );
+
+    "replace same value in program" >:: (fun _ ->
+        let v = "42" in
+        let ses = 2 in
+        let p = [PUSH (Val v); PUSH (Val v)] in
+        assert_equal
+          ~cmp:[%eq: Program.t]
+          ~printer:[%show: Program.t]
+          (val_to_const ses p)
+          [PUSH (Val v); PUSH (Val v)]
+      );
+
+
+    
   ]
 
 let () =
