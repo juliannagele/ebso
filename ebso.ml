@@ -139,8 +139,7 @@ let () =
       and p_smt = flag "print-smt" no_arg
           ~doc:"print constraint given to solver in SMT-LIB format"
       and stackes = flag "stack-element-size" (optional int)
-          ~doc:"ses number of bits used for stack elements \
-                (fits arguments of PUSH by modulo 2^ses)"
+          ~doc:"ses number of bits used for stack elements"
       and stackas = flag "stack-address-size" (optional int)
           ~doc:"sas number of bits used for addressing stack elements \
                 (i.e. stack then has 2^sas elements)"
