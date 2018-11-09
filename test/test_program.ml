@@ -143,8 +143,8 @@ let suite =
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
-          (val_to_const ses p)
           [PUSH (Const ("c" ^ v))]
+          (val_to_const ses p)
       );
 
     "do not replace fitting val with const" >:: (fun _ ->
@@ -154,8 +154,8 @@ let suite =
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
-          (val_to_const ses p)
           [PUSH (Val v)]
+          (val_to_const ses p)
       );
 
     "do not replace 0 with const" >:: (fun _ ->
@@ -165,8 +165,8 @@ let suite =
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
-          (val_to_const ses p)
           [PUSH (Val v)]
+          (val_to_const ses p)
       );
 
     "replace in program" >:: (fun _ ->
@@ -175,8 +175,8 @@ let suite =
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
-          (val_to_const ses p)
           [PUSH (Val "2"); PUSH (Const "c17"); PUSH (Const "c9"); ADD; PUSH (Const "c100")]
+          (val_to_const ses p)
       );
 
     "replace same value in program" >:: (fun _ ->
@@ -186,8 +186,8 @@ let suite =
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
-          (val_to_const ses p)
           [PUSH (Const ("c" ^ v)); PUSH (Const ("c" ^ v)) ]
+          (val_to_const ses p)
       );
 
     "replace max value and max + 1 in program" >:: (fun _ ->
@@ -198,8 +198,8 @@ let suite =
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
-          (val_to_const ses p)
           [PUSH (Val max); PUSH (Const ("c" ^ max_1)) ]
+          (val_to_const ses p)
       );
 
     "replace large binary val with const" >:: (fun _ ->
@@ -209,8 +209,8 @@ let suite =
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
-          (val_to_const ses p)
           [PUSH (Const ("c" ^ v))]
+          (val_to_const ses p)
       );
 
     (* const_to_val *)
@@ -221,8 +221,8 @@ let suite =
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
-          (const_to_val p)
           [PUSH (Val v)]
+          (const_to_val p)
       );
 
     "redeem large binary val from const" >:: (fun _ ->
@@ -231,8 +231,8 @@ let suite =
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
-          (const_to_val p)
           [PUSH (Val v)]
+          (const_to_val p)
       );
 
     "idempotent with fitting value" >:: (fun _ ->
@@ -242,8 +242,8 @@ let suite =
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
-          (const_to_val (val_to_const ses p))
           p
+          (const_to_val (val_to_const ses p))
       );
 
     "idempotent in large program" >:: (fun _ ->
@@ -252,8 +252,8 @@ let suite =
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
-          (const_to_val (val_to_const ses p))
           p
+          (const_to_val (val_to_const ses p))
       );
 
     "idempotent with same value in program" >:: (fun _ ->
@@ -263,8 +263,8 @@ let suite =
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
-          (const_to_val (val_to_const ses p))
           p
+          (const_to_val (val_to_const ses p))
       );
 
     (* consts *)
@@ -275,8 +275,8 @@ let suite =
         assert_equal
           ~cmp:[%eq: string list]
           ~printer:[%show: string list]
-          (consts p)
           [c1; c2]
+          (consts p)
       );
 
     "values of different bases to same const" >:: (fun _ ->
