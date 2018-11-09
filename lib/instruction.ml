@@ -64,7 +64,7 @@ let val_to_const ses instr =
   | i -> i
 
 let const_to_val = function
-  | PUSH (Const c) -> PUSH (Val (Stackarg.to_valarg c))
+  | PUSH (Const c) -> PUSH (Val (Stackarg.constarg_to_valarg c))
   | i -> i
 
 (* list of instructions that are encodable, i.e., can be super optimized *)

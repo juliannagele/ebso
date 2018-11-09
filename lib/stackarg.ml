@@ -11,13 +11,13 @@ let show_valarg_hex x =
   if Int.rem (String.length hx) 2 = 1 then "0" ^ hx else hx
 
 type constarg = string [@@deriving show { with_path = false }, sexp, compare]
-let to_valarg c = String.chop_prefix_exn c ~prefix:"c"
+let constarg_to_valarg c = String.chop_prefix_exn c ~prefix:"c"
 let from_valarg v = "c" ^ (valarg_to_dec v)
 
 type t =
   | Val of valarg [@printer fun fmt x -> fprintf fmt "%s" (valarg_to_dec x)]
   | Tmpl
-  | Const of constarg [@printer fun fmt x -> fprintf fmt "%s" (valarg_to_dec (to_valarg x))]
+  | Const of constarg [@printer fun fmt x -> fprintf fmt "%s" (valarg_to_dec (constarg_to_valarg x))]
 [@@deriving show { with_path = false }, sexp, compare]
 
 let equal x y = match (x, y) with
@@ -35,7 +35,7 @@ let all = [Tmpl]
 let show_stackarg_hex a =
   match a with
   | Val x -> show_valarg_hex x
-  | Const c -> show_valarg_hex (to_valarg c)
+  | Const c -> show_valarg_hex (constarg_to_valarg c)
   | Tmpl -> failwith "hex output not supported for template"
 
 let mod_stackarg_to_ses ses = function
