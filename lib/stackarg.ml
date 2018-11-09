@@ -4,7 +4,7 @@ open Core
    or binary, e.g. "0b1" *)
 type valarg = string [@@deriving show { with_path = false }, sexp, compare]
 let valarg_to_dec x = Z.of_string x |> Z.to_string
-let num_string_to_hex x = Z.of_string x |> Z.format "x"
+let valarg_to_hex x = Z.of_string x |> Z.format "x"
 
 type constarg = string [@@deriving show { with_path = false }, sexp, compare]
 let to_valarg c = String.chop_prefix_exn c ~prefix:"c"
@@ -30,7 +30,7 @@ let all_of_stackarg = [Tmpl]
 
 let show_stackarg_hex a =
   let show_val x =
-    let hx = num_string_to_hex x in
+    let hx = valarg_to_hex x in
     if Int.rem (String.length hx) 2 = 1 then "0" ^ hx else hx
   in
   match a with
