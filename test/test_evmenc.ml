@@ -68,7 +68,7 @@ let effect =
     (* add *)
 
     "add two elements on the stack">:: (fun _ ->
-        let p = [PUSH (Val "4"); PUSH (Val "5"); ADD] in
+        let p = [PUSH (Val "1"); PUSH (Val "2"); ADD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -76,14 +76,14 @@ let effect =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
-          (senum 9)
+          (senum 3)
           (eval_stack st m (List.length p) 0)
       );
 
     (* sub *)
 
     "subtract two elements on the stack">:: (fun _ ->
-        let p = [PUSH (Val "3"); PUSH (Val "8"); SUB] in
+        let p = [PUSH (Val "3"); PUSH (Val "4"); SUB] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -91,12 +91,12 @@ let effect =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
-          (senum 5)
+          (senum 1)
           (eval_stack st m (List.length p) 0)
       );
 
     "subtract two elements on the stack with negative result">:: (fun _ ->
-        let p = [PUSH (Val "13"); PUSH (Val "8"); SUB] in
+        let p = [PUSH (Val "4"); PUSH (Val "3"); SUB] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -104,7 +104,7 @@ let effect =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
-          (senum (-5))
+          (senum (-1))
           (eval_stack st m (List.length p) 0)
       );
 
