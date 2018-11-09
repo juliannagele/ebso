@@ -5,10 +5,13 @@ open Instruction
 open Program
 open Evmenc
 
+(* returns value within bounds of ses *)
+let val_of_int_safe i = Val (Int.to_string (i mod !ses))
+
 let test_stack_pres oc =
   let (d, _) = delta_alpha oc in
   (* create program that initializes stack with d + 2 values *)
-  let ip = List.init (d + 2) ~f:(fun i -> PUSH (Val (Int.to_string i))) in
+  let ip = List.init (d + 2) ~f:(fun i -> PUSH (val_of_int_safe i)) in
   let p = ip @ [oc] in
   let ea = mk_enc_consts p (`User []) in
   let st = mk_state ea "" in
@@ -23,7 +26,7 @@ let test_stack_pres oc =
 let test_stack_ctr p =
   let d = stack_depth p in
   (* create program that initializes stack with d values *)
-  let ip = List.init d ~f:(fun i -> PUSH (Val (Int.to_string i))) in
+  let ip = List.init d ~f:(fun i -> PUSH (val_of_int_safe i)) in
   let p = ip @ p in
   let ea = mk_enc_consts p (`User []) in
   let st = mk_state ea "" in
@@ -38,7 +41,7 @@ let test_stack_ctr p =
 let test_no_exc_halt p =
   let d = stack_depth p in
   (* create program that initializes stack with d values *)
-  let ip = List.init d ~f:(fun i -> PUSH (Val (Int.to_string i))) in
+  let ip = List.init d ~f:(fun i -> PUSH (val_of_int_safe i)) in
   let p = ip @ p in
   let ea = mk_enc_consts p (`User []) in
   let st = mk_state ea "" in
@@ -1175,7 +1178,7 @@ let effect =
   (List.map all_of_idx ~f:(fun idx ->
        "effect of DUP " ^ show_idx idx >:: (fun _ ->
            let i = idx_to_enum idx in
-           let ip = List.init i ~f:(fun n -> PUSH (Val (Int.to_string n))) in
+           let ip = List.init i ~f:(fun n -> PUSH (val_of_int_safe n)) in
            let p = ip @ [DUP idx] in
            let ea = mk_enc_consts p (`User []) in
            let st = mk_state ea "" in
@@ -1188,7 +1191,7 @@ let effect =
   (List.map all_of_idx ~f:(fun idx ->
        "preservation of elements between DUP " ^ show_idx idx >:: (fun _ ->
            let i = idx_to_enum idx in
-           let ip = List.init i ~f:(fun n -> PUSH (Val (Int.to_string n))) in
+           let ip = List.init i ~f:(fun n -> PUSH (val_of_int_safe n)) in
            let p = ip @ [DUP idx] in
            let ea = mk_enc_consts p (`User []) in
            let st = mk_state ea "" in
