@@ -36,8 +36,6 @@ let stack_depth p =
 
 let total_gas_cost = List.fold ~init:0 ~f:(fun gc i -> gc + gas_cost i)
 
-let mod_to_ses ses p = List.map p ~f:(Instruction.mod_to_ses ses)
-
 let val_to_const ses p =
   List.map p
     ~f:(function | PUSH x -> PUSH (Stackarg.val_to_const ses x) | i -> i)

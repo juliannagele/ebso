@@ -51,10 +51,6 @@ let compare i i2 = match (i, i2) with
   | (PUSH _, PUSH _) -> 0
   | _ -> [%compare: t] i i2
 
-let mod_to_ses ses = function
-  | PUSH x -> PUSH (Stackarg.mod_stackarg_to_ses ses x)
-  | i -> i
-
 (* list of instructions that are encodable, i.e., can be super optimized *)
 let encodable = [
     ADD

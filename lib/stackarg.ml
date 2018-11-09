@@ -41,12 +41,6 @@ let show_stackarg_hex a =
   | Const c -> show_constarg_hex c
   | Tmpl -> failwith "hex output not supported for template"
 
-let mod_stackarg_to_ses ses = function
-  | Tmpl -> Tmpl
-  | Val i ->
-    Val (Z.(mod) (Z.abs (Z.of_string i)) (Z.pow (Z.of_int 2) ses) |> Z.to_string)
-  | Const c -> Const c
-
 let val_to_const ses a =
   let max_repr = Z.pow (Z.of_int 2) ses in
   match a with
