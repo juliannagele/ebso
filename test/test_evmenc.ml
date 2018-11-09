@@ -6,7 +6,7 @@ open Program
 open Evmenc
 
 (* returns value within bounds of ses *)
-let val_of_int_safe i = Val (Int.to_string (i mod !ses))
+let val_of_int_safe i = Stackarg.Val (Int.to_string (i mod !ses))
 
 let test_stack_pres oc =
   let (d, _) = delta_alpha oc in

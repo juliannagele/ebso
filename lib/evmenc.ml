@@ -100,7 +100,7 @@ let init ea st =
 (* TODO: check data layout on stack *)
 let enc_stackarg ea j = function
   (* careful: if x is to large for sesort leftmost bits are truncated *)
-  | Val x -> Z3.Expr.mk_numeral_string !ctxt (valarg_to_dec x) !sesort
+  | Stackarg.Val x -> Z3.Expr.mk_numeral_string !ctxt (Stackarg.valarg_to_dec x) !sesort
   | Tmpl -> ea.a <@@> [j]
   | Const c -> seconst c
 

@@ -1,5 +1,6 @@
 open Core
 open Sedlexing
+open Stackarg
 open Instruction
 
 exception SyntaxError of int
