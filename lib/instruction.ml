@@ -3,11 +3,15 @@ open Core
 let num_string_to_dec x = Z.of_string x |> Z.to_string
 let num_string_to_hex x = Z.of_string x |> Z.format "x"
 
+type constarg = string [@@deriving show { with_path = false }, sexp, compare]
+let to_val c = String.chop_prefix_exn c ~prefix:"c"
+let from_val v = "c" ^ v
+
 type stackarg =
   (* string either in hexadecimal format starting with 0x or in decimal format *)
   | Val of string [@printer fun fmt x -> fprintf fmt "%s" (num_string_to_dec x)]
   | Tmpl
-  | Const of string
+  | Const of constarg [@printer fun fmt x -> fprintf fmt "%s" (num_string_to_dec (to_val x))]
 [@@deriving show { with_path = false }, sexp, compare]
 
 let equal_stackarg x y = match (x, y) with
@@ -94,14 +98,12 @@ let val_to_const ses instr =
   let max_repr = Z.pow (Z.of_int 2) ses in
   match instr with
   | PUSH (Val x) ->
-    let v = if Z.of_string x >= max_repr then Const ("c" ^ x) else Val x in
+    let v = if Z.of_string x >= max_repr then Const (from_val x) else Val x in
     PUSH v
   | i -> i
 
 let const_to_val = function
-  | PUSH (Const c) ->
-    let v =  String.chop_prefix_exn c ~prefix:"c" in
-    PUSH (Val v)
+  | PUSH (Const c) -> PUSH (Val (to_val c))
   | i -> i
 
 (* list of instructions that are encodable, i.e., can be super optimized *)
