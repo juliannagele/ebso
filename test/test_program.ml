@@ -115,79 +115,79 @@ let suite =
 
     "replace large val with const" >:: (fun _ ->
         let v = "16" in
-        let ses = 2 in
+        let wsz = 2 in
         let p = [PUSH (Val v)] in
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
           [PUSH (Const ("c" ^ v))]
-          (val_to_const ses p)
+          (val_to_const wsz p)
       );
 
     "do not replace fitting val with const" >:: (fun _ ->
         let v = "1" in
-        let ses = 2 in
+        let wsz = 2 in
         let p = [PUSH (Val v)] in
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
           [PUSH (Val v)]
-          (val_to_const ses p)
+          (val_to_const wsz p)
       );
 
     "do not replace 0 with const" >:: (fun _ ->
         let v = "0" in
-        let ses = 2 in
+        let wsz = 2 in
         let p = [PUSH (Val v)] in
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
           [PUSH (Val v)]
-          (val_to_const ses p)
+          (val_to_const wsz p)
       );
 
     "replace in program" >:: (fun _ ->
-        let ses = 2 in
+        let wsz = 2 in
         let p = [PUSH (Val "2"); PUSH (Val "17"); PUSH (Val "9"); ADD; PUSH (Val "100")] in
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
           [PUSH (Val "2"); PUSH (Const "c17"); PUSH (Const "c9"); ADD; PUSH (Const "c100")]
-          (val_to_const ses p)
+          (val_to_const wsz p)
       );
 
     "replace same value in program" >:: (fun _ ->
         let v = "42" in
-        let ses = 2 in
+        let wsz = 2 in
         let p = [PUSH (Val v); PUSH (Val v)] in
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
           [PUSH (Const ("c" ^ v)); PUSH (Const ("c" ^ v)) ]
-          (val_to_const ses p)
+          (val_to_const wsz p)
       );
 
     "replace max value and max + 1 in program" >:: (fun _ ->
         let max = "3" in
         let max_1 = "4" in
-        let ses = 2 in
+        let wsz = 2 in
         let p = [PUSH (Val max); PUSH (Val max_1)] in
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
           [PUSH (Val max); PUSH (Const ("c" ^ max_1)) ]
-          (val_to_const ses p)
+          (val_to_const wsz p)
       );
 
     "replace large binary val with const" >:: (fun _ ->
         let v = "0b1001" in
-        let ses = 2 in
+        let wsz = 2 in
         let p = [PUSH (Val v)] in
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
           [PUSH (Const ("c9"))]
-          (val_to_const ses p)
+          (val_to_const wsz p)
       );
 
     (* const_to_val *)
@@ -214,34 +214,34 @@ let suite =
 
     "idempotent with fitting value" >:: (fun _ ->
         let v = "1" in
-        let ses = 2 in
+        let wsz = 2 in
         let p = [PUSH (Val v)] in
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
           p
-          (const_to_val (val_to_const ses p))
+          (const_to_val (val_to_const wsz p))
       );
 
     "idempotent in large program" >:: (fun _ ->
-        let ses = 2 in
+        let wsz = 2 in
         let p = [PUSH (Val "2"); PUSH (Val "17"); PUSH (Val "9"); ADD; PUSH (Val "100")] in
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
           p
-          (const_to_val (val_to_const ses p))
+          (const_to_val (val_to_const wsz p))
       );
 
     "idempotent with same value in program" >:: (fun _ ->
         let v = "42" in
-        let ses = 2 in
+        let wsz = 2 in
         let p = [PUSH (Val v); PUSH (Val v)] in
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
           p
-          (const_to_val (val_to_const ses p))
+          (const_to_val (val_to_const wsz p))
       );
 
     (* consts *)

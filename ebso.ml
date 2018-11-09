@@ -16,9 +16,9 @@ let outputcfg =
 
 let set_options stackes stackas nobv pm psmt pc pinter csv =
   outputcfg := {pmodel = pm; psmt = psmt; pcnstrnt = pc; pinter = pinter; csv = csv};
-  Option.iter stackes ~f:(fun stackes -> set_ses stackes);
+  Option.iter stackes ~f:(fun stackes -> set_wsz stackes);
   Option.iter stackas ~f:(fun stackas -> set_sas stackas);
-  if nobv then (sesort := int_sort; sasort := int_sort) else ()
+  if nobv then (wsort := int_sort; sasort := int_sort) else ()
 
 let log e =
   let log b s = if b then Out_channel.prerr_endline s else () in
@@ -68,15 +68,15 @@ let add_step step = function
 
 let tvalidate sp tp sz =
   let sp = Program.const_to_val sp and tp = Program.const_to_val tp in
-  let oses = !ses in
-  set_ses sz;
+  let oldwsz = !wsz in
+  set_wsz sz;
   let c = enc_trans_val (mk_enc_consts sp (`User [])) tp in
   let tv =
     match solve_model [c] with
     | None -> true
     | Some _ -> false
   in
-  set_ses oses; tv
+  set_wsz oldwsz; tv
 
 let super_optimize_encbl p sis tval hist_bbs =
   let rec sopt p hist =
@@ -138,8 +138,8 @@ let () =
           ~doc:"print constraint given to solver"
       and p_smt = flag "print-smt" no_arg
           ~doc:"print constraint given to solver in SMT-LIB format"
-      and stackes = flag "stack-element-size" (optional int)
-          ~doc:"ses number of bits used for stack elements"
+      and wordsize = flag "word-size" (optional int)
+          ~doc:"wsz word size, i.e., number of bits used for stack elements"
       and stackas = flag "stack-address-size" (optional int)
           ~doc:"sas number of bits used for addressing stack elements \
                 (i.e. stack then has 2^sas elements)"
@@ -158,13 +158,13 @@ let () =
       and progr = anon ("PROGRAM" %: string)
       in
       fun () ->
-        set_options stackes stackas nobv p_model p_smt p_constr p_inter csv;
+        set_options wordsize stackas nobv p_model p_smt p_constr p_inter csv;
         let buf =
           if direct then Sedlexing.Latin1.from_string progr
           else Sedlexing.Latin1.from_channel (In_channel.create progr)
         in
         let p = Parser.parse buf in
-        let p = if Option.is_some stackes then Program.val_to_const !ses p else p in
+        let p = if Option.is_some wordsize then Program.val_to_const !wsz p else p in
         let bbs = Program.split_into_bbs p in
         match opt_mode with
         | NO ->

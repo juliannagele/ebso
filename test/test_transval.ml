@@ -6,7 +6,7 @@ open Evmenc
 
 let suite =
   (* set to realistic values for validation *)
-  set_ses 256; set_sas 10;
+  set_wsz 256; set_sas 10;
   "suite" >:::
   [
     (* translation validation *)

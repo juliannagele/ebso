@@ -6,7 +6,7 @@ open Evmenc
 
 let suite =
   (* set low for fast testing *)
-  set_ses 3; set_sas 6;
+  set_wsz 3; set_sas 6;
   "suite" >:::
   [
     (* enc_search_space *)

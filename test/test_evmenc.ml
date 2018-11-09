@@ -5,8 +5,8 @@ open Instruction
 open Program
 open Evmenc
 
-(* returns value within bounds of ses *)
-let val_of_int_safe i = Stackarg.Val (Int.to_string (i mod !ses))
+(* returns value within bounds of word size *)
+let val_of_int_safe i = Stackarg.Val (Int.to_string (i mod !wsz))
 
 let test_stack_pres oc =
   let (d, _) = delta_alpha oc in
@@ -257,7 +257,7 @@ let effect =
           (senum 0) (eval_stack st m (List.length p) 0)
       );
 
-    "-2^(ses - 1) sdiv -1 = -2^(ses - 1), wraps to negative" >::(fun _ ->
+    "-2^(wsz - 1) sdiv -1 = -2^(wsz - 1), wraps to negative" >::(fun _ ->
         let p = [PUSH (Val "-1"); PUSH (Val "0b100"); SDIV] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
@@ -1394,7 +1394,7 @@ let misc =
 
 let suite =
   (* set low for fast testing *)
-  set_ses 3; set_sas 6;
+  set_wsz 3; set_sas 6;
   "suite" >:::
   effect @ pres_stack @ stack_ctr @ exc_halt @ forced_stack_underflow
   @ gas_cost @ misc

@@ -7,17 +7,17 @@ open Program
    for exception handling, otherwise the stack counter wraps around
    --> max stack size 2^sas - 1 *)
 let sas = ref 6
-(* stack element size *)
-let ses = ref 3
+(* word size *)
+let wsz = ref 3
 let sasort = ref (bv_sort !sas)
-let sesort = ref (bv_sort !ses)
+let wsort = ref (bv_sort !wsz)
 
-let set_ses s = ses := s; sesort := bv_sort !ses
+let set_wsz n = wsz := n; wsort := bv_sort !wsz
 let set_sas s = sas := s; sasort := bv_sort !sas
 
-let senum n = Z3.Expr.mk_numeral_int !ctxt n !sesort
+let senum n = Z3.Expr.mk_numeral_int !ctxt n !wsort
 let sanum n = Z3.Expr.mk_numeral_int !ctxt n !sasort
-let seconst s = Z3.Expr.mk_const_s !ctxt s !sesort
+let seconst s = Z3.Expr.mk_const_s !ctxt s !wsort
 let saconst s = Z3.Expr.mk_const_s !ctxt s !sasort
 
 type enc_consts = {
@@ -47,8 +47,8 @@ let mk_enc_consts p sis =
   (* target program *)
   fis = func_decl "instr" [int_sort] int_sort;
   (* arguments for PUSH instrucions in target program *)
-  a = func_decl "a" [int_sort] !sesort;
-  (* arguments of PUSH which are too large to fit in ses *)
+  a = func_decl "a" [int_sort] !wsort;
+  (* arguments of PUSH which are too large to fit in word size *)
   cs = List.map (Program.consts p) ~f:(seconst);
   (* integer encoding of opcodes *)
   opcodes = List.mapi sis ~f:(fun i oc -> (oc, i));
@@ -66,12 +66,12 @@ type state = {
 }
 
 let mk_state ea idx =
-  let xs_sorts = List.map ea.xs ~f:(fun _ -> !sesort) in
-  let cs_sorts = List.map ea.cs ~f:(fun _ -> !sesort) in
+  let xs_sorts = List.map ea.xs ~f:(fun _ -> !wsort) in
+  let cs_sorts = List.map ea.cs ~f:(fun _ -> !wsort) in
   { (* stack(x0 ... x(sd-1), j, n) = nth stack element after j instructions
        starting from a stack that contained elements x0 ... x(sd-1) *)
     stack = func_decl ("stack" ^ idx)
-        (xs_sorts @ cs_sorts @ [int_sort; !sasort]) !sesort;
+        (xs_sorts @ cs_sorts @ [int_sort; !sasort]) !wsort;
     (* sc(j) = index of the next free slot on the stack after j instructions *)
     stack_ctr = func_decl ("sc" ^ idx) [int_sort] !sasort;
     (* exc_halt(j) is true if exceptional halting occurs after j instructions *)
@@ -99,8 +99,8 @@ let init ea st =
 
 (* TODO: check data layout on stack *)
 let enc_stackarg ea j = function
-  (* careful: if x is to large for sesort leftmost bits are truncated *)
-  | Stackarg.Val x -> Z3.Expr.mk_numeral_string !ctxt (Stackarg.valarg_to_dec x) !sesort
+  (* careful: if x is to large for wsort leftmost bits are truncated *)
+  | Stackarg.Val x -> Z3.Expr.mk_numeral_string !ctxt (Stackarg.valarg_to_dec x) !wsort
   | Tmpl -> ea.a <@@> [j]
   | Const c -> seconst c
 
@@ -174,8 +174,8 @@ let enc_addmod ea st j =
   sk' (sc' - sanum 1) ==
   (* EVM defines (x + y) mod 0 = 0 as 0, Z3 says it's undefined *)
   ite (denom == senum 0) (senum 0) (
-    (* truncate back to ses, safe because mod denom brings us back to range *)
-    extract (Int.pred !ses) 0
+    (* truncate back to word size, safe because mod denom brings us back to range *)
+    extract (Int.pred !wsz) 0
       (* requires non overflowing add, pad with 0s to avoid overflow *)
       (urem ((zeroext 1 y) + (zeroext 1 x)) (zeroext 1 denom)))
 
@@ -188,10 +188,10 @@ let enc_mulmod ea st j =
   sk' (sc' - sanum 1) ==
   (* EVM defines (x + y) mod 0 = 0 as 0, Z3 says it's undefined *)
   ite (denom == senum 0) (senum 0) (
-    (* truncate back to ses, safe because mod denom brings us back to range *)
-    extract (Int.pred !ses) 0
+    (* truncate back to word size, safe because mod denom brings us back to range *)
+    extract (Int.pred !wsz) 0
       (* requires non overflowing mul, pad with 0s to avoid overflow *)
-      (urem ((zeroext !ses y) * (zeroext !ses x)) (zeroext !ses denom)))
+      (urem ((zeroext !wsz y) * (zeroext !wsz x)) (zeroext !wsz denom)))
 
 let enc_not ea st j =
   let open Z3Ops in
