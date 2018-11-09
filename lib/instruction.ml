@@ -26,12 +26,15 @@ let stackarg_of_sexp s = match s with
 
 let all_of_stackarg = [Tmpl]
 
-let show_stackarg_hex = function
-  | Val x ->
+let show_stackarg_hex a =
+  let show_val x =
     let hx = num_string_to_hex x in
     if Int.rem (String.length hx) 2 = 1 then "0" ^ hx else hx
+  in
+  match a with
+  | Val x -> show_val x
+  | Const c -> show_val (to_val c)
   | Tmpl -> failwith "hex output not supported for template"
-  | Const _ -> failwith "hex output not supported for constant"
 
 let mod_stackarg_to_ses ses = function
   | Tmpl -> Tmpl
