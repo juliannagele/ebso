@@ -1,6 +1,9 @@
 open Core
 
-let num_string_to_dec x = Z.of_string x |> Z.to_string
+(* a value argument can be either decimal, e.g., "1", hex, e.g., "0x1"
+   or binary, e.g. "0b1" *)
+type valarg = string [@@deriving show { with_path = false }, sexp, compare]
+let valarg_to_dec x = Z.of_string x |> Z.to_string
 let num_string_to_hex x = Z.of_string x |> Z.format "x"
 
 type constarg = string [@@deriving show { with_path = false }, sexp, compare]
@@ -9,9 +12,9 @@ let from_val v = "c" ^ v
 
 type stackarg =
   (* string either in hexadecimal format starting with 0x or in decimal format *)
-  | Val of string [@printer fun fmt x -> fprintf fmt "%s" (num_string_to_dec x)]
+  | Val of valarg [@printer fun fmt x -> fprintf fmt "%s" (valarg_to_dec x)]
   | Tmpl
-  | Const of constarg [@printer fun fmt x -> fprintf fmt "%s" (num_string_to_dec (to_val x))]
+  | Const of constarg [@printer fun fmt x -> fprintf fmt "%s" (valarg_to_dec (to_val x))]
 [@@deriving show { with_path = false }, sexp, compare]
 
 let equal_stackarg x y = match (x, y) with
