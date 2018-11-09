@@ -201,6 +201,18 @@ let suite =
           [PUSH (Const ("c" ^ v)); PUSH (Const ("c" ^ v)) ]
       );
 
+    "replace max value and max + 1 in program" >:: (fun _ ->
+        let max = "3" in
+        let max_1 = "4" in
+        let ses = 2 in
+        let p = [PUSH (Val max); PUSH (Val max_1)] in
+        assert_equal
+          ~cmp:[%eq: Program.t]
+          ~printer:[%show: Program.t]
+          (val_to_const ses p)
+          [PUSH (Val max); PUSH (Const ("c" ^ max_1)) ]
+      );
+
     (* const_to_val *)
 
     "redeem val from const" >:: (fun _ ->

@@ -94,7 +94,7 @@ let val_to_const ses instr =
   let max_repr = Z.pow (Z.of_int 2) ses in
   match instr with
   | PUSH (Val x) ->
-    let v = if Z.of_string x > max_repr then Const ("c" ^ x) else Val x in
+    let v = if Z.of_string x >= max_repr then Const ("c" ^ x) else Val x in
     PUSH v
   | i -> i
 
