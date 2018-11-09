@@ -381,11 +381,12 @@ let eval_fis ea m j = eval_func_decl m j ea.fis |> Z3.Arithmetic.Integer.get_int
 
 let eval_a ea m j = eval_func_decl m j ea.a |> Z3.Arithmetic.Integer.numeral_to_string
 
-let dec_instr ea m j =
-  let i = eval_fis ea m j |> dec_opcode ea in
-  match i with
+let dec_push ea m j = function
   | PUSH Tmpl -> PUSH (Val (eval_a ea m j))
   | i -> i
+
+let dec_instr ea m j =
+  eval_fis ea m j |> dec_opcode ea |> dec_push ea m j
 
 let dec_super_opt ea m =
   let k = Z3.Arithmetic.Integer.get_int @@ eval_const m ea.kt in
