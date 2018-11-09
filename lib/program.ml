@@ -38,9 +38,13 @@ let total_gas_cost = List.fold ~init:0 ~f:(fun gc i -> gc + gas_cost i)
 
 let mod_to_ses ses p = List.map p ~f:(Instruction.mod_to_ses ses)
 
-let val_to_const ses p = List.map p ~f:(Instruction.val_to_const ses)
+let val_to_const ses p =
+  List.map p
+    ~f:(function | PUSH x -> PUSH (Stackarg.val_to_const ses x) | i -> i)
 
-let const_to_val p = List.map p ~f:Instruction.const_to_val
+let const_to_val p =
+  List.map p
+    ~f:(function | PUSH x -> PUSH (Stackarg.const_to_val x) | i -> i)
 
 let consts p = List.stable_dedup
     (List.filter_map p ~f:(function | PUSH (Const c) -> Some c | _ -> None))

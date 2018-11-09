@@ -55,18 +55,6 @@ let mod_to_ses ses = function
   | PUSH x -> PUSH (Stackarg.mod_stackarg_to_ses ses x)
   | i -> i
 
-let val_to_const ses instr =
-  let max_repr = Z.pow (Z.of_int 2) ses in
-  match instr with
-  | PUSH (Val x) ->
-    let v = if Z.of_string x >= max_repr then Stackarg.Const (Stackarg.valarg_to_constarg x) else Val x in
-    PUSH v
-  | i -> i
-
-let const_to_val = function
-  | PUSH (Const c) -> PUSH (Val (Stackarg.constarg_to_valarg c))
-  | i -> i
-
 (* list of instructions that are encodable, i.e., can be super optimized *)
 let encodable = [
     ADD

@@ -13,17 +13,20 @@ let show_valarg_hex x =
 type constarg = string [@@deriving show { with_path = false }, sexp, compare]
 let constarg_to_valarg c = String.chop_prefix_exn c ~prefix:"c"
 let valarg_to_constarg v = "c" ^ (valarg_to_dec v)
+let constarg_eq = String.equal
+let constarg_to_dec = constarg_to_valarg (* convention is that constarg is in dec *)
+let show_constarg_hex c = show_valarg_hex (constarg_to_valarg c)
 
 type t =
   | Val of valarg [@printer fun fmt x -> fprintf fmt "%s" (valarg_to_dec x)]
   | Tmpl
-  | Const of constarg [@printer fun fmt x -> fprintf fmt "%s" (valarg_to_dec (constarg_to_valarg x))]
+  | Const of constarg [@printer fun fmt x -> fprintf fmt "%s" (constarg_to_dec x)]
 [@@deriving show { with_path = false }, sexp, compare]
 
 let equal x y = match (x, y) with
   | Val x, Val y -> valarg_eq x y
   | Tmpl, Tmpl -> true
-  | Const c, Const d -> String.equal c d
+  | Const c, Const d -> constarg_eq c d
   | _, _ -> false
 
 let of_sexp s = match s with
@@ -35,7 +38,7 @@ let all = [Tmpl]
 let show_stackarg_hex a =
   match a with
   | Val x -> show_valarg_hex x
-  | Const c -> show_valarg_hex (constarg_to_valarg c)
+  | Const c -> show_constarg_hex c
   | Tmpl -> failwith "hex output not supported for template"
 
 let mod_stackarg_to_ses ses = function
@@ -43,3 +46,13 @@ let mod_stackarg_to_ses ses = function
   | Val i ->
     Val (Z.(mod) (Z.abs (Z.of_string i)) (Z.pow (Z.of_int 2) ses) |> Z.to_string)
   | Const c -> Const c
+
+let val_to_const ses a =
+  let max_repr = Z.pow (Z.of_int 2) ses in
+  match a with
+  | Val x -> if Z.of_string x >= max_repr then Const (valarg_to_constarg x) else a
+  | a -> a
+
+let const_to_val = function
+  | Const c -> Val (constarg_to_valarg c)
+  | a -> a
