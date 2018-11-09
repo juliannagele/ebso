@@ -147,17 +147,6 @@ let suite =
           [PUSH (Const ("c" ^ v))]
       );
 
-    "replace large binary val with const" >:: (fun _ ->
-        let v = "0b1001" in
-        let ses = 2 in
-        let p = [PUSH (Val v)] in
-        assert_equal
-          ~cmp:[%eq: Program.t]
-          ~printer:[%show: Program.t]
-          (val_to_const ses p)
-          [PUSH (Const ("c" ^ v))]
-      );
-
     "do not replace fitting val with const" >:: (fun _ ->
         let v = "1" in
         let ses = 2 in
@@ -211,6 +200,17 @@ let suite =
           ~printer:[%show: Program.t]
           (val_to_const ses p)
           [PUSH (Val max); PUSH (Const ("c" ^ max_1)) ]
+      );
+
+    "replace large binary val with const" >:: (fun _ ->
+        let v = "0b1001" in
+        let ses = 2 in
+        let p = [PUSH (Val v)] in
+        assert_equal
+          ~cmp:[%eq: Program.t]
+          ~printer:[%show: Program.t]
+          (val_to_const ses p)
+          [PUSH (Const ("c" ^ v))]
       );
 
     (* const_to_val *)
@@ -277,6 +277,19 @@ let suite =
           ~printer:[%show: string list]
           (consts p)
           [c1; c2]
+      );
+
+    "values of different bases to same const" >:: (fun _ ->
+        let vb = "0b1001" in
+        let vd = "9" in
+        let vh = "0x9" in
+        let p = [PUSH (Val vb); PUSH (Val vd); PUSH (Val vh);] in
+        let p' = Program.val_to_const 3 p in
+        assert_equal
+          ~cmp:[%eq: string list]
+          ~printer:[%show: string list]
+          ["c" ^ vd]
+          (consts p')
       );
   ]
 
