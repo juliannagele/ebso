@@ -5,6 +5,10 @@ open Core
 type valarg = string [@@deriving show { with_path = false }, sexp, compare]
 let valarg_to_dec x = Z.of_string x |> Z.to_string
 let valarg_to_hex x = Z.of_string x |> Z.format "x"
+let valarg_eq x y = Z.equal (Z.of_string x) (Z.of_string y)
+let show_valarg_hex x =
+  let hx = valarg_to_hex x in
+  if Int.rem (String.length hx) 2 = 1 then "0" ^ hx else hx
 
 type constarg = string [@@deriving show { with_path = false }, sexp, compare]
 let to_valarg c = String.chop_prefix_exn c ~prefix:"c"
@@ -17,7 +21,7 @@ type stackarg =
 [@@deriving show { with_path = false }, sexp, compare]
 
 let equal_stackarg x y = match (x, y) with
-  | Val x, Val y -> Z.equal (Z.of_string x) (Z.of_string y)
+  | Val x, Val y -> valarg_eq x y
   | Tmpl, Tmpl -> true
   | Const c, Const d -> String.equal c d
   | _, _ -> false
@@ -29,13 +33,9 @@ let stackarg_of_sexp s = match s with
 let all_of_stackarg = [Tmpl]
 
 let show_stackarg_hex a =
-  let show_val x =
-    let hx = valarg_to_hex x in
-    if Int.rem (String.length hx) 2 = 1 then "0" ^ hx else hx
-  in
   match a with
-  | Val x -> show_val x
-  | Const c -> show_val (to_valarg c)
+  | Val x -> show_valarg_hex x
+  | Const c -> show_valarg_hex (to_valarg c)
   | Tmpl -> failwith "hex output not supported for template"
 
 let mod_stackarg_to_ses ses = function
