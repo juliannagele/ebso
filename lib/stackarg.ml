@@ -12,7 +12,7 @@ let show_valarg_hex x =
 
 type constarg = string [@@deriving show { with_path = false }, sexp, compare]
 let to_valarg c = String.chop_prefix_exn c ~prefix:"c"
-let from_valarg v = "c" ^ v
+let from_valarg v = "c" ^ (valarg_to_dec v)
 
 type t =
   | Val of valarg [@printer fun fmt x -> fprintf fmt "%s" (valarg_to_dec x)]
