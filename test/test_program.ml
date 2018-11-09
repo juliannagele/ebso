@@ -209,7 +209,7 @@ let suite =
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
-          [PUSH (Const ("c" ^ v))]
+          [PUSH (Const ("c9"))]
           (val_to_const ses p)
       );
 
