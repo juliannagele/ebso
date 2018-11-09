@@ -368,6 +368,10 @@ let enc_trans_val ea tp =
      (* but their final state is different *)
      ~! (enc_equivalence_at ea sts stt ks kt))
 
+(* classic superoptimzation: generate & test *)
+
+let enc_classic_so_test _ _ = failwith "step1 not implemented"
+
 let eval_stack ?(xs = []) st m i n =
   eval_func_decl m i ~n:[sanum n] ~xs:xs st.stack
 
@@ -391,3 +395,5 @@ let dec_instr ea m j =
 let dec_super_opt ea m =
   let k = Z3.Arithmetic.Integer.get_int @@ eval_const m ea.kt in
   List.init k ~f:(dec_instr ea m)
+
+let dec_classic_super_opt ea m pc = List.mapi pc ~f:(dec_push ea m)
