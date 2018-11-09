@@ -26,13 +26,15 @@ type enc_consts = {
   kt : Z3.Expr.expr;
   fis : Z3.FuncDecl.func_decl;
   a : Z3.FuncDecl.func_decl;
+  cs : Z3.Expr.expr list;
   opcodes : (Instruction.t * int) list;
   xs : Z3.Expr.expr list;
 }
 
 let mk_enc_consts p sis =
+  let const_pushs = List.map (Program.consts p) ~f:(fun c -> PUSH (Const c)) in
   let sis = match sis with
-    | `All -> Instruction.encodable
+    | `All -> Instruction.encodable @ const_pushs
     | `Progr -> sis_of_progr p
     | `User sis -> List.stable_dedup sis
   in
@@ -46,12 +48,14 @@ let mk_enc_consts p sis =
   fis = func_decl "instr" [int_sort] int_sort;
   (* arguments for PUSH instrucions in target program *)
   a = func_decl "a" [int_sort] !sesort;
+  (* arguments of PUSH which are too large to fit in ses *)
+  cs = List.map (Program.consts p) ~f:(seconst);
   (* integer encoding of opcodes *)
   opcodes = List.mapi sis ~f:(fun i oc -> (oc, i));
   (* list of free variables x_0 .. x_(stack_depth -1)
      for stack elements already on stack *)
   (* careful: no check that this does not generate more than max stacksize variables *)
-  xs = List.init (stack_depth p) ~f:(fun i -> seconst ("x_" ^ Int.to_string i))
+  xs = List.init (stack_depth p) ~f:(fun i -> seconst ("x_" ^ Int.to_string i));
 }
 
 type state = {
@@ -63,10 +67,11 @@ type state = {
 
 let mk_state ea idx =
   let xs_sorts = List.map ea.xs ~f:(fun _ -> !sesort) in
+  let cs_sorts = List.map ea.cs ~f:(fun _ -> !sesort) in
   { (* stack(x0 ... x(sd-1), j, n) = nth stack element after j instructions
        starting from a stack that contained elements x0 ... x(sd-1) *)
     stack = func_decl ("stack" ^ idx)
-        (xs_sorts @ [int_sort; !sasort]) !sesort;
+        (xs_sorts @ cs_sorts @ [int_sort; !sasort]) !sesort;
     (* sc(j) = index of the next free slot on the stack after j instructions *)
     stack_ctr = func_decl ("sc" ^ idx) [int_sort] !sasort;
     (* exc_halt(j) is true if exceptional halting occurs after j instructions *)
@@ -88,7 +93,7 @@ let init ea st =
   (st.stack_ctr @@ [num 0] == sanum skd)
   (* set inital stack elements *)
   && conj (List.mapi ea.xs
-             ~f:(fun i x -> st.stack @@ (ea.xs @ [num 0; sanum i]) == x))
+             ~f:(fun i x -> st.stack @@ (ea.xs @ ea.cs @ [num 0; sanum i]) == x))
   && (st.exc_halt @@ [num 0] == btm)
   && (st.used_gas @@ [num 0] == num 0)
 
@@ -102,7 +107,7 @@ let enc_stackarg ea j = function
 let enc_push ea st j x =
   let open Z3Ops in
   (* the stack after the PUSH *)
-  let sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
+  let sk' n = st.stack @@ (ea.xs @ ea.cs @ [j + one; n]) in
   (* the stack counter before the PUSH *)
   let sc = st.stack_ctr @@ [j] in
   (* the new top element will be x *)
@@ -112,8 +117,8 @@ let enc_pop _ _ _ = top
 
 let enc_binop ea st j op =
   let open Z3Ops in
-  let sk n = st.stack @@ (ea.xs @ [j; n])
-  and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
+  let sk n = st.stack @@ (ea.xs @ ea.cs @ [j; n])
+  and sk' n = st.stack @@ (ea.xs @ ea.cs @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] in
   (* the new top element is the result of applying op to the previous two *)
   (sk' (sc - sanum 2) == op (sk (sc - sanum 1)) (sk (sc - sanum 2)))
@@ -162,8 +167,8 @@ let enc_xor ea st j = enc_binop ea st j (Z3.BitVector.mk_xor !ctxt)
 
 let enc_addmod ea st j =
   let open Z3Ops in
-  let sk n = st.stack @@ (ea.xs @ [j; n])
-  and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
+  let sk n = st.stack @@ (ea.xs @ ea.cs @ [j; n])
+  and sk' n = st.stack @@ (ea.xs @ ea.cs @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   let denom = sk (sc - sanum 3) and x =  sk (sc - sanum 2) and y =  sk (sc - sanum 1) in
   sk' (sc' - sanum 1) ==
@@ -176,8 +181,8 @@ let enc_addmod ea st j =
 
 let enc_mulmod ea st j =
   let open Z3Ops in
-  let sk n = st.stack @@ (ea.xs @ [j; n])
-  and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
+  let sk n = st.stack @@ (ea.xs @ ea.cs @ [j; n])
+  and sk' n = st.stack @@ (ea.xs @ ea.cs @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   let denom = sk (sc - sanum 3) and x =  sk (sc - sanum 2) and y =  sk (sc - sanum 1) in
   sk' (sc' - sanum 1) ==
@@ -190,16 +195,16 @@ let enc_mulmod ea st j =
 
 let enc_not ea st j =
   let open Z3Ops in
-  let sk n = st.stack @@ (ea.xs @ [j; n])
-  and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
+  let sk n = st.stack @@ (ea.xs @ ea.cs @ [j; n])
+  and sk' n = st.stack @@ (ea.xs @ ea.cs @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   (* the new top element is the bitwise negation of the old top element *)
   (sk' (sc' - sanum 1) == Z3.BitVector.mk_not !ctxt (sk (sc - sanum 1)))
 
 let enc_iszero ea st j =
   let open Z3Ops in
-  let sk n = st.stack @@ (ea.xs @ [j; n])
-  and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
+  let sk n = st.stack @@ (ea.xs @ ea.cs @ [j; n])
+  and sk' n = st.stack @@ (ea.xs @ ea.cs @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   (* if the old top element is 0 then the new top element is 1 and 0 otherwise *)
   (sk' (sc' - sanum 1) == ite (sk (sc - sanum 1) == (senum 0)) (senum 1) (senum 0))
@@ -207,8 +212,8 @@ let enc_iszero ea st j =
 let enc_swap ea st j idx =
   let sc_idx = sanum (idx + 1) in
   let open Z3Ops in
-  let sk n = st.stack @@ (ea.xs @ [j; n])
-  and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
+  let sk n = st.stack @@ (ea.xs @ ea.cs @ [j; n])
+  and sk' n = st.stack @@ (ea.xs @ ea.cs @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   (* the new top element is the 1+idx'th from the old stack *)
   (sk' (sc' - sanum 1) == sk (sc - sc_idx)) &&
@@ -222,8 +227,8 @@ let enc_swap ea st j idx =
 let enc_dup ea st j idx =
   let sc_idx = sanum idx in
   let open Z3Ops in
-  let sk n = st.stack @@ (ea.xs @ [j; n])
-  and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
+  let sk n = st.stack @@ (ea.xs @ ea.cs @ [j; n])
+  and sk' n = st.stack @@ (ea.xs @ ea.cs @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   (* the new top element is the idx'th from the old stack *)
   (sk' (sc' - sanum 1) == sk (sc - sc_idx)) &&
@@ -264,8 +269,8 @@ let enc_instruction ea st j is =
   let (d, a) = delta_alpha is in let diff = (a - d) in
   let open Z3Ops in
   let sc = st.stack_ctr @@ [j] in
-  let sk n = st.stack @@ (ea.xs @ [j; n])
-  and sk' n = st.stack @@ (ea.xs @ [j + one; n]) in
+  let sk n = st.stack @@ (ea.xs @ ea.cs @ [j; n])
+  and sk' n = st.stack @@ (ea.xs @ ea.cs @ [j + one; n]) in
   let enc_used_gas =
     st.used_gas @@ [j + one] == ((st.used_gas @@ [j]) + (num (gas_cost is)))
   in
@@ -316,7 +321,7 @@ let enc_equivalence_at ea sts stt js jt =
   (* source and target stack are equal below the stack counter;
      note that it doesn't matter which stack counter is used, they are equal *)
   (forall n ((n < stt.stack_ctr @@ [jt]) ==>
-      (sts.stack @@ (ea.xs @ [js; n]) == stt.stack @@ (ea.xs @ [jt; n]))))
+      (sts.stack @@ (ea.xs @ ea.cs @ [js; n]) == stt.stack @@ (ea.xs @ ea.cs @ [jt; n]))))
 
 (* we only demand equivalence at kt *)
 let enc_equivalence ea sts stt =
@@ -338,7 +343,7 @@ let enc_super_opt ea =
   let sts = mk_state ea "_s" in
   let stt = mk_state ea "_t" in
   let ks = List.length ea.p in
-  foralls ea.xs
+  foralls (ea.xs @ ea.cs)
   (enc_program ea sts &&
    enc_search_space ea stt &&
    enc_equivalence ea sts stt &&

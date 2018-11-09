@@ -67,6 +67,7 @@ let add_step step = function
   | [] -> [step]
 
 let tvalidate sp tp sz =
+  let sp = Program.const_to_val sp and tp = Program.const_to_val tp in
   let oses = !ses in
   set_ses sz;
   let c = enc_trans_val (mk_enc_consts sp (`User [])) tp in
@@ -164,7 +165,7 @@ let () =
           else Sedlexing.Latin1.from_channel (In_channel.create progr)
         in
         let p = Parser.parse buf in
-        let p = if Option.is_some stackes then Program.mod_to_ses !ses p else p in
+        let p = if Option.is_some stackes then Program.val_to_const !ses p else p in
         let bbs = Program.split_into_bbs p in
         match opt_mode with
         | NO ->
