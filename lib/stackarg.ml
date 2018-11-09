@@ -14,23 +14,23 @@ type constarg = string [@@deriving show { with_path = false }, sexp, compare]
 let to_valarg c = String.chop_prefix_exn c ~prefix:"c"
 let from_valarg v = "c" ^ v
 
-type stackarg =
+type t =
   | Val of valarg [@printer fun fmt x -> fprintf fmt "%s" (valarg_to_dec x)]
   | Tmpl
   | Const of constarg [@printer fun fmt x -> fprintf fmt "%s" (valarg_to_dec (to_valarg x))]
 [@@deriving show { with_path = false }, sexp, compare]
 
-let equal_stackarg x y = match (x, y) with
+let equal x y = match (x, y) with
   | Val x, Val y -> valarg_eq x y
   | Tmpl, Tmpl -> true
   | Const c, Const d -> String.equal c d
   | _, _ -> false
 
-let stackarg_of_sexp s = match s with
+let of_sexp s = match s with
   | Sexp.Atom i -> if String.equal i "Tmpl" then Tmpl else Val i
   | Sexp.List _ -> failwith "could not parse argument of PUSH"
 
-let all_of_stackarg = [Tmpl]
+let all = [Tmpl]
 
 let show_stackarg_hex a =
   match a with

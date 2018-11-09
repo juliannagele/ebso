@@ -1,5 +1,4 @@
 open Core
-open Stackarg
 
 type idx =
   | I [@value 1] | II | III | IV | V
@@ -31,7 +30,7 @@ type t =
   | POP | MLOAD | MSTORE | MSTORE8 | SLOAD | SSTORE | JUMP | JUMPI | PC | MSIZE
   | GAS | JUMPDEST
   (* 60s & 70s:  Push Operations *)
-  | PUSH of stackarg [@printer fun fmt x -> fprintf fmt "PUSH %s" (show_stackarg x)]
+  | PUSH of Stackarg.t [@printer fun fmt x -> fprintf fmt "PUSH %s" (Stackarg.show x)]
   (* 80s:  Duplication Operations *)
   | DUP of idx [@printer fun fmt i -> fprintf fmt "DUP%i" (idx_to_enum i)]
   (* 90s:  Exchange Operations *)
@@ -53,19 +52,19 @@ let compare i i2 = match (i, i2) with
   | _ -> [%compare: t] i i2
 
 let mod_to_ses ses = function
-  | PUSH x -> PUSH (mod_stackarg_to_ses ses x)
+  | PUSH x -> PUSH (Stackarg.mod_stackarg_to_ses ses x)
   | i -> i
 
 let val_to_const ses instr =
   let max_repr = Z.pow (Z.of_int 2) ses in
   match instr with
   | PUSH (Val x) ->
-    let v = if Z.of_string x >= max_repr then Const (from_valarg x) else Val x in
+    let v = if Z.of_string x >= max_repr then Stackarg.Const (Stackarg.from_valarg x) else Val x in
     PUSH v
   | i -> i
 
 let const_to_val = function
-  | PUSH (Const c) -> PUSH (Val (to_valarg c))
+  | PUSH (Const c) -> PUSH (Val (Stackarg.to_valarg c))
   | i -> i
 
 (* list of instructions that are encodable, i.e., can be super optimized *)
@@ -90,7 +89,7 @@ let encodable = [
   ; XOR
   ; NOT
   ; POP
-] @ List.map all_of_stackarg ~f:(fun a -> PUSH a)
+] @ List.map Stackarg.all ~f:(fun a -> PUSH a)
   @ List.map all_of_idx ~f:(fun i -> SWAP i)
   @ List.map all_of_idx ~f:(fun i -> DUP i)
 
@@ -209,7 +208,7 @@ let show_hex = function
   | GAS -> "5a"
   | JUMPDEST -> "5b"
   | PUSH x ->
-    let hx = show_stackarg_hex x in
+    let hx = Stackarg.show_stackarg_hex x in
     (* 96 = 0x60, so 95 + number of bytes is the bytecode we need *)
     Z.format "x" (Z.of_int (95 + (String.length hx / 2))) ^ hx
   | DUP idx -> "8" ^ show_idx_hex idx
