@@ -59,7 +59,7 @@ let val_to_const ses instr =
   let max_repr = Z.pow (Z.of_int 2) ses in
   match instr with
   | PUSH (Val x) ->
-    let v = if Z.of_string x >= max_repr then Stackarg.Const (Stackarg.from_valarg x) else Val x in
+    let v = if Z.of_string x >= max_repr then Stackarg.Const (Stackarg.valarg_to_constarg x) else Val x in
     PUSH v
   | i -> i
 
