@@ -7,14 +7,14 @@ let valarg_to_dec x = Z.of_string x |> Z.to_string
 let num_string_to_hex x = Z.of_string x |> Z.format "x"
 
 type constarg = string [@@deriving show { with_path = false }, sexp, compare]
-let to_val c = String.chop_prefix_exn c ~prefix:"c"
-let from_val v = "c" ^ v
+let to_valarg c = String.chop_prefix_exn c ~prefix:"c"
+let from_valarg v = "c" ^ v
 
 type stackarg =
   (* string either in hexadecimal format starting with 0x or in decimal format *)
   | Val of valarg [@printer fun fmt x -> fprintf fmt "%s" (valarg_to_dec x)]
   | Tmpl
-  | Const of constarg [@printer fun fmt x -> fprintf fmt "%s" (valarg_to_dec (to_val x))]
+  | Const of constarg [@printer fun fmt x -> fprintf fmt "%s" (valarg_to_dec (to_valarg x))]
 [@@deriving show { with_path = false }, sexp, compare]
 
 let equal_stackarg x y = match (x, y) with
@@ -36,7 +36,7 @@ let show_stackarg_hex a =
   in
   match a with
   | Val x -> show_val x
-  | Const c -> show_val (to_val c)
+  | Const c -> show_val (to_valarg c)
   | Tmpl -> failwith "hex output not supported for template"
 
 let mod_stackarg_to_ses ses = function
@@ -104,12 +104,12 @@ let val_to_const ses instr =
   let max_repr = Z.pow (Z.of_int 2) ses in
   match instr with
   | PUSH (Val x) ->
-    let v = if Z.of_string x >= max_repr then Const (from_val x) else Val x in
+    let v = if Z.of_string x >= max_repr then Const (from_valarg x) else Val x in
     PUSH v
   | i -> i
 
 let const_to_val = function
-  | PUSH (Const c) -> PUSH (Val (to_val c))
+  | PUSH (Const c) -> PUSH (Val (to_valarg c))
   | i -> i
 
 (* list of instructions that are encodable, i.e., can be super optimized *)
