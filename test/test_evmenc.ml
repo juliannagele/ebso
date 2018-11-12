@@ -1076,7 +1076,7 @@ let effect =
         let p = [NUMBER] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
-        let c = enc_program ea st in
+        let c = foralls ea.uis (enc_program ea st) in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
           (senum 3)
@@ -1087,7 +1087,7 @@ let effect =
         let p = [NUMBER; NUMBER] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
-        let c = enc_program ea st in
+        let c = foralls ea.uis (enc_program ea st) in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t list]

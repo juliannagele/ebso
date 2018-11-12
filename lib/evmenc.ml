@@ -348,7 +348,7 @@ let enc_super_opt ea =
   let sts = mk_state ea "_s" in
   let stt = mk_state ea "_t" in
   let ks = List.length ea.p in
-  foralls (ea.xs @ ea.cs)
+  foralls (ea.xs @ ea.cs @ ea.uis)
   (enc_program ea sts &&
    enc_search_space ea stt &&
    enc_equivalence ea sts stt &&
