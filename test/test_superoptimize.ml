@@ -263,9 +263,9 @@ let suite =
           [PUSH (Val "2")] (dec_super_opt ea m)
       );
 
-    (* enc_super_opt with init stack elements *)
+    (* enc_super_opt with initial words *)
 
-    "super optimize x + 0 with one init stack element" >::(fun _ ->
+    "super optimize x + 0 with one initial word on stack" >::(fun _ ->
         let p = [PUSH (Val "0"); ADD] in
         let sis = `User [PUSH Tmpl; ADD] in
         let ea = mk_enc_consts p sis in
@@ -275,7 +275,7 @@ let suite =
           [] (dec_super_opt ea m)
       );
 
-    "super optimize with two init stack elements" >: test_case ~length:Long (fun _ ->
+    "super optimize with two initial words on stack" >: test_case ~length:Long (fun _ ->
         let p = [ADD; PUSH (Val "0"); ADD] in
         let sis = `User [ADD] in
         let ea = mk_enc_consts p sis in

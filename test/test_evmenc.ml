@@ -17,7 +17,7 @@ let test_stack_pres oc =
   let st = mk_state ea "" in
   let c = enc_program ea st in
   let m = solve_model_exn [c] in
-  (* check all elements below delta *)
+  (* check all words below delta *)
   assert_equal ~cmp:[%eq: Z3.Expr.t list]
     ~printer:(List.to_string ~f:Z3.Expr.to_string)
     [(senum 0); (senum 1)]
@@ -70,7 +70,7 @@ let effect =
   [
     (* add *)
 
-    "add two elements on the stack">:: (fun _ ->
+    "add two words on the stack">:: (fun _ ->
         let p = [PUSH (Val "1"); PUSH (Val "2"); ADD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
@@ -85,7 +85,7 @@ let effect =
 
     (* sub *)
 
-    "subtract two elements on the stack">:: (fun _ ->
+    "subtract two words on the stack">:: (fun _ ->
         let p = [PUSH (Val "3"); PUSH (Val "4"); SUB] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
@@ -98,7 +98,7 @@ let effect =
           (eval_stack st m (List.length p) 0)
       );
 
-    "subtract two elements on the stack with negative result">:: (fun _ ->
+    "subtract two words on the stack with negative result">:: (fun _ ->
         let p = [PUSH (Val "4"); PUSH (Val "3"); SUB] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
@@ -1057,7 +1057,7 @@ let effect =
 
     (* push *)
 
-    "top of the stack is the pushed element after a PUSH">:: (fun _ ->
+    "top of the stack is the pushed word after a PUSH">:: (fun _ ->
         let p = [PUSH (Val "5")] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
@@ -1072,7 +1072,7 @@ let effect =
 
     (* SWAP *)
 
-    "swap I two elements on stack" >::(fun _ ->
+    "swap I two words on stack" >::(fun _ ->
         let p = [PUSH (Val "1"); PUSH (Val "2"); SWAP I] in
         let ea = mk_enc_consts p `All in
         let st = mk_state ea "" in
@@ -1085,7 +1085,7 @@ let effect =
           [(eval_stack st m (List.length p) 0); (eval_stack st m (List.length p) 1)]
       );
 
-    "swap I with only one element" >::(fun _ ->
+    "swap I with only one word" >::(fun _ ->
         let p = [PUSH (Val "1"); SWAP I] in
         let ea = mk_enc_consts p `All in
         let st = mk_state ea "" in
@@ -1100,7 +1100,7 @@ let effect =
            (eval_stack ~xs:[senum 2] st m (List.length p) 1)]
       );
 
-    "swap I with no elements" >::(fun _ ->
+    "swap I with no words" >::(fun _ ->
         let p = [SWAP I] in
         let ea = mk_enc_consts p `All in
         let st = mk_state ea "" in
@@ -1115,7 +1115,7 @@ let effect =
            (eval_stack ~xs:[senum 2; senum 1] st m (List.length p) 1)]
       );
 
-     "elements after swap II" >::(fun _ ->
+     "words after swap II" >::(fun _ ->
         let p = [PUSH (Val "1"); PUSH (Val "2"); PUSH (Val "3"); SWAP II] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
@@ -1130,7 +1130,7 @@ let effect =
            eval_stack st m (List.length p) 2;]
       );
 
-     "preserve elements between swap III" >::(fun _ ->
+     "preserve words between swap III" >::(fun _ ->
         let p = [PUSH (Val "1"); PUSH (Val "2"); PUSH (Val "3"); PUSH (Val "4"); SWAP III] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
@@ -1146,7 +1146,7 @@ let effect =
 
     (* dup *)
 
-    "duplicate top element" >:: (fun _ ->
+    "duplicate top word" >:: (fun _ ->
         let p = [PUSH (Val "1"); DUP I] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
@@ -1160,7 +1160,7 @@ let effect =
            eval_stack st m (List.length p) 1;]
       );
 
-    "DUP I with no elements" >::(fun _ ->
+    "DUP I with no words" >::(fun _ ->
         let p = [DUP I] in
         let ea = mk_enc_consts p `All in
         let st = mk_state ea "" in
@@ -1189,7 +1189,7 @@ let effect =
              (eval_stack st m (List.length p) 0)
          ))) @
   (List.map all_of_idx ~f:(fun idx ->
-       "preservation of elements between DUP " ^ show_idx idx >:: (fun _ ->
+       "preservation of words between DUP " ^ show_idx idx >:: (fun _ ->
            let i = idx_to_enum idx in
            let ip = List.init i ~f:(fun n -> PUSH (val_of_int_safe n)) in
            let p = ip @ [DUP idx] in
@@ -1205,9 +1205,9 @@ let effect =
          )))
 
 let pres_stack =
-  (* test preservation of stack elements for all opcodes *)
+  (* test preservation of words for all opcodes *)
   List.map Instruction.encodable
-    ~f:(fun oc -> "preservation of stack elements by " ^ [%show: Instruction.t] oc
+    ~f:(fun oc -> "preservation of words by " ^ [%show: Instruction.t] oc
                   >:: (fun _ -> test_stack_pres oc))
 
 let stack_ctr =
@@ -1239,7 +1239,7 @@ let exc_halt =
         test_no_exc_halt [ADD; SUB]
       );
 
-    "PUSHing too many elements leads to a stack overflow">:: (fun _ ->
+    "PUSHing too many words leads to a stack overflow">:: (fun _ ->
         let max = Int.pow 2 !sas in
         let p = List.init max ~f:(fun _ -> PUSH (Val "1")) in
         let ea = mk_enc_consts p (`User []) in
@@ -1261,7 +1261,7 @@ let exc_halt =
 let forced_stack_underflow =
   (* test below use hack to erase xs to start from emtpy stack *)
   [
-    "add with only one element">:: (fun _ ->
+    "add with only one word">:: (fun _ ->
         let p = [PUSH (Val "3"); ADD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state {ea with p = []} "" in
@@ -1292,7 +1292,7 @@ let forced_stack_underflow =
           (eval_exc_halt st m (List.length p))
       );
 
-    "SUB with only one element">:: (fun _ ->
+    "SUB with only one word">:: (fun _ ->
         let p = [PUSH (Val "3"); SUB] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state {ea with p = []} "" in

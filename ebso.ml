@@ -145,7 +145,7 @@ let () =
                 (i.e. stack then has 2^sas elements)"
       and nobv = flag "no-bitvectors" no_arg
           ~doc:"do not use bit vectors, but integers everywhere \
-                (stack-element-size and stack-address-size have no effect)"
+                (word-size and stack-address-size have no effect)"
       and opt_mode = flag "optimize"
           (optional_with_default UNBOUNDED (Arg_type.create opt_mode_of_string))
           ~doc:"mode optimize NO | UNBOUNDED"

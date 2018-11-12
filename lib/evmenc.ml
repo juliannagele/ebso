@@ -52,8 +52,7 @@ let mk_enc_consts p sis =
   cs = List.map (Program.consts p) ~f:(seconst);
   (* integer encoding of opcodes *)
   opcodes = List.mapi sis ~f:(fun i oc -> (oc, i));
-  (* list of free variables x_0 .. x_(stack_depth -1)
-     for stack elements already on stack *)
+  (* list of free variables x_0 .. x_(stack_depth -1) for words already on stack *)
   (* careful: no check that this does not generate more than max stacksize variables *)
   xs = List.init (stack_depth p) ~f:(fun i -> seconst ("x_" ^ Int.to_string i));
 }
@@ -68,8 +67,8 @@ type state = {
 let mk_state ea idx =
   let xs_sorts = List.map ea.xs ~f:(fun _ -> !wsort) in
   let cs_sorts = List.map ea.cs ~f:(fun _ -> !wsort) in
-  { (* stack(x0 ... x(sd-1), j, n) = nth stack element after j instructions
-       starting from a stack that contained elements x0 ... x(sd-1) *)
+  { (* stack(x0 ... x(sd-1), j, n) = nth word on stack after j instructions
+       starting from a stack that contained words x0 ... x(sd-1) *)
     stack = func_decl ("stack" ^ idx)
         (xs_sorts @ cs_sorts @ [int_sort; !sasort]) !wsort;
     (* sc(j) = index of the next free slot on the stack after j instructions *)
@@ -91,7 +90,7 @@ let init ea st =
   let skd = stack_depth (ea.p) in
   (* set stack counter to skd *)
   (st.stack_ctr @@ [num 0] == sanum skd)
-  (* set inital stack elements *)
+  (* set inital words on stack *)
   && conj (List.mapi ea.xs
              ~f:(fun i x -> st.stack @@ (ea.xs @ ea.cs @ [num 0; sanum i]) == x))
   && (st.exc_halt @@ [num 0] == btm)
@@ -110,7 +109,7 @@ let enc_push ea st j x =
   let sk' n = st.stack @@ (ea.xs @ ea.cs @ [j + one; n]) in
   (* the stack counter before the PUSH *)
   let sc = st.stack_ctr @@ [j] in
-  (* the new top element will be x *)
+  (* the new top word will be x *)
   sk' sc == enc_stackarg ea j x
 
 let enc_pop _ _ _ = top
@@ -120,7 +119,7 @@ let enc_binop ea st j op =
   let sk n = st.stack @@ (ea.xs @ ea.cs @ [j; n])
   and sk' n = st.stack @@ (ea.xs @ ea.cs @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] in
-  (* the new top element is the result of applying op to the previous two *)
+  (* the new top word is the result of applying op to the previous two *)
   (sk' (sc - sanum 2) == op (sk (sc - sanum 1)) (sk (sc - sanum 2)))
 
 let enc_add ea st j = enc_binop ea st j (<+>)
@@ -198,7 +197,7 @@ let enc_not ea st j =
   let sk n = st.stack @@ (ea.xs @ ea.cs @ [j; n])
   and sk' n = st.stack @@ (ea.xs @ ea.cs @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
-  (* the new top element is the bitwise negation of the old top element *)
+  (* the new top word is the bitwise negation of the old top word *)
   (sk' (sc' - sanum 1) == Z3.BitVector.mk_not !ctxt (sk (sc - sanum 1)))
 
 let enc_iszero ea st j =
@@ -206,7 +205,7 @@ let enc_iszero ea st j =
   let sk n = st.stack @@ (ea.xs @ ea.cs @ [j; n])
   and sk' n = st.stack @@ (ea.xs @ ea.cs @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
-  (* if the old top element is 0 then the new top element is 1 and 0 otherwise *)
+  (* if the old top word is 0 then the new top word is 1 and 0 otherwise *)
   (sk' (sc' - sanum 1) == ite (sk (sc - sanum 1) == (senum 0)) (senum 1) (senum 0))
 
 let enc_swap ea st j idx =
@@ -215,11 +214,11 @@ let enc_swap ea st j idx =
   let sk n = st.stack @@ (ea.xs @ ea.cs @ [j; n])
   and sk' n = st.stack @@ (ea.xs @ ea.cs @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
-  (* the new top element is the 1+idx'th from the old stack *)
+  (* the new top word is the 1+idx'th from the old stack *)
   (sk' (sc' - sanum 1) == sk (sc - sc_idx)) &&
-  (* the new 1+idx'th element is the top from the old stack*)
+  (* the new 1+idx'th word is the top from the old stack*)
   (sk' (sc' - sc_idx) == sk (sc - sanum 1)) &&
-  (* the stack elements between top and idx+1 are not touched *)
+  (* the words between top and idx+1 are not touched *)
   conj (List.init (Int.pred idx) ~f:(fun i ->
       let sc_iidx = sanum (Int.(-) idx i) in
       (sk' (sc' - sc_iidx) == sk (sc - sc_iidx))))
@@ -230,9 +229,9 @@ let enc_dup ea st j idx =
   let sk n = st.stack @@ (ea.xs @ ea.cs @ [j; n])
   and sk' n = st.stack @@ (ea.xs @ ea.cs @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
-  (* the new top element is the idx'th from the old stack *)
+  (* the new top word is the idx'th from the old stack *)
   (sk' (sc' - sanum 1) == sk (sc - sc_idx)) &&
-  (* all stack elements down to idx are not touched *)
+  (* all words down to idx are not touched *)
   conj (List.init idx ~f:(fun i ->
       let sc_iidx = sanum (Int.(-) idx i) in
       (sk' (sc - sc_iidx) == sk (sc - sc_iidx))))
@@ -291,7 +290,7 @@ let enc_instruction ea st j is =
   in
   let enc_pres =
     let n = saconst "n" in
-    (* all elements below d stay the same *)
+    (* all words below d stay the same *)
     forall n ((n < sc - sanum d) ==> (sk' n == sk n))
   in
   enc_effect && enc_used_gas && enc_stack_ctr && enc_pres && enc_exc_halt
