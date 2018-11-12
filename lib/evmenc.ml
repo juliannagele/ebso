@@ -112,6 +112,7 @@ let enc_push ea st j x =
   (* the new top word will be x *)
   sk' sc == enc_stackarg ea j x
 
+(* the only effect of POP is to change the stack counter *)
 let enc_pop _ _ _ = top
 
 let enc_binop ea st j op =
