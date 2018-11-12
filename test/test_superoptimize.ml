@@ -305,6 +305,16 @@ let suite =
           [] (dec_super_opt ea m)
       );
 
+    "super optimize NUMBER PUSH 0 ADD" >:: (fun _ ->
+        let p = [NUMBER; PUSH (Val "0"); ADD] in
+        let sis = `All in
+        let ea = mk_enc_consts p sis in
+        let c = enc_super_opt ea in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
+          [NUMBER] (dec_super_opt ea m)
+      );
+
   ]
 
 let () =
