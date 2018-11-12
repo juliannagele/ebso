@@ -272,23 +272,31 @@ let suite =
     (* unints *)
 
     "uninterpreted instrucions of NUMBER" >:: (fun _ ->
-        assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
-          ["NUMBER"] (Program.unints [NUMBER])
+        assert_equal
+          ~cmp:[%eq: (Instruction.t * string) list]
+          ~printer:[%show: (Instruction.t * string) list]
+          [NUMBER, "NUMBER"] (Program.unints [NUMBER])
       );
 
     "uninterpreted instrucions of NUMBER NUMBER" >:: (fun _ ->
-        assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
-          ["NUMBER"] (Program.unints [NUMBER; NUMBER])
+        assert_equal
+          ~cmp:[%eq: (Instruction.t * string) list]
+          ~printer:[%show: (Instruction.t * string) list]
+          [NUMBER, "NUMBER"] (Program.unints [NUMBER; NUMBER])
       );
 
     "uninterpreted instrucions of SHA3" >:: (fun _ ->
-        assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
-          ["SHA3-0"] (Program.unints [SHA3])
+        assert_equal
+          ~cmp:[%eq: (Instruction.t * string) list]
+          ~printer:[%show: (Instruction.t * string) list]
+          [SHA3, "SHA3-0"] (Program.unints [SHA3])
       );
 
     "uninterpreted instrucions of SHA3 NUMBER SHA3 NUMBER" >:: (fun _ ->
-        assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
-          ["SHA3-0"; "NUMBER"; "SHA3-2"]
+        assert_equal
+          ~cmp:[%eq: (Instruction.t * string) list]
+          ~printer:[%show: (Instruction.t * string) list]
+          [SHA3, "SHA3-0"; NUMBER, "NUMBER"; SHA3, "SHA3-2"]
           (Program.unints [SHA3; NUMBER; SHA3; NUMBER])
       );
 
