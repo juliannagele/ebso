@@ -51,6 +51,53 @@ let compare i i2 = match (i, i2) with
   | (PUSH _, PUSH _) -> 0
   | _ -> [%compare: t] i i2
 
+(* list of instructions that remain uninterpreted *)
+let uninterpreted = [
+    EXP
+  ; SIGNEXTEND
+  ; BYTE
+  ; SHA3
+  ; ADDRESS
+  ; BALANCE
+  ; ORIGIN
+  ; CALLER
+  ; CALLVALUE
+  ; CALLDATALOAD
+  ; CALLDATASIZE
+  ; CODESIZE
+  ; GASPRICE
+  ; EXTCODESIZE
+  ; RETURNDATASIZE
+  ; BLOCKHASH
+  ; COINBASE
+  ; TIMESTAMP
+  ; NUMBER
+  ; DIFFICULTY
+  ; GASLIMIT
+  ; MLOAD
+  ; SLOAD
+  ; PC
+  ; MSIZE
+  ; GAS
+  ]
+
+(* list of instructions that have an effect on the outside world that is
+   not encodable, i.e., effects on memory, storage, and logs *)
+let outsideeffect = [
+    CALLDATACOPY
+  ; CODECOPY
+  ; EXTCODECOPY
+  ; RETURNDATACOPY
+  ; MSTORE
+  ; MSTORE8
+  ; SSTORE
+  ; LOG0
+  ; LOG1
+  ; LOG2
+  ; LOG3
+  ; LOG4
+]
+
 (* list of instructions that are encodable, i.e., can be super optimized *)
 let encodable = [
     ADD
@@ -87,6 +134,8 @@ let delta_alpha = function
   | SMOD -> (2, 1)
   | ADDMOD -> (3, 1)
   | MULMOD -> (3, 1)
+  | EXP -> (2, 1)
+  | SIGNEXTEND -> (2, 1)
   | LT -> (2, 1)
   | GT -> (2, 1)
   | SLT -> (2, 1)
@@ -97,10 +146,53 @@ let delta_alpha = function
   | OR -> (2, 1)
   | XOR -> (2, 1)
   | NOT -> (1, 1)
-  | PUSH _ -> (0, 1)
+  | BYTE -> (2, 1)
+  | SHA3 -> (2, 1)
+  | ADDRESS -> (0, 1)
+  | BALANCE -> (1, 1)
+  | ORIGIN -> (0, 1)
+  | CALLER -> (0, 1)
+  | CALLVALUE -> (0, 1)
+  | CALLDATALOAD -> (1, 1)
+  | CALLDATASIZE -> (0, 1)
+  | CODESIZE -> (0, 1)
+  | GASPRICE -> (0, 1)
+  | EXTCODESIZE -> (1, 1)
+  | RETURNDATASIZE -> (0, 1)
+  | BLOCKHASH -> (1, 1)
+  | COINBASE -> (0, 1)
+  | TIMESTAMP -> (0, 1)
+  | NUMBER -> (0, 1)
+  | DIFFICULTY -> (0, 1)
+  | GASLIMIT -> (0, 1)
   | POP -> (1, 0)
-  | SWAP i -> (idx_to_enum i + 1, idx_to_enum i + 1)
+  | MLOAD -> (1, 1)
+  | MSTORE -> (2, 0)
+  | MSTORE8 -> (2, 0)
+  | SLOAD -> (1, 1)
+  | SSTORE -> (2, 0)
+  | JUMP -> (1, 0)
+  | JUMPI -> (2, 0)
+  | PC -> (0, 1)
+  | MSIZE -> (0, 1)
+  | GAS -> (0, 1)
+  | JUMPDEST -> (0, 0)
+  | PUSH _ -> (0, 1)
   | DUP i -> (idx_to_enum i, idx_to_enum i + 1)
+  | SWAP i -> (idx_to_enum i + 1, idx_to_enum i + 1)
+  | LOG0 -> (2, 0)
+  | LOG1 -> (3, 0)
+  | LOG2 -> (4, 0)
+  | LOG3 -> (5, 0)
+  | LOG4 -> (6, 0)
+  | CREATE -> (3, 1)
+  | CALL -> (7, 1)
+  | CALLCODE -> (7, 1)
+  | RETURN -> (2, 0)
+  | DELEGATECALL -> (6, 1)
+  | STATICCALL -> (6, 1)
+  | REVERT -> (2, 0)
+  | SELFDESTRUCT -> (1, 0)
   | _ -> failwith "not implemented"
 
 let gas_cost = function
@@ -113,6 +205,14 @@ let gas_cost = function
   | SMOD -> 5
   | ADDMOD -> 8
   | MULMOD -> 8
+  (* gas price of EXP depends on word on stack, 10 is lower bound,
+     since EXP is uninterpreted only value relative to DUP matters *)
+  | EXP -> 10
+  | SIGNEXTEND -> 5
+  | BYTE -> 3
+  (* gas price of SHA3 depends on word on stack, 10 is lower bound,
+     since EXP is uninterpreted only value relative to DUP matters *)
+  | SHA3 -> 30
   | LT -> 3
   | GT -> 3
   | SLT -> 3
@@ -123,8 +223,30 @@ let gas_cost = function
   | OR -> 3
   | XOR -> 3
   | NOT -> 3
-  | PUSH _ -> 3
+  | ADDRESS -> 2
+  | BALANCE -> 400
+  | ORIGIN -> 2
+  | CALLER -> 2
+  | CALLVALUE -> 2
+  | CALLDATALOAD -> 3
+  | CALLDATASIZE -> 2
+  | CODESIZE -> 2
+  | GASPRICE -> 2
+  | EXTCODESIZE -> 700
+  | RETURNDATASIZE -> 2
+  | BLOCKHASH -> 20
+  | COINBASE -> 2
+  | TIMESTAMP -> 2
+  | NUMBER -> 2
+  | DIFFICULTY -> 2
+  | GASLIMIT -> 2
   | POP -> 2
+  | MLOAD -> 2
+  | SLOAD -> 200
+  | PC -> 2
+  | MSIZE -> 2
+  | GAS -> 2
+  | PUSH _ -> 3
   | SWAP _ -> 3
   | DUP _ -> 3
   | _ -> failwith "not implemented"
