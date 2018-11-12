@@ -27,6 +27,7 @@ type enc_consts = {
   fis : Z3.FuncDecl.func_decl;
   a : Z3.FuncDecl.func_decl;
   cs : Z3.Expr.expr list;
+  uis : Z3.Expr.expr list;
   opcodes : (Instruction.t * int) list;
   xs : Z3.Expr.expr list;
 }
@@ -50,6 +51,8 @@ let mk_enc_consts p sis =
   a = func_decl "a" [int_sort] !wsort;
   (* arguments of PUSH which are too large to fit in word size *)
   cs = List.map (Program.consts p) ~f:(seconst);
+  (* variables for uninterpreted instructions *)
+  uis = List.map (Program.unints p) ~f:(seconst);
   (* integer encoding of opcodes *)
   opcodes = List.mapi sis ~f:(fun i oc -> (oc, i));
   (* list of free variables x_0 .. x_(stack_depth -1) for words already on stack *)
