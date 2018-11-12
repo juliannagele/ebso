@@ -295,6 +295,16 @@ let suite =
           [PUSH (Val "3"); SUB] (dec_super_opt ea m)
       );
 
+    "super optimize NUMBER POP" >:: (fun _ ->
+        let p = [NUMBER; POP] in
+        let sis = `All in
+        let ea = mk_enc_consts p sis in
+        let c = enc_super_opt ea in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
+          [] (dec_super_opt ea m)
+      );
+
   ]
 
 let () =

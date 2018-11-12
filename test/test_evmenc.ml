@@ -1070,6 +1070,33 @@ let effect =
           (eval_stack st m (List.length p) 0)
       );
 
+    (* number *)
+
+    "top of the stack is some word after NUMBER" >:: (fun _ ->
+        let p = [NUMBER] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 3)
+          (eval_stack ~xs:[senum 3] st m (List.length p) 0)
+      );
+
+    "stack after NUMBER NUMBER" >:: (fun _ ->
+        let p = [NUMBER; NUMBER] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = enc_program ea st in
+        let m = solve_model_exn [c] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t list]
+          ~printer:(List.to_string ~f:(Z3.Expr.to_string))
+          [senum 3; senum 3]
+          [eval_stack ~xs:[senum 3] st m (List.length p) 0;
+           eval_stack ~xs:[senum 3] st m (List.length p) 1]
+      );
+
     (* SWAP *)
 
     "swap I two words on stack" >::(fun _ ->
