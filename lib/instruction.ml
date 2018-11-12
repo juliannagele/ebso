@@ -210,8 +210,8 @@ let gas_cost = function
   | EXP -> 10
   | SIGNEXTEND -> 5
   | BYTE -> 3
-  (* gas price of SHA3 depends on word on stack, 10 is lower bound,
-     since EXP is uninterpreted only value relative to DUP matters *)
+  (* gas price of SHA3 depends on word on stack, 30 is lower bound,
+     since SHA3 is uninterpreted only value relative to DUP matters *)
   | SHA3 -> 30
   | LT -> 3
   | GT -> 3
