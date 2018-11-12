@@ -47,6 +47,16 @@ let const_to_val p =
 let consts p = List.stable_dedup
     (List.filter_map p ~f:(function | PUSH (Const c) -> Some c | _ -> None))
 
+let unints p =
+  List.stable_dedup @@
+  List.filter_mapi p ~f:(fun j i ->
+      if List.mem Instruction.uninterpreted i ~equal:Instruction.equal then
+        let d =
+          if Tuple.T2.get1 (delta_alpha i) > 0 then "-" ^ Int.to_string j else ""
+        in
+        Some (Instruction.show i ^ d)
+      else None)
+
 (* basic blocks -- we classify basic blocks into 3 kinds:
 - NotEncodable for instructions that are not yet supported
 - Terminal if the last instruction of the block interrupts control flow,
