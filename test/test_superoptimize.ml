@@ -295,6 +295,8 @@ let suite =
           [PUSH (Val "3"); SUB] (dec_super_opt ea m)
       );
 
+    (* superoptimize uninterpreted instructions *)
+
     "super optimize NUMBER POP" >:: (fun _ ->
         let p = [NUMBER; POP] in
         let cis = `All in
