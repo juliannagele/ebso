@@ -195,6 +195,13 @@ let delta_alpha = function
   | SELFDESTRUCT -> (1, 0)
   | _ -> failwith "not implemented"
 
+(* name of variable representing an uninterpreted instruction *)
+let unint_name j i =
+  let d =
+    if Tuple.T2.get1 (delta_alpha i) > 0 then "-" ^ Int.to_string j else ""
+  in
+  show i ^ d
+
 let gas_cost = function
   | ADD -> 3
   | MUL -> 5
