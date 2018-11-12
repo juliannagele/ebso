@@ -34,8 +34,9 @@ type enc_consts = {
 
 let mk_enc_consts p sis =
   let const_pushs = List.map (Program.consts p) ~f:(fun c -> PUSH (Const c)) in
+  let (unints, unint_names) = List.unzip (Program.unints p) in
   let sis = match sis with
-    | `All -> Instruction.encodable @ const_pushs
+    | `All -> Instruction.encodable @ const_pushs @ unints
     | `Progr -> sis_of_progr p
     | `User sis -> List.stable_dedup sis
   in
@@ -52,7 +53,7 @@ let mk_enc_consts p sis =
   (* arguments of PUSH which are too large to fit in word size *)
   cs = List.map (Program.consts p) ~f:(seconst);
   (* variables for uninterpreted instructions *)
-  uis = List.map (Program.unints p) ~f:(seconst);
+  uis = List.map unint_names ~f:(seconst);
   (* integer encoding of opcodes *)
   opcodes = List.mapi sis ~f:(fun i oc -> (oc, i));
   (* list of free variables x_0 .. x_(stack_depth -1) for words already on stack *)
