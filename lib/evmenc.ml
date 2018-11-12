@@ -22,7 +22,7 @@ let saconst s = Z3.Expr.mk_const_s !ctxt s !sasort
 
 type enc_consts = {
   p : Program.t;
-  sis : Instruction.t list;
+  cis : Instruction.t list;
   kt : Z3.Expr.expr;
   fis : Z3.FuncDecl.func_decl;
   a : Z3.FuncDecl.func_decl;
@@ -32,18 +32,18 @@ type enc_consts = {
   xs : Z3.Expr.expr list;
 }
 
-let mk_enc_consts p sis =
+let mk_enc_consts p cis =
   let const_pushs = List.map (Program.consts p) ~f:(fun c -> PUSH (Const c)) in
   let (unints, unint_names) = List.unzip (Program.unints p) in
-  let sis = match sis with
+  let cis = match cis with
     | `All -> Instruction.encodable @ const_pushs @ unints
-    | `Progr -> sis_of_progr p
-    | `User sis -> List.stable_dedup sis
+    | `Progr -> cis_of_progr p
+    | `User cis -> List.stable_dedup cis
   in
 { (* source program *)
   p = p;
-  (* set of potential instructions to choose from in target program *)
-  sis = sis;
+  (* candidate instruction set: instructions to choose from in target program *)
+  cis = cis;
   (* number of instructions in target program *)
   kt = intconst "k";
   (* target program *)
@@ -55,7 +55,7 @@ let mk_enc_consts p sis =
   (* variables for uninterpreted instructions *)
   uis = List.map unint_names ~f:(seconst);
   (* integer encoding of opcodes *)
-  opcodes = List.mapi sis ~f:(fun i oc -> (oc, i));
+  opcodes = List.mapi cis ~f:(fun i oc -> (oc, i));
   (* list of free variables x_0 .. x_(stack_depth -1) for words already on stack *)
   (* careful: no check that this does not generate more than max stacksize variables *)
   xs = List.init (stack_depth p) ~f:(fun i -> seconst ("x_" ^ Int.to_string i));
@@ -307,16 +307,16 @@ let enc_instruction ea st j is =
 let enc_search_space ea st =
   let open Z3Ops in
   let j = intconst "j" in
-  let enc_sis =
-    List.map ea.sis ~f:(fun is ->
+  let enc_cis =
+    List.map ea.cis ~f:(fun is ->
         (ea.fis @@ [j] == num (enc_opcode ea is)) ==> (enc_instruction ea st j is))
   in
   (* optimization potential:
-     choose opcodes = 1 .. |sis| and demand fis (j) < |sis| *)
-  let in_sis =
-    List.map ea.sis ~f:(fun is -> ea.fis @@ [j] == num (enc_opcode ea is))
+     choose opcodes = 1 .. |cis| and demand fis (j) < |cis| *)
+  let in_cis =
+    List.map ea.cis ~f:(fun is -> ea.fis @@ [j] == num (enc_opcode ea is))
   in
-  forall j (((j < ea.kt) && (j >= (num 0))) ==> conj enc_sis && disj in_sis) &&
+  forall j (((j < ea.kt) && (j >= (num 0))) ==> conj enc_cis && disj in_cis) &&
   ea.kt >= (num 0)
 
 let enc_equivalence_at ea sts stt js jt =

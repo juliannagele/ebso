@@ -12,8 +12,8 @@ let suite =
     "correct candidate program" >::(fun _ ->
         let p = [ADD;] in
         let pc = [ADD;] in
-        let sis = `User [] in
-        let ea = mk_enc_consts p sis in
+        let cis = `User [] in
+        let ea = mk_enc_consts p cis in
         let c = enc_classic_so_test ea pc in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -23,8 +23,8 @@ let suite =
     "correct candidate program with one PUSH" >::(fun _ ->
         let p = [PUSH (Val "1");] in
         let pc = [PUSH Tmpl] in
-        let sis = `User [] in
-        let ea = mk_enc_consts p sis in
+        let cis = `User [] in
+        let ea = mk_enc_consts p cis in
         let c = enc_classic_so_test ea pc in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -34,8 +34,8 @@ let suite =
     "incorrect candidate program with one PUSH" >::(fun _ ->
         let p = [PUSH (Val "1");] in
         let pc = [ADD] in
-        let sis = `User [] in
-        let ea = mk_enc_consts p sis in
+        let cis = `User [] in
+        let ea = mk_enc_consts p cis in
         let c = enc_classic_so_test ea pc in
         let m = solve_model [c] in
         assert_bool "not unsat" (Option.is_none m)
@@ -44,8 +44,8 @@ let suite =
     "correct candidate program with two PUSHs" >::(fun _ ->
         let p = [PUSH (Val "2"); PUSH (Val "1")] in
         let pc = [PUSH Tmpl; PUSH Tmpl] in
-        let sis = `User [] in
-        let ea = mk_enc_consts p sis in
+        let cis = `User [] in
+        let ea = mk_enc_consts p cis in
         let c = enc_classic_so_test ea pc in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -55,8 +55,8 @@ let suite =
     "incorrect candidate program with two PUSHs" >::(fun _ ->
         let p = [PUSH (Val "2"); PUSH (Val "1")] in
         let pc = [PUSH Tmpl] in
-        let sis = `User [] in
-        let ea = mk_enc_consts p sis in
+        let cis = `User [] in
+        let ea = mk_enc_consts p cis in
         let c = enc_classic_so_test ea pc in
         let m = solve_model [c] in
         assert_bool "not unsat" (Option.is_none m)
@@ -65,8 +65,8 @@ let suite =
     "correct candidate program with two PUSHs and optimization" >::(fun _ ->
         let p = [PUSH (Val "2"); PUSH (Val "1"); ADD] in
         let pc = [PUSH Tmpl;] in
-        let sis = `User [] in
-        let ea = mk_enc_consts p sis in
+        let cis = `User [] in
+        let ea = mk_enc_consts p cis in
         let c = enc_classic_so_test ea pc in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -76,8 +76,8 @@ let suite =
     "correct candidate program with three PUSHs and optimization" >::(fun _ ->
         let p = [PUSH (Val "2"); PUSH (Val "1"); PUSH (Val "1"); ADD] in
         let pc = [PUSH Tmpl; DUP I] in
-        let sis = `User [] in
-        let ea = mk_enc_consts p sis in
+        let cis = `User [] in
+        let ea = mk_enc_consts p cis in
         let c = enc_classic_so_test ea pc in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]

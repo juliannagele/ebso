@@ -26,7 +26,7 @@ let show p = pp Format.str_formatter p |> Format.flush_str_formatter
 
 let show_hex p = String.concat ~sep:"" (List.map p ~f:Instruction.show_hex)
 
-let sis_of_progr p =
+let cis_of_progr p =
   List.map p ~f:(function | PUSH _ -> PUSH Tmpl | i -> i) |> List.stable_dedup
 
 let stack_depth p =

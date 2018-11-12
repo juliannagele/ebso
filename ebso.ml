@@ -78,9 +78,9 @@ let tvalidate sp tp sz =
   in
   set_wsz oldwsz; tv
 
-let super_optimize_encbl p sis tval hist_bbs =
+let super_optimize_encbl p cis tval hist_bbs =
   let rec sopt p hist =
-    let ea = mk_enc_consts p sis in
+    let ea = mk_enc_consts p cis in
     let c = enc_super_opt ea in
     log (`Constraint c);
     match solve_model [c] with
@@ -100,9 +100,9 @@ let super_optimize_encbl p sis tval hist_bbs =
   in
   sopt p []
 
-let super_optimize_bb sis tval hist_bbs = function
-  | Next p -> super_optimize_encbl p sis tval hist_bbs
-  | Terminal (p, _) -> super_optimize_encbl p sis tval hist_bbs
+let super_optimize_bb cis tval hist_bbs = function
+  | Next p -> super_optimize_encbl p cis tval hist_bbs
+  | Terminal (p, _) -> super_optimize_encbl p cis tval hist_bbs
   | NotEncodable _ -> hist_bbs
 
 let stats_bb bb =

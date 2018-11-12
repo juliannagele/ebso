@@ -32,12 +32,12 @@ let suite =
           3 (stack_depth p)
       );
 
-    (* sis_of_progr / Instruction.all *)
+    (* cis_of_progr / Instruction.all *)
 
     "compute instruction set of given program" >::(fun _ ->
         let p = [SUB; PUSH (Val "1"); PUSH (Val "1"); ADD; ADD; PUSH (Val "2"); POP] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [SUB; PUSH Tmpl; ADD; POP] (sis_of_progr p)
+          [SUB; PUSH Tmpl; ADD; POP] (cis_of_progr p)
       );
 
     "list of all instructions" >::(fun _ ->
