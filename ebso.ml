@@ -98,7 +98,11 @@ let super_optimize_encbl p cis tval hist_bbs =
       (* if translation validation failed discard program and increase wordsize by 1 *)
       begin
         match tv with
-        | Some false -> (set_wsz (!wsz + 1); sopt p hist)
+        | Some false ->
+          begin
+            set_wsz (!wsz + 1);
+            sopt (Program.val_to_const !wsz (Program.const_to_val p)) hist
+          end
         | _ -> sopt p' hist
       end
     | None ->
