@@ -299,7 +299,7 @@ let suite =
 
     "super optimize NUMBER POP" >:: (fun _ ->
         let p = [NUMBER; POP] in
-        let cis = `All in
+        let cis = `Progr in
         let ea = mk_enc_consts p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
@@ -309,7 +309,7 @@ let suite =
 
     "super optimize NUMBER PUSH 0 ADD" >:: (fun _ ->
         let p = [NUMBER; PUSH (Val "0"); ADD] in
-        let cis = `All in
+        let cis = `Progr in
         let ea = mk_enc_consts p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
@@ -319,7 +319,7 @@ let suite =
 
     "super optimize NUMBER NUMBER NUMBER POP" >:: (fun _ ->
         let p = [NUMBER; NUMBER; NUMBER; POP] in
-        let cis = `User [POP] in
+        let cis = `Progr in
         let ea = mk_enc_consts p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
@@ -329,7 +329,7 @@ let suite =
 
     "super optimize NUMBER DUP1" >:: (fun _ ->
         let p = [NUMBER; DUP I] in
-        let cis = `All in
+        let cis = `Progr in
         let ea = mk_enc_consts p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
