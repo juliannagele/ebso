@@ -51,79 +51,6 @@ let compare i i2 = match (i, i2) with
   | (PUSH _, PUSH _) -> 0
   | _ -> [%compare: t] i i2
 
-(* list of instructions that remain uninterpreted *)
-let uninterpreted = [
-    EXP
-  ; SIGNEXTEND
-  ; BYTE
-  ; SHA3
-  ; ADDRESS
-  ; BALANCE
-  ; ORIGIN
-  ; CALLER
-  ; CALLVALUE
-  ; CALLDATALOAD
-  ; CALLDATASIZE
-  ; CODESIZE
-  ; GASPRICE
-  ; EXTCODESIZE
-  ; RETURNDATASIZE
-  ; BLOCKHASH
-  ; COINBASE
-  ; TIMESTAMP
-  ; NUMBER
-  ; DIFFICULTY
-  ; GASLIMIT
-  ; MLOAD
-  ; SLOAD
-  ; PC
-  ; MSIZE
-  ; GAS
-  ]
-
-(* list of instructions that have an effect on the outside world that is
-   not encodable, i.e., effects on memory, storage, and logs *)
-let outsideeffect = [
-    CALLDATACOPY
-  ; CODECOPY
-  ; EXTCODECOPY
-  ; RETURNDATACOPY
-  ; MSTORE
-  ; MSTORE8
-  ; SSTORE
-  ; LOG0
-  ; LOG1
-  ; LOG2
-  ; LOG3
-  ; LOG4
-]
-
-(* list of instructions that are encodable, i.e., can be super optimized *)
-let encodable = [
-    ADD
-  ; MUL
-  ; SUB
-  ; DIV
-  ; SDIV
-  ; MOD
-  ; SMOD
-  ; ADDMOD
-  ; MULMOD
-  ; LT
-  ; GT
-  ; SLT
-  ; SGT
-  ; EQ
-  ; ISZERO
-  ; AND
-  ; OR
-  ; XOR
-  ; NOT
-  ; POP
-] @ List.map Stackarg.all ~f:(fun a -> PUSH a)
-  @ List.map all_of_idx ~f:(fun i -> SWAP i)
-  @ List.map all_of_idx ~f:(fun i -> DUP i)
-
 let delta_alpha = function
   | ADD -> (2, 1)
   | MUL -> (2, 1)
@@ -203,9 +130,82 @@ let unint_names j i =
   in
   List.init (d + 1) ~f:(fun io -> show i ^ "-" ^ j ^  Int.to_string io)
 
+(* list of instructions that remain uninterpreted *)
+let uninterpreted = [
+    EXP
+  ; SIGNEXTEND
+  ; BYTE
+  ; SHA3
+  ; ADDRESS
+  ; BALANCE
+  ; ORIGIN
+  ; CALLER
+  ; CALLVALUE
+  ; CALLDATALOAD
+  ; CALLDATASIZE
+  ; CODESIZE
+  ; GASPRICE
+  ; EXTCODESIZE
+  ; RETURNDATASIZE
+  ; BLOCKHASH
+  ; COINBASE
+  ; TIMESTAMP
+  ; NUMBER
+  ; DIFFICULTY
+  ; GASLIMIT
+  ; MLOAD
+  ; SLOAD
+  ; PC
+  ; MSIZE
+  ; GAS
+  ]
+
 (* uninterpreted instructions that do not consume words from the stack *)
 let constant_uninterpreted =
   List.filter uninterpreted ~f:(fun i -> Tuple.T2.get1 (delta_alpha i) = 0)
+
+(* list of instructions that have an effect on the outside world that is
+   not encodable, i.e., effects on memory, storage, and logs *)
+let outsideeffect = [
+    CALLDATACOPY
+  ; CODECOPY
+  ; EXTCODECOPY
+  ; RETURNDATACOPY
+  ; MSTORE
+  ; MSTORE8
+  ; SSTORE
+  ; LOG0
+  ; LOG1
+  ; LOG2
+  ; LOG3
+  ; LOG4
+  ]
+
+(* list of instructions that are encodable, i.e., can be super optimized *)
+let encodable = [
+    ADD
+  ; MUL
+  ; SUB
+  ; DIV
+  ; SDIV
+  ; MOD
+  ; SMOD
+  ; ADDMOD
+  ; MULMOD
+  ; LT
+  ; GT
+  ; SLT
+  ; SGT
+  ; EQ
+  ; ISZERO
+  ; AND
+  ; OR
+  ; XOR
+  ; NOT
+  ; POP
+] @ List.map Stackarg.all ~f:(fun a -> PUSH a)
+  @ List.map all_of_idx ~f:(fun i -> SWAP i)
+  @ List.map all_of_idx ~f:(fun i -> DUP i)
 
 let gas_cost = function
   | ADD -> 3
