@@ -370,7 +370,7 @@ let enc_trans_val ea tp =
   let stt = mk_state ea "_t" in
   let kt = num (List.length tp) and ks = num (List.length ea.p) in
   (* we're asking for inputs that distinguish the programs *)
-  existss ea.xs
+  existss (ea.xs @ ea.uis)
     (* encode source and target program *)
     ((List.foldi tp ~init:(enc_program ea sts)
         ~f:(fun j enc oc -> enc <&> enc_instruction ea stt (num j) oc)) &&
