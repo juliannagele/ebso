@@ -15,13 +15,14 @@ let test_stack_pres oc =
   let p = ip @ [oc] in
   let ea = mk_enc_consts p (`User []) in
   let st = mk_state ea "" in
-  let c = enc_program ea st in
+  let c = foralls ea.uis (enc_program ea st) in
   let m = solve_model_exn [c] in
   (* check all words below delta *)
   assert_equal ~cmp:[%eq: Z3.Expr.t list]
     ~printer:(List.to_string ~f:Z3.Expr.to_string)
     [(senum 0); (senum 1)]
-    [(eval_stack st m (List.length p) 0); (eval_stack st m (List.length p) 1)]
+    [(eval_stack ~xs:(List.map ea.uis ~f:(fun _ -> senum 1)) st m (List.length p) 0);
+     (eval_stack ~xs:(List.map ea.uis ~f:(fun _ -> senum 1)) st m (List.length p) 1)]
 
 let test_stack_ctr p =
   let d = stack_depth p in
