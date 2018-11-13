@@ -206,6 +206,7 @@ let encodable = [
 ] @ List.map Stackarg.all ~f:(fun a -> PUSH a)
   @ List.map all_of_idx ~f:(fun i -> SWAP i)
   @ List.map all_of_idx ~f:(fun i -> DUP i)
+  @ constant_uninterpreted
 
 let gas_cost = function
   | ADD -> 3
