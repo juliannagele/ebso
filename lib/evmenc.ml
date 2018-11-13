@@ -53,7 +53,7 @@ let mk_enc_consts p cis =
   (* arguments of PUSH which are too large to fit in word size *)
   cs = List.map (Program.consts p) ~f:(seconst);
   (* variables for uninterpreted instructions *)
-  uis = List.map unint_names ~f:(seconst);
+  uis = List.map (List.concat unint_names) ~f:(seconst);
   (* integer encoding of opcodes *)
   opcodes = List.mapi cis ~f:(fun i oc -> (oc, i));
   (* list of free variables x_0 .. x_(stack_depth -1) for words already on stack *)

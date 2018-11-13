@@ -51,7 +51,7 @@ let unints p =
   List.stable_dedup @@
   List.filter_mapi p ~f:(fun j i ->
       if List.mem Instruction.uninterpreted i ~equal:Instruction.equal then
-        Some (i, Instruction.unint_name j i)
+        Some (i, Instruction.unint_names j i)
       else None)
 
 (* basic blocks -- we classify basic blocks into 3 kinds:
