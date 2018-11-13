@@ -59,6 +59,15 @@ let suite =
         assert_bool "no model found" (Option.is_some m)
       );
 
+    "validation with uninterpreted instruction" >::(fun _ ->
+        let sp = [PC; PUSH (Val "0"); ADD;] in
+        let tp = [PC] in
+        let ea = mk_enc_consts sp `All in
+        let c = enc_trans_val ea tp in
+        let m = solve_model [c] in
+        assert_bool "not unsat" (Option.is_none m)
+      );
+
   ]
 
 let () =
