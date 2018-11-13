@@ -63,7 +63,7 @@ let output_step hist hist_bbs =
 let add_step step = function
   | h when !outputcfg.pinter -> step :: h
   | s :: ss ->
-    {step with input = s.input; tval = Option.merge s.tval step.tval ~f:(&&)} :: ss
+    {step with input = s.input} :: ss
   | [] -> [step]
 
 let tvalidate sp tp sz =
@@ -91,7 +91,12 @@ let super_optimize_encbl p cis tval hist_bbs =
       let stp = {input = p; opt = p'; optimal = false; tval = tv} in
       let hist = add_step stp hist in
       output_step hist hist_bbs;
-      sopt p' hist
+      (* if translation validation failed discard program and increase wordsize by 1 *)
+      begin
+        match tv with
+        | Some false -> (set_wsz (!wsz + 1); sopt p hist)
+        | _ -> sopt p' hist
+      end
     | None ->
       let stp = {input = p; opt = p; optimal = true; tval = None} in
       let hist = add_step stp hist in
