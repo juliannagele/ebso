@@ -242,7 +242,9 @@ let enc_dup ea st j idx =
       let sc_iidx = sanum (Int.(-) idx i) in
       (sk' (sc - sc_iidx) == sk (sc - sc_iidx))))
 
-let enc_number ea st j = enc_push ea st j (Const "NUMBER")
+let enc_const_uninterpreted ea st j i =
+  let name = List.hd_exn @@ Instruction.unint_names 0 i in
+  enc_push ea st j (Const name)
 
 (* effect of instruction on state st after j steps *)
 let enc_instruction ea st j is =
@@ -271,7 +273,8 @@ let enc_instruction ea st j is =
     | NOT -> enc_not ea st j
     | SWAP idx -> enc_swap ea st j (idx_to_enum idx)
     | DUP idx -> enc_dup ea st j (idx_to_enum idx)
-    | NUMBER -> enc_number ea st j
+    | _ when List.mem constant_uninterpreted is ~equal:Instruction.equal ->
+      enc_const_uninterpreted ea st j is
     | _ -> failwith "not implemented"
   in
   let (d, a) = delta_alpha is in let diff = (a - d) in
