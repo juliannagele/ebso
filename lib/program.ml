@@ -91,7 +91,7 @@ let split_into_bbs ?(split_non_encodable=true) p =
   let is_encodable i =
     match i with
     | PUSH _ -> true
-    | _ -> List.mem encodable i ~equal:Instruction.equal
+    | _ -> List.mem (encodable @ constant_uninterpreted) i ~equal:Instruction.equal
   in
   let rec split bb bbs = function
     | [] -> (if not (List.is_empty bb) then Next bb :: bbs else bbs) |> List.rev
