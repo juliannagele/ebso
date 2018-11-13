@@ -1,6 +1,6 @@
 (executables
  (names test_evmenc test_superoptimize test_parser test_program
-        test_transval test_classic_superoptimize)
+        test_transval test_classic_superoptimize test_nonconstunint)
  (libraries core ebso oUnit z3)
  (preprocess (pps ppx_deriving.std))
 )

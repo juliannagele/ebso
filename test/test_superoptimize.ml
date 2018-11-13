@@ -295,7 +295,7 @@ let suite =
           [PUSH (Val "3"); SUB] (dec_super_opt ea m)
       );
 
-    (* superoptimize uninterpreted instructions *)
+    (* superoptimize constant uninterpreted instructions *)
 
     "super optimize NUMBER POP" >:: (fun _ ->
         let p = [NUMBER; POP] in
@@ -335,66 +335,6 @@ let suite =
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
           [NUMBER; NUMBER] (dec_super_opt ea m)
-      );
-
-    "super optimize BLOCKHASH POP" >:: (fun _ ->
-        let p = [BLOCKHASH; POP] in
-        let cis = `Progr in
-        let ea = mk_enc_consts p cis in
-        let c = enc_super_opt ea in
-        let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [POP] (dec_super_opt ea m)
-      );
-
-    "super optimize BLOCKHASH PUSH 0 ADD" >:: (fun _ ->
-        let p = [BLOCKHASH; PUSH (Val "0"); ADD] in
-        let cis = `User [] in
-        let ea = mk_enc_consts p cis in
-        let c = enc_super_opt ea in
-        let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [BLOCKHASH] (dec_super_opt ea m)
-      );
-
-    "super optimize PUSH 0 PUSH 2 ADD BLOCKHASH" >:: (fun _ ->
-        let p = [PUSH (Val "0"); PUSH (Val "2"); ADD; BLOCKHASH] in
-        let cis = `Progr in
-        let ea = mk_enc_consts p cis in
-        let c = enc_super_opt ea in
-        let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [PUSH (Val "2"); BLOCKHASH] (dec_super_opt ea m)
-      );
-
-    "super optimize BLOCKHASH BLOCKHASH" >: test_case ~length:Long (fun _ ->
-        let p = [BLOCKHASH; BLOCKHASH; PUSH (Val "0"); POP] in
-        let cis = `Progr in
-        let ea = mk_enc_consts p cis in
-        let c = enc_super_opt ea in
-        let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [BLOCKHASH; BLOCKHASH] (dec_super_opt ea m)
-      );
-
-    "super optimize NOT BLOCKHASH" >: test_case ~length:Long (fun _ ->
-        let p = [NOT; BLOCKHASH; PUSH (Val "0"); POP] in
-        let cis = `Progr in
-        let ea = mk_enc_consts p cis in
-        let c = enc_super_opt ea in
-        let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [NOT; BLOCKHASH] (dec_super_opt ea m)
-      );
-
-    "super optimize PUSH BLOCKHASH PUSH BLOCKHASH" >: test_case ~length:Long (fun _ ->
-        let p = [PUSH (Val "0"); BLOCKHASH; PUSH (Val "0"); BLOCKHASH] in
-        let cis = `All in
-        let ea = mk_enc_consts p cis in
-        let c = enc_super_opt ea in
-        let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [PUSH (Val "0"); BLOCKHASH; DUP I] (dec_super_opt ea m)
       );
 
   ]
