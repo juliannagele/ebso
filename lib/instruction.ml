@@ -203,6 +203,10 @@ let unint_names j i =
   in
   List.init (d + 1) ~f:(fun io -> show i ^ "-" ^ j ^  Int.to_string io)
 
+(* uninterpreted instructions that do not consume words from the stack *)
+let constant_uninterpreted =
+  List.filter uninterpreted ~f:(fun i -> Tuple.T2.get1 (delta_alpha i) = 0)
+
 let gas_cost = function
   | ADD -> 3
   | MUL -> 5
