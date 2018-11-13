@@ -63,7 +63,11 @@ let output_step hist hist_bbs =
 let add_step step = function
   | h when !outputcfg.pinter -> step :: h
   | s :: ss ->
-    {step with input = s.input} :: ss
+    let tv =
+      if Option.is_some step.tval then step.tval
+      else if step.input = s.opt then s.tval else None
+    in
+    {step with input = s.input; tval = tv} :: ss
   | [] -> [step]
 
 let tvalidate sp tp sz =
