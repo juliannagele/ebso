@@ -84,7 +84,8 @@ let (<>>) = mk_bin_op BitVector.mk_sgt Arithmetic.mk_gt
 let (<>=>) = mk_bin_op BitVector.mk_sge Arithmetic.mk_ge
 let (<<=>) = mk_bin_op BitVector.mk_sle Arithmetic.mk_le
 
-let (<!=>) x y = Boolean.mk_distinct !ctxt [x; y]
+let distinct xs = Boolean.mk_distinct !ctxt xs
+let (<!=>) x y = distinct [x; y]
 let (<==>) x y = Boolean.mk_eq !ctxt x y
 
 let foralls ?(weight = None) ?(patterns = []) ?(nopatterns = [])
