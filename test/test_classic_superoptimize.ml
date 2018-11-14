@@ -6,7 +6,7 @@ open Evmenc
 
 let suite =
   (* set low for fast testing *)
-  set_wsz 256; set_sas 10;
+  set_wsz 3; set_sas 10;
   "suite" >:::
   [
     "correct candidate program" >::(fun _ ->
