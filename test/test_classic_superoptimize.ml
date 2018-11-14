@@ -14,10 +14,11 @@ let suite =
         let pc = [ADD;] in
         let cis = `User [] in
         let ea = mk_enc_consts p cis in
-        let c = enc_classic_so_test ea pc in
+        let js = List.init (List.length pc) ~f:(fun i -> intconst ("j" ^ Int.to_string i)) in
+        let c = enc_classic_so_test ea pc js in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [ADD;] (dec_classic_super_opt ea m pc)
+          [ADD;] (dec_classic_super_opt ea m pc js)
       );
 
     "correct candidate program with one PUSH" >::(fun _ ->
@@ -25,10 +26,11 @@ let suite =
         let pc = [PUSH Tmpl] in
         let cis = `User [] in
         let ea = mk_enc_consts p cis in
-        let c = enc_classic_so_test ea pc in
+        let js = List.init (List.length pc) ~f:(fun i -> intconst ("j" ^ Int.to_string i)) in
+        let c = enc_classic_so_test ea pc js in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [PUSH (Val "1")] (dec_classic_super_opt ea m pc)
+          [PUSH (Val "1")] (dec_classic_super_opt ea m pc js)
       );
 
     "incorrect candidate program with one PUSH" >::(fun _ ->
@@ -36,7 +38,8 @@ let suite =
         let pc = [ADD] in
         let cis = `User [] in
         let ea = mk_enc_consts p cis in
-        let c = enc_classic_so_test ea pc in
+        let js = List.init (List.length pc) ~f:(fun i -> intconst ("j" ^ Int.to_string i)) in
+        let c = enc_classic_so_test ea pc js in
         let m = solve_model [c] in
         assert_bool "not unsat" (Option.is_none m)
       );
@@ -46,10 +49,11 @@ let suite =
         let pc = [PUSH Tmpl; PUSH Tmpl] in
         let cis = `User [] in
         let ea = mk_enc_consts p cis in
-        let c = enc_classic_so_test ea pc in
+        let js = List.init (List.length pc) ~f:(fun i -> intconst ("j" ^ Int.to_string i)) in
+        let c = enc_classic_so_test ea pc js in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [PUSH (Val "2"); PUSH (Val "1")] (dec_classic_super_opt ea m pc)
+          [PUSH (Val "2"); PUSH (Val "1")] (dec_classic_super_opt ea m pc js)
       );
 
     "incorrect candidate program with two PUSHs" >::(fun _ ->
@@ -57,7 +61,8 @@ let suite =
         let pc = [PUSH Tmpl] in
         let cis = `User [] in
         let ea = mk_enc_consts p cis in
-        let c = enc_classic_so_test ea pc in
+        let js = List.init (List.length pc) ~f:(fun i -> intconst ("j" ^ Int.to_string i)) in
+        let c = enc_classic_so_test ea pc js in
         let m = solve_model [c] in
         assert_bool "not unsat" (Option.is_none m)
       );
@@ -67,10 +72,11 @@ let suite =
         let pc = [PUSH Tmpl;] in
         let cis = `User [] in
         let ea = mk_enc_consts p cis in
-        let c = enc_classic_so_test ea pc in
+        let js = List.init (List.length pc) ~f:(fun i -> intconst ("j" ^ Int.to_string i)) in
+        let c = enc_classic_so_test ea pc js in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [PUSH (Val "3")] (dec_classic_super_opt ea m pc)
+          [PUSH (Val "3")] (dec_classic_super_opt ea m pc js)
       );
 
     "correct candidate program with three PUSHs and optimization" >::(fun _ ->
@@ -78,11 +84,25 @@ let suite =
         let pc = [PUSH Tmpl; DUP I] in
         let cis = `User [] in
         let ea = mk_enc_consts p cis in
-        let c = enc_classic_so_test ea pc in
+        let js = List.init (List.length pc) ~f:(fun i -> intconst ("j" ^ Int.to_string i)) in
+        let c = enc_classic_so_test ea pc js in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [PUSH (Val "2"); DUP I] (dec_classic_super_opt ea m pc)
+          [PUSH (Val "2"); DUP I] (dec_classic_super_opt ea m pc js)
       );
+
+    "correct candidate program which requires reordering" >::(fun _ ->
+        let p = [PUSH (Val "2"); PUSH (Val "1"); PUSH (Val "1"); ADD] in
+        let pc = [DUP I; PUSH Tmpl] in
+        let cis = `User [] in
+        let ea = mk_enc_consts p cis in
+        let js = List.init (List.length pc) ~f:(fun i -> intconst ("j" ^ Int.to_string i)) in
+        let c = enc_classic_so_test ea pc js in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
+          [PUSH (Val "2"); DUP I] (dec_classic_super_opt ea m pc js)
+      );
+
   ]
 
 let () =

@@ -381,20 +381,24 @@ let enc_trans_val ea tp =
      ~! (enc_equivalence_at ea sts stt ks kt))
 
 (* classic superoptimzation: generate & test *)
-let enc_classic_so_test ea cp =
+let enc_classic_so_test ea cp js =
   let open Z3Ops in
   let sts = mk_state ea "_s" in
-  let stt = mk_state ea "_c" in
+  let stc = mk_state ea "_c" in
   let kt = num (List.length cp) and ks = num (List.length ea.p) in
   foralls (ea.xs @ ea.cs @ ea.uis)
-    (* encode source and candidate program *)
-    ((List.foldi cp ~init:(enc_program ea sts)
-        ~f:(fun j enc oc -> enc <&> enc_instruction ea stt (num j) oc)) &&
+    (* encode source program*)
+    ((enc_program ea sts) &&
+     (* all instructions from candidate program are used in some order *)
+     distinct js &&
+     (conj (List.map js ~f:(fun j -> (j < kt) && (j >= num 0)))) &&
+     (* encode instructions from candidate program *)
+     conj (List.map2_exn cp js ~f:(fun i j -> enc_instruction ea stc j i)) &&
      (* they start in the same state *)
-     (enc_equivalence_at ea sts stt (num 0) (num 0)) &&
-     sts.used_gas @@ [num 0] == stt.used_gas @@ [num 0] &&
+     (enc_equivalence_at ea sts stc (num 0) (num 0)) &&
+     sts.used_gas @@ [num 0] == stc.used_gas @@ [num 0] &&
      (* and their final state is the same *)
-     (enc_equivalence_at ea sts stt ks kt))
+     (enc_equivalence_at ea sts stc ks kt))
 
 let eval_stack ?(xs = []) st m i n =
   eval_func_decl m i ~n:[sanum n] ~xs:xs st.stack
@@ -420,4 +424,7 @@ let dec_super_opt ea m =
   let k = Z3.Arithmetic.Integer.get_int @@ eval_const m ea.kt in
   List.init k ~f:(dec_instr ea m)
 
-let dec_classic_super_opt ea m pc = List.mapi pc ~f:(dec_push ea m)
+let dec_classic_super_opt ea m cp js =
+  let js = List.map js ~f:(fun j -> eval_const m j |> Z3.Arithmetic.Integer.get_int) in
+  List.sort ~compare:(fun (_, j1) (_, j2) -> Int.compare j1 j2) (List.zip_exn cp js)
+  |> List.mapi ~f:(fun j (i, _) -> dec_push ea m j i)
