@@ -46,7 +46,7 @@ let print_step step =
         (Program.show step.input) (Program.show step.opt) g;
       Option.iter step.tval ~f:(fun b ->
           Out_channel.printf ", translation validation %s"
-            (if b then "succesful" else "failed"));
+            (if b then "successful" else "failed"));
       if step.optimal then
         Out_channel.print_endline ", this instruction sequence is optimal."
       else Out_channel.print_endline "."
