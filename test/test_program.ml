@@ -302,6 +302,57 @@ let suite =
           (Program.unints [SHA3; NUMBER; SHA3; NUMBER])
       );
 
+    (* enumerate programs *)
+
+    "enumerate programs of cost 1" >:: (fun _ ->
+        let m = Int.Map.set Int.Map.empty ~key:0 ~data:[[]] in
+        assert_equal ~cmp:[%eq: t list] ~printer:[%show: t list]
+          [] (Tuple.T2.get1 @@ enumerate 1 Instruction.encodable m)
+      );
+
+    "enumerate programs of cost 2" >:: (fun _ ->
+        let m = Int.Map.set Int.Map.empty ~key:0 ~data:[[]] in
+        assert_equal ~cmp:[%eq: t list] ~printer:[%show: t list]
+          [[POP]]
+          (Tuple.T2.get1 @@ enumerate 2 Instruction.encodable m)
+      );
+
+    "enumerate programs of cost 3" >:: (fun _ ->
+        let m = Int.Map.set Int.Map.empty ~key:0 ~data:[[]] in
+        assert_equal ~cmp:[%eq: t list] ~printer:[%show: t list]
+          [[ADD]; [SUB]]
+          (Tuple.T2.get1 @@ enumerate 3 [ADD; SUB; POP] m)
+      );
+
+    "enumerate programs of cost 4" >:: (fun _ ->
+        let m = Int.Map.set Int.Map.empty ~key:0 ~data:[[]] in
+        assert_equal ~cmp:[%eq: t list] ~printer:[%show: t list]
+          [[POP; POP]]
+          (Tuple.T2.get1 @@ enumerate 4 [ADD; SUB; POP] m)
+      );
+
+    "enumerate programs of cost 5" >:: (fun _ ->
+        let m = Int.Map.set Int.Map.empty ~key:0 ~data:[[]] in
+        assert_equal ~cmp:[%eq: t list] ~printer:[%show: t list]
+          [[POP; ADD]; [POP; SUB]; [ADD; POP]; [SUB; POP]]
+          (Tuple.T2.get1 @@ enumerate 5 [ADD; SUB; POP] m)
+      );
+
+    "enumerate programs of cost 6" >:: (fun _ ->
+        let m = Int.Map.set Int.Map.empty ~key:0 ~data:[[]] in
+        assert_equal ~cmp:[%eq: t list] ~printer:[%show: t list]
+          [[POP; POP; POP]; [ADD; ADD]; [SUB; ADD]; [ADD; SUB]; [SUB; SUB]]
+          (Tuple.T2.get1 @@ enumerate 6 [ADD; SUB; POP] m)
+      );
+
+    "reuse map when enumerating programs of cost 6" >:: (fun _ ->
+        let m = Int.Map.set Int.Map.empty ~key:0 ~data:[[]] in
+        let m = Tuple.T2.get2 @@ enumerate 3 [ADD; SUB; POP] m in
+        assert_equal ~cmp:[%eq: t list] ~printer:[%show: t list]
+          [[POP; POP; POP]; [ADD; ADD]; [SUB; ADD]; [ADD; SUB]; [SUB; SUB]]
+          (Tuple.T2.get1 @@ enumerate 6 [ADD; SUB; POP] m)
+      );
+
   ]
 
 let () =
