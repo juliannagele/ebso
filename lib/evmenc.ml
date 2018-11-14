@@ -356,13 +356,13 @@ let enc_super_opt ea =
   let stt = mk_state ea "_t" in
   let ks = List.length ea.p in
   foralls (ea.xs @ ea.cs @ ea.uis)
-  (enc_program ea sts &&
-   enc_search_space ea stt &&
-   enc_equivalence ea sts stt &&
-   sts.used_gas @@ [num ks] > stt.used_gas @@ [ea.kt] &&
-   (* bound the number of instructions in the target; aids solver in showing
-      unsat, i.e., that program is optimal *)
-   ea.kt <= sts.used_gas @@ [num ks])
+    (enc_program ea sts &&
+     enc_search_space ea stt &&
+     enc_equivalence ea sts stt &&
+     sts.used_gas @@ [num ks] > stt.used_gas @@ [ea.kt] &&
+     (* bound the number of instructions in the target; aids solver in showing
+        unsat, i.e., that program is optimal *)
+     ea.kt <= sts.used_gas @@ [num ks])
 
 let enc_trans_val ea tp =
   let open Z3Ops in
