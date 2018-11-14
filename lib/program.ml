@@ -126,6 +126,8 @@ let rec enumerate g cis m = match Int.Map.find m g with
       List.fold_left pgs ~init:([], m) ~f:(fun (ps, m) pg ->
           let is = List.filter cis ~f:(fun i -> gas_cost i = g - pg) in
           let (pps, m') = enumerate pg cis m in
-          (List.concat_map pps ~f:(fun pp -> List.map is ~f:(fun i -> i :: pp)) @ ps, m'))
+          let addi pp i = List.sort ~compare:Instruction.compare (i :: pp) in
+          (List.concat_map pps ~f:(fun pp -> List.map is ~f:(addi pp)) @ ps, m'))
     in
+    let ps = List.stable_dedup ps in
     (ps, Int.Map.add_exn m' ~key:g ~data:ps)
