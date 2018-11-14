@@ -118,6 +118,37 @@ let super_optimize_bb cis tval hist_bbs = function
   | Terminal (p, _) -> super_optimize_encbl p cis tval hist_bbs
   | NotEncodable _ -> hist_bbs
 
+let classic_super_optimize_encbl p cis tval hist_bbs =
+  let rec sopt p g gm cps =
+    let ea = mk_enc_consts p cis in
+    match cps with
+    | [] ->
+      let (cps, m') = Program.enumerate g ea.cis gm in
+      sopt p (g + 1) m' cps
+    | cp :: cps ->
+      let js = List.init (List.length cp) ~f:(fun i -> intconst ("j" ^ Int.to_string i)) in
+      let c = enc_classic_so_test ea cp js in
+      log (`Constraint c);
+      match solve_model [c] with
+      | None -> sopt p g gm cps
+      | Some m ->
+        log (`Model m);
+        let p' = dec_classic_super_opt ea m cp js in
+        let tv = Option.map tval ~f:(tvalidate ea.p p') in
+        match tv with
+        | Some false -> sopt p g gm cps
+        | _ ->
+          let s = {input = p; opt = p'; optimal = true; tval = tv} in
+          output_step [s] hist_bbs;
+          [s] :: hist_bbs
+  in
+  sopt p 0 (Int.Map.set Int.Map.empty ~key:0 ~data:[[]]) []
+
+let classic_super_optimize_bb cis tval hist_bbs = function
+  | Next p -> classic_super_optimize_encbl p cis tval hist_bbs
+  | Terminal (p, _) -> classic_super_optimize_encbl p cis tval hist_bbs
+  | NotEncodable _ -> hist_bbs
+
 let stats_bb bb =
   let len p = Int.to_string (List.length p) in
   match bb with
@@ -131,11 +162,13 @@ let stats_bb bb =
 type opt_mode =
   | NO
   | UNBOUNDED
+  | CLASSIC
 [@@deriving show { with_path = false }]
 
 let opt_mode_of_string = function
   | "NO" -> NO
   | "UNBOUNDED" -> UNBOUNDED
+  | "CLASSIC" -> CLASSIC
   | _ -> failwith "Unknown optimization mode"
 
 let () =
@@ -190,5 +223,7 @@ let () =
           end
         | UNBOUNDED ->
           List.fold_left bbs ~init:[] ~f:(super_optimize_bb `All tval) |> ignore
+        | CLASSIC ->
+          List.fold_left bbs ~init:[] ~f:(classic_super_optimize_bb `All  tval) |> ignore
     ]
   |> Command.run ~version:"0.1"
