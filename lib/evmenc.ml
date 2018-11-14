@@ -381,8 +381,20 @@ let enc_trans_val ea tp =
      ~! (enc_equivalence_at ea sts stt ks kt))
 
 (* classic superoptimzation: generate & test *)
-
-let enc_classic_so_test _ _ = failwith "step1 not implemented"
+let enc_classic_so_test ea cp =
+  let open Z3Ops in
+  let sts = mk_state ea "_s" in
+  let stt = mk_state ea "_c" in
+  let kt = num (List.length cp) and ks = num (List.length ea.p) in
+  foralls (ea.xs @ ea.cs @ ea.uis)
+    (* encode source and candidate program *)
+    ((List.foldi cp ~init:(enc_program ea sts)
+        ~f:(fun j enc oc -> enc <&> enc_instruction ea stt (num j) oc)) &&
+     (* they start in the same state *)
+     (enc_equivalence_at ea sts stt (num 0) (num 0)) &&
+     sts.used_gas @@ [num 0] == stt.used_gas @@ [num 0] &&
+     (* and their final state is the same *)
+     (enc_equivalence_at ea sts stt ks kt))
 
 let eval_stack ?(xs = []) st m i n =
   eval_func_decl m i ~n:[sanum n] ~xs:xs st.stack
