@@ -167,7 +167,7 @@ type opt_mode =
 let opt_mode_of_string = function
   | "NO" -> NO
   | "UNBOUNDED" -> UNBOUNDED
-  | "CLASSIC" -> CLASSIC
+  | "BASIC" -> CLASSIC
   | _ -> failwith "Unknown optimization mode"
 
 let () =
@@ -190,7 +190,7 @@ let () =
                 (i.e. stack then has 2^sas elements)"
       and opt_mode = flag "optimize"
           (optional_with_default UNBOUNDED (Arg_type.create opt_mode_of_string))
-          ~doc:"mode optimize NO | UNBOUNDED"
+          ~doc:"mode optimize NO | UNBOUNDED | BASIC"
       and csv = flag "csv" (optional string)
           ~doc:"filename write output to csv file"
       and p_inter = flag "print-intermediate" no_arg
