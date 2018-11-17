@@ -14,11 +14,10 @@ type output_options =
 let outputcfg =
   ref {pmodel = false; psmt = false; pcnstrnt = false; pinter = false; csv = None}
 
-let set_options stackes stackas nobv pm psmt pc pinter csv =
+let set_options stackes stackas pm psmt pc pinter csv =
   outputcfg := {pmodel = pm; psmt = psmt; pcnstrnt = pc; pinter = pinter; csv = csv};
   Option.iter stackes ~f:(fun stackes -> set_wsz stackes);
-  Option.iter stackas ~f:(fun stackas -> set_sas stackas);
-  if nobv then (wsort := int_sort; sasort := int_sort) else ()
+  Option.iter stackas ~f:(fun stackas -> set_sas stackas)
 
 let log e =
   let log b s = if b then Out_channel.prerr_endline s else () in
@@ -189,9 +188,6 @@ let () =
       and stackas = flag "stack-address-size" (optional int)
           ~doc:"sas number of bits used for addressing stack elements \
                 (i.e. stack then has 2^sas elements)"
-      and nobv = flag "no-bitvectors" no_arg
-          ~doc:"do not use bit vectors, but integers everywhere \
-                (word-size and stack-address-size have no effect)"
       and opt_mode = flag "optimize"
           (optional_with_default UNBOUNDED (Arg_type.create opt_mode_of_string))
           ~doc:"mode optimize NO | UNBOUNDED"
@@ -204,7 +200,7 @@ let () =
       and progr = anon ("PROGRAM" %: string)
       in
       fun () ->
-        set_options wordsize stackas nobv p_model p_smt p_constr p_inter csv;
+        set_options wordsize stackas p_model p_smt p_constr p_inter csv;
         let buf =
           if direct then Sedlexing.Latin1.from_string progr
           else Sedlexing.Latin1.from_channel (In_channel.create progr)
