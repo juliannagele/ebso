@@ -4,6 +4,7 @@ version: "0.1"
 synopsis: "EVM Bytecode Super Optimizer"
 maintainer: [ "mail@jnagele.net" "mail@maria-a-schett.net" ]
 authors: [ "mail@jnagele.net" "mail@maria-a-schett.net" ]
+license: "Apache-2.0"
 homepage: "https://github.com/juliannagele/ebso"
 dev-repo: "git+https://github.com:juliannagele/ebso.git"
 bug-reports: "https://github.com/juliannagele/ebso/issues"
