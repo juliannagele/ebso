@@ -367,6 +367,38 @@ let suite =
           (Tuple.T2.get1 @@ enumerate 6 [ADD; SUB; POP] m)
       );
 
+    (* compute word size, trying to minimize number of allquantified bits *)
+
+    "without any values, use word-size 1" >:: (fun _ ->
+        assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
+          1 (compute_word_size [ADDRESS; ADD; POP; SUB] 256)
+      );
+
+    "without any input variables, use word-size to fit all values" >:: (fun _ ->
+        assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
+          3 (compute_word_size [PUSH (Val "5"); PUSH (Val "2"); ADD] 256)
+      );
+
+    "tie-breaker: fit value" >:: (fun _ ->
+        assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
+          2 (compute_word_size [PUSH (Val "2"); ADD] 256)
+      );
+
+    "abstracting value yields fewer allquantified bits" >:: (fun _ ->
+        assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
+          1 (compute_word_size [PUSH (Val "5"); ADD] 256)
+      );
+
+    "fitting values yields fewer allquantified bits" >:: (fun _ ->
+        assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
+          2 (compute_word_size [ADD; PUSH (Val "3"); PUSH (Val "3"); PUSH (Val "3")] 256)
+      );
+
+    "fitting some values and abstracting another" >:: (fun _ ->
+        assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
+          2 (compute_word_size [ADD; PUSH (Val "3"); PUSH (Val "3"); PUSH (Val "3"); PUSH (Val "40")] 256)
+      );
+
   ]
 
 let () =

@@ -68,6 +68,24 @@ let unints p =
         Some (i, Instruction.unint_names j i)
       else None)
 
+let compute_word_size p max_ws =
+  let d = stack_depth p in
+  let abstr_vals ws =
+    List.count p
+      ~f:(function PUSH (Val x) -> Z.numbits (Z.of_string x) > ws | _ -> false)
+  in
+  let rec get_min_ws n m =
+    if n <= 0 then m else
+      let an = abstr_vals n and am = abstr_vals m in
+      let nb = (an + d) * n and mb = (am + d) * m in
+      let m = match Int.compare nb mb with
+        | -1 -> n
+        | 0 when an <= am -> n
+        | _ -> m
+      in
+      get_min_ws (n - 1) m
+  in get_min_ws (max_ws - 1) max_ws
+
 (* basic blocks -- we classify basic blocks into 3 kinds:
 - NotEncodable for instructions that are not yet supported
 - Terminal if the last instruction of the block interrupts control flow,
