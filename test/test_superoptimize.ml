@@ -351,6 +351,70 @@ let suite =
           [NUMBER; NUMBER] (dec_super_opt ea m)
       );
 
+    (* superoptimize uninterpreted instructions with argument *)
+
+    "basic, already optimal test" >:: (fun _ ->
+        let p = [PUSH (Val "1"); BALANCE] in
+        let cis = `Progr in
+        let ea = mk_enc_consts p cis in
+        let c = enc_super_opt ea in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
+          p (dec_super_opt ea m)
+      );
+
+
+    "twice BALANCE for same address optimizes to DUP" >:: (fun _ ->
+        let p = [PUSH (Val "1"); BALANCE; PUSH (Val "1"); BALANCE] in
+        let cis = `Progr in
+        let ea = mk_enc_consts p cis in
+        let c = enc_super_opt ea in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
+          [PUSH (Val "1"); BALANCE; DUP I]  (dec_super_opt ea m)
+      );
+
+    "twice BALANCE for different address does not optimize" >:: (fun _ ->
+        let p = [PUSH (Val "1"); BALANCE; PUSH (Val "2"); BALANCE] in
+        let cis = `Progr in
+        let ea = mk_enc_consts p cis in
+        let c = enc_super_opt ea in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
+          p (dec_super_opt ea m)
+      );
+
+    "twice BALANCE for same address to be computed optimizes to DUP" >:: (fun _ ->
+        let p = [PUSH (Val "2"); BALANCE; PUSH (Val "1"); PUSH (Val "1"); ADD; BALANCE] in
+        let cis = `Progr in
+        let ea = mk_enc_consts p cis in
+        let c = enc_super_opt ea in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
+          [PUSH (Val "2"); BALANCE; DUP I]  (dec_super_opt ea m)
+      );
+
+
+   "POPing BALANCE optimizes to POP to pop argument of BALANCE" >:: (fun _ ->
+        let p = [BALANCE; POP] in
+        let cis = `Progr in
+        let ea = mk_enc_consts p cis in
+        let c = enc_super_opt ea in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
+          [POP] (dec_super_opt ea m)
+      );
+
+    "twice BALANCE for same address given as initial stack arg" >:: (fun _ ->
+        let p = [DUP I; BALANCE; SWAP I; BALANCE] in
+        let cis = `Progr in
+        let ea = mk_enc_consts p cis in
+        let c = enc_super_opt ea in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
+          [BALANCE; DUP I] (dec_super_opt ea m)
+      );
+
   ]
 
 let () =
