@@ -289,7 +289,7 @@ let enc_instruction ea st j is =
     | DUP idx -> enc_dup ea st j (idx_to_enum idx)
     | _ when List.mem constant_uninterpreted is ~equal:Instruction.equal ->
       enc_const_uninterpreted ea st j is
-    | _ -> failwith "not implemented"
+    | i -> failwith ("Encoding for " ^ [%show: Instruction.t] i ^ " not implemented.")
   in
   let (d, a) = delta_alpha is in let diff = (a - d) in
   let open Z3Ops in
