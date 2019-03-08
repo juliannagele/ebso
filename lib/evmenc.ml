@@ -48,6 +48,11 @@ type enc_consts = {
   blncs : Z3.Expr.expr list;
 }
 
+(* list of free variables x_0 .. x_(stack_depth -1) for words already on stack *)
+(* careful: no check that this does not generate more than max stacksize variables *)
+let mk_input_vars p =
+  List.init (stack_depth p) ~f:(fun i -> seconst ("x_" ^ Int.to_string i))
+
 let mk_enc_consts p cis =
   let const_pushs = List.map (Program.consts p) ~f:(fun c -> PUSH (Const c)) in
   let (unints, unint_names) = List.unzip (Program.unints p) in
@@ -56,7 +61,7 @@ let mk_enc_consts p cis =
     | `Progr -> cis_of_progr p
     | `User cis -> List.stable_dedup cis
   in
-  let xs = List.init (stack_depth p) ~f:(fun i -> seconst ("x_" ^ Int.to_string i)) in
+  let xs = mk_input_vars p in
   let cs = List.map (Program.consts p) ~f:(seconst) in
   let uis = List.map (List.concat unint_names) ~f:(seconst) in
   let blncs = List.map (Program.unint_balance_names p) ~f:(seconst) in
@@ -76,8 +81,6 @@ let mk_enc_consts p cis =
   uis = uis;
   (* integer encoding of opcodes *)
   opcodes = List.mapi cis ~f:(fun i oc -> (oc, i));
-  (* list of free variables x_0 .. x_(stack_depth -1) for words already on stack *)
-  (* careful: no check that this does not generate more than max stacksize variables *)
   xs = xs;
   (* read only memory for balance *)
   brom = func_decl "balance" (!wsort :: List.map (xs @ cs @ uis @ blncs) ~f:(fun _ -> !wsort)) !wsort;
