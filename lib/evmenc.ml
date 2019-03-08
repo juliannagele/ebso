@@ -134,12 +134,16 @@ let enc_opcode ea i = List.Assoc.find_exn ea.opcodes ~equal:[%eq: Instruction.t]
 let dec_opcode ea i =
   List.Assoc.find_exn (List.Assoc.inverse ea.opcodes) ~equal:[%eq: int] i
 
+let enc_arg ea st j =
+  let open Z3Ops in
+  st.stack @@ (ea.xs @ ea.cs @ ea.uis @ ea.blncs @ [j; ((st.stack_ctr @@ [j])- sanum 1)])
+
 let init_balance_rom ea st =
   let k = seconst "k" in
   let open Z3Ops in
   let pos = List.filter_mapi ea.p ~f:(fun j i -> match i with BALANCE -> Some j | _ -> None) in
   let pos_blncs = List.zip_exn pos ea.blncs in
-  let arg j =  st.stack @@ (ea.xs @ ea.cs @ ea.uis @ ea.blncs @ [j; ((st.stack_ctr @@ [j])- sanum 1)]) in
+  let arg = enc_arg ea st in
   forall k (
   match pos_blncs with
   | (p, b) :: [] ->
