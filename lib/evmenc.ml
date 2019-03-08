@@ -60,6 +60,9 @@ let mk_const_vars p = List.map (Program.consts p) ~f:(seconst)
 (* based on list of names of uninterpreted instructions  *)
 let mk_unint_vars unint_names = List.map (List.concat unint_names) ~f:(seconst)
 
+(* list of free variables for every BALANCE instruction in program p *)
+let mk_blnc_vars p = List.map (Program.unint_balance_names p) ~f:(seconst)
+
 let mk_enc_consts p cis =
   let const_pushs = List.map (Program.consts p) ~f:(fun c -> PUSH (Const c)) in
   let (unints, unint_names) = List.unzip (Program.unints p) in
@@ -71,7 +74,7 @@ let mk_enc_consts p cis =
   let xs = mk_input_vars p in
   let cs = mk_const_vars p in
   let uis = mk_unint_vars unint_names in
-  let blncs = List.map (Program.unint_balance_names p) ~f:(seconst) in
+  let blncs = mk_blnc_vars p in
 { (* source program *)
   p = p;
   (* candidate instruction set: instructions to choose from in target program *)
