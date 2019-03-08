@@ -63,6 +63,9 @@ let mk_unint_vars unint_names = List.map (List.concat unint_names) ~f:(seconst)
 (* list of free variables for every BALANCE instruction in program p *)
 let mk_blnc_vars p = List.map (Program.unint_balance_names p) ~f:(seconst)
 
+(* list of wsorts for every variable in vs *)
+let mk_vars_sorts vs = List.map vs ~f:(fun _ -> !wsort)
+
 let mk_enc_consts p cis =
   let const_pushs = List.map (Program.consts p) ~f:(fun c -> PUSH (Const c)) in
   let (unints, unint_names) = List.unzip (Program.unints p) in
@@ -93,7 +96,7 @@ let mk_enc_consts p cis =
   (* read only memory for balance *)
   (* source and target program use the same brom, hence brom cannot be
      in state without adapting equvivalence *)
-  brom = func_decl "balance" (!wsort :: List.map (xs @ cs @ uis @ blncs) ~f:(fun _ -> !wsort)) !wsort;
+  brom = func_decl "balance" (!wsort :: (mk_vars_sorts (xs @ cs @ uis @ blncs))) !wsort;
   blncs = blncs;
 }
 
@@ -108,14 +111,11 @@ type state = {
 }
 
 let mk_state ea idx =
-  let xs_sorts = List.map ea.xs ~f:(fun _ -> !wsort) in
-  let cs_sorts = List.map ea.cs ~f:(fun _ -> !wsort) in
-  let uis_sorts = List.map ea.uis ~f:(fun _ -> !wsort) in
-  let blncs_sorts = List.map ea.blncs ~f:(fun _ -> !wsort) in
   { (* stack(x0 ... x(sd-1), j, n) = nth word on stack after j instructions
        starting from a stack that contained words x0 ... x(sd-1) *)
     stack = func_decl ("stack" ^ idx)
-        (xs_sorts @ cs_sorts @ uis_sorts @ blncs_sorts @ [int_sort; !sasort]) !wsort;
+        ((mk_vars_sorts (ea.xs @ ea.cs @ ea.uis @ ea.blncs))
+         @ [int_sort; !sasort]) !wsort;
     (* sc(j) = index of the next free slot on the stack after j instructions *)
     stack_ctr = func_decl ("sc" ^ idx) [int_sort] !sasort;
     (* exc_halt(j) is true if exceptional halting occurs after j instructions *)
