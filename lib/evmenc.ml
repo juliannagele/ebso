@@ -142,7 +142,7 @@ let enc_top ea st j =
 let init_balance_rom ea st =
   let k = seconst "k" in
   let open Z3Ops in
-  let pos = List.filter_mapi ea.p ~f:(fun j i -> match i with BALANCE -> Some j | _ -> None) in
+  let pos = poss_of_instr ea.p BALANCE in
   let pos_blncs = List.zip_exn pos ea.blncs in
   let arg = enc_top ea st in
   forall k (
