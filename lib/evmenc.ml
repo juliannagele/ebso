@@ -96,7 +96,7 @@ let mk_enc_consts p cis =
   (* read only memory for balance *)
   (* source and target program use the same brom, hence brom cannot be
      in state without adapting equvivalence *)
-  brom = func_decl "balance" (!wsort :: (mk_vars_sorts (xs @ cs @ uis @ blncs))) !wsort;
+  brom = func_decl "balances_rom" (!wsort :: (mk_vars_sorts (xs @ cs @ uis @ blncs))) !wsort;
   blncs = blncs;
 }
 
