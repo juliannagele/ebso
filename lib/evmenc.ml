@@ -56,6 +56,10 @@ let mk_input_vars p =
 (* arguments of PUSH which are too large to fit in word size *)
 let mk_const_vars p = List.map (Program.consts p) ~f:(seconst)
 
+(* list of free variables for uninterpreted instructions *)
+(* based on list of names of uninterpreted instructions  *)
+let mk_unint_vars unint_names = List.map (List.concat unint_names) ~f:(seconst)
+
 let mk_enc_consts p cis =
   let const_pushs = List.map (Program.consts p) ~f:(fun c -> PUSH (Const c)) in
   let (unints, unint_names) = List.unzip (Program.unints p) in
@@ -66,7 +70,7 @@ let mk_enc_consts p cis =
   in
   let xs = mk_input_vars p in
   let cs = mk_const_vars p in
-  let uis = List.map (List.concat unint_names) ~f:(seconst) in
+  let uis = mk_unint_vars unint_names in
   let blncs = List.map (Program.unint_balance_names p) ~f:(seconst) in
 { (* source program *)
   p = p;
@@ -79,7 +83,6 @@ let mk_enc_consts p cis =
   (* arguments for PUSH instrucions in target program *)
   a = func_decl "a" [int_sort] !wsort;
   cs = cs;
-  (* variables for uninterpreted instructions *)
   uis = uis;
   (* integer encoding of opcodes *)
   opcodes = List.mapi cis ~f:(fun i oc -> (oc, i));
