@@ -136,7 +136,7 @@ let dec_opcode ea i =
 
 let enc_arg ea st j =
   let open Z3Ops in
-  st.stack @@ (ea.xs @ ea.cs @ ea.uis @ ea.blncs @ [j; ((st.stack_ctr @@ [j])- sanum 1)])
+  st.stack @@ (forall_vars ea @ [j; ((st.stack_ctr @@ [j])- sanum 1)])
 
 let init_balance_rom ea st =
   let k = seconst "k" in
