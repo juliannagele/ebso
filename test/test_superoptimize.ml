@@ -353,7 +353,7 @@ let suite =
 
     (* superoptimize uninterpreted instructions with argument *)
 
-    "basic, already optimal test" >:: (fun _ ->
+    "basic, already optimal test" >: test_case ~length:Long (fun _ ->
         let p = [PUSH (Val "1"); BALANCE] in
         let cis = `Progr in
         let ea = mk_enc_consts p cis in
@@ -363,8 +363,7 @@ let suite =
           p (dec_super_opt ea m)
       );
 
-
-    "twice BALANCE for same address optimizes to DUP" >:: (fun _ ->
+    "twice BALANCE for same address optimizes to DUP" >: test_case ~length:Long (fun _ ->
         let p = [PUSH (Val "1"); BALANCE; PUSH (Val "1"); BALANCE] in
         let cis = `Progr in
         let ea = mk_enc_consts p cis in
@@ -394,7 +393,6 @@ let suite =
           [PUSH (Val "2"); BALANCE; DUP I]  (dec_super_opt ea m)
       );
 
-
    "POPing BALANCE optimizes to POP to pop argument of BALANCE" >:: (fun _ ->
         let p = [BALANCE; POP] in
         let cis = `Progr in
@@ -405,7 +403,7 @@ let suite =
           [POP] (dec_super_opt ea m)
       );
 
-    "twice BALANCE for same address given as initial stack arg" >:: (fun _ ->
+    "twice BALANCE for same address given as initial stack arg">: test_case ~length:Long (fun _ ->
         let p = [DUP I; BALANCE; SWAP I; BALANCE] in
         let cis = `Progr in
         let ea = mk_enc_consts p cis in
