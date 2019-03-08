@@ -91,6 +91,8 @@ let mk_enc_consts p cis =
   opcodes = List.mapi cis ~f:(fun i oc -> (oc, i));
   xs = xs;
   (* read only memory for balance *)
+  (* source and target program use the same brom, hence brom cannot be
+     in state without adapting equvivalence *)
   brom = func_decl "balance" (!wsort :: List.map (xs @ cs @ uis @ blncs) ~f:(fun _ -> !wsort)) !wsort;
   blncs = blncs;
 }
