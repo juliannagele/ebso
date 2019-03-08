@@ -67,12 +67,12 @@ let mk_blnc_vars p = List.map (Program.unint_balance_names p) ~f:(seconst)
 let mk_vars_sorts vs = List.map vs ~f:(fun _ -> !wsort)
 
 (* list of candidate instructions *)
-let mk_cis unints p mde =
-  let const_pushs = List.map (Program.consts p) ~f:(fun c -> PUSH (Const c)) in
-  match mde with
-    | `All -> Instruction.encodable @ const_pushs @ unints
-    | `Progr -> cis_of_progr p
-    | `User cis -> List.stable_dedup cis
+let mk_cis unints p = function
+  | `Progr -> cis_of_progr p
+  | `User cis -> List.stable_dedup cis
+  | `All ->
+    let const_pushs = List.map (Program.consts p) ~f:(fun c -> PUSH (Const c)) in
+    Instruction.encodable @ const_pushs @ unints
 
 let mk_enc_consts p cis_mde =
   let (unints, unint_names) = List.unzip (Program.unints p) in
