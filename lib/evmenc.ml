@@ -93,7 +93,9 @@ let mk_enc_consts p cis =
   (* integer encoding of opcodes *)
   opcodes = List.mapi cis ~f:(fun i oc -> (oc, i));
   xs = xs;
-  (* read only memory for balance *)
+  (* read only memory for balance "balance_rom" returns a word
+     depending on a given argument, i.e., the argument of BALANCE in
+     the program, _and_ depending on the forall quantified variables *)
   (* source and target program use the same brom, hence brom cannot be
      in state without adapting equvivalence *)
   brom = func_decl "balances_rom" (!wsort :: (mk_vars_sorts (xs @ cs @ uis @ blncs))) !wsort;
