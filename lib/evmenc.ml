@@ -53,6 +53,9 @@ type enc_consts = {
 let mk_input_vars p =
   List.init (stack_depth p) ~f:(fun i -> seconst ("x_" ^ Int.to_string i))
 
+(* arguments of PUSH which are too large to fit in word size *)
+let mk_const_vars p = List.map (Program.consts p) ~f:(seconst)
+
 let mk_enc_consts p cis =
   let const_pushs = List.map (Program.consts p) ~f:(fun c -> PUSH (Const c)) in
   let (unints, unint_names) = List.unzip (Program.unints p) in
@@ -62,7 +65,7 @@ let mk_enc_consts p cis =
     | `User cis -> List.stable_dedup cis
   in
   let xs = mk_input_vars p in
-  let cs = List.map (Program.consts p) ~f:(seconst) in
+  let cs = mk_const_vars p in
   let uis = List.map (List.concat unint_names) ~f:(seconst) in
   let blncs = List.map (Program.unint_balance_names p) ~f:(seconst) in
 { (* source program *)
@@ -75,7 +78,6 @@ let mk_enc_consts p cis =
   fis = func_decl "instr" [int_sort] int_sort;
   (* arguments for PUSH instrucions in target program *)
   a = func_decl "a" [int_sort] !wsort;
-  (* arguments of PUSH which are too large to fit in word size *)
   cs = cs;
   (* variables for uninterpreted instructions *)
   uis = uis;
