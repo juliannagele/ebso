@@ -68,6 +68,10 @@ let unints p =
         Some (i, Instruction.unint_names j i)
       else None)
 
+let unint_balance_names p =
+  let bs = List.filter p ~f:(Instruction.equal BALANCE) in
+  List.mapi bs ~f:(fun k i -> [%show: Instruction.t] i ^ [%show: int] k)
+
 let compute_word_size p max_ws =
   let d = stack_depth p in
   let abstr_vals ws =

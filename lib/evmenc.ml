@@ -44,6 +44,8 @@ type enc_consts = {
   uis : Z3.Expr.expr list;
   opcodes : (Instruction.t * int) list;
   xs : Z3.Expr.expr list;
+  brom : Z3.FuncDecl.func_decl;
+  blncs : Z3.Expr.expr list;
 }
 
 let mk_enc_consts p cis =
@@ -54,6 +56,10 @@ let mk_enc_consts p cis =
     | `Progr -> cis_of_progr p
     | `User cis -> List.stable_dedup cis
   in
+  let xs = List.init (stack_depth p) ~f:(fun i -> seconst ("x_" ^ Int.to_string i)) in
+  let cs = List.map (Program.consts p) ~f:(seconst) in
+  let uis = List.map (List.concat unint_names) ~f:(seconst) in
+  let blncs = List.map (Program.unint_balance_names p) ~f:(seconst) in
 { (* source program *)
   p = p;
   (* candidate instruction set: instructions to choose from in target program *)
@@ -65,15 +71,21 @@ let mk_enc_consts p cis =
   (* arguments for PUSH instrucions in target program *)
   a = func_decl "a" [int_sort] !wsort;
   (* arguments of PUSH which are too large to fit in word size *)
-  cs = List.map (Program.consts p) ~f:(seconst);
+  cs = cs;
   (* variables for uninterpreted instructions *)
-  uis = List.map (List.concat unint_names) ~f:(seconst);
+  uis = uis;
   (* integer encoding of opcodes *)
   opcodes = List.mapi cis ~f:(fun i oc -> (oc, i));
   (* list of free variables x_0 .. x_(stack_depth -1) for words already on stack *)
   (* careful: no check that this does not generate more than max stacksize variables *)
-  xs = List.init (stack_depth p) ~f:(fun i -> seconst ("x_" ^ Int.to_string i));
+  xs = xs;
+  (* read only memory for balance *)
+  brom = func_decl "balance" (!wsort :: List.map (xs @ cs @ uis @ blncs) ~f:(fun _ -> !wsort)) !wsort;
+  blncs = blncs;
 }
+
+(* project all forall quantified variables *)
+let forall_vars ea = ea.xs @ ea.cs @ ea.uis @ ea.blncs
 
 type state = {
   stack : Z3.FuncDecl.func_decl;
@@ -86,10 +98,11 @@ let mk_state ea idx =
   let xs_sorts = List.map ea.xs ~f:(fun _ -> !wsort) in
   let cs_sorts = List.map ea.cs ~f:(fun _ -> !wsort) in
   let uis_sorts = List.map ea.uis ~f:(fun _ -> !wsort) in
+  let blncs_sorts = List.map ea.blncs ~f:(fun _ -> !wsort) in
   { (* stack(x0 ... x(sd-1), j, n) = nth word on stack after j instructions
        starting from a stack that contained words x0 ... x(sd-1) *)
     stack = func_decl ("stack" ^ idx)
-        (xs_sorts @ cs_sorts @ uis_sorts @ [int_sort; !sasort]) !wsort;
+        (xs_sorts @ cs_sorts @ uis_sorts @ blncs_sorts @ [int_sort; !sasort]) !wsort;
     (* sc(j) = index of the next free slot on the stack after j instructions *)
     stack_ctr = func_decl ("sc" ^ idx) [int_sort] !sasort;
     (* exc_halt(j) is true if exceptional halting occurs after j instructions *)
@@ -103,6 +116,28 @@ let enc_opcode ea i = List.Assoc.find_exn ea.opcodes ~equal:[%eq: Instruction.t]
 let dec_opcode ea i =
   List.Assoc.find_exn (List.Assoc.inverse ea.opcodes) ~equal:[%eq: int] i
 
+let init_balance_rom ea st =
+  let k = seconst "k" in
+  let open Z3Ops in
+  let pos = List.filter_mapi ea.p ~f:(fun j i -> match i with BALANCE -> Some j | _ -> None) in
+  let pos_blncs = List.zip_exn pos ea.blncs in
+  let arg j =  st.stack @@ (ea.xs @ ea.cs @ ea.uis @ ea.blncs @ [j; ((st.stack_ctr @@ [j])- sanum 1)]) in
+  forall k (
+  match pos_blncs with
+  | (p, b) :: [] ->
+    (ea.brom @@ (forall_vars ea @ [arg (num p)])) == b &&
+    ((k != arg (num p)) ==> ((ea.brom @@ (forall_vars ea @ [k])) != b))
+  | (p1, b1) :: (p2, b2) :: [] ->
+    let a1 = forall_vars ea @ [arg (num p1)] in
+    let a2 = forall_vars ea @ [arg (num p2)] in
+    (ea.brom @@ a1) == b1 &&
+    (ea.brom @@ a2) == (ite (arg (num p1) == arg (num p2)) b1 b2) &&
+    ((k != arg (num p1)) ==> (ea.brom @@ forall_vars ea @ [k] != b1)) &&
+    ((k != arg (num p2)) ==> (ea.brom @@ forall_vars ea @ [k] != b2))
+  | [] -> top
+  | _ -> failwith "Currently only works with up to two BALANCE instructions." )
+
+
 let init ea st =
   let open Z3Ops in
   (* careful: if stack_depth is larger than 2^sas, no checks *)
@@ -111,9 +146,10 @@ let init ea st =
   (st.stack_ctr @@ [num 0] == sanum skd)
   (* set inital words on stack *)
   && conj (List.mapi ea.xs ~f:(fun i x ->
-      st.stack @@ (ea.xs @ ea.cs @ ea.uis @ [num 0; sanum i]) == x))
+      st.stack @@ (forall_vars ea @ [num 0; sanum i]) == x))
   && (st.exc_halt @@ [num 0] == btm)
   && (st.used_gas @@ [num 0] == num 0)
+  && init_balance_rom ea st
 
 (* TODO: check data layout on stack *)
 let enc_stackarg ea j = function
@@ -125,7 +161,7 @@ let enc_stackarg ea j = function
 let enc_push ea st j x =
   let open Z3Ops in
   (* the stack after the PUSH *)
-  let sk' n = st.stack @@ (ea.xs @ ea.cs @ ea.uis @ [j + one; n]) in
+  let sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
   (* the stack counter before the PUSH *)
   let sc = st.stack_ctr @@ [j] in
   (* the new top word will be x *)
@@ -136,8 +172,8 @@ let enc_pop _ _ _ = top
 
 let enc_binop ea st j op =
   let open Z3Ops in
-  let sk n = st.stack @@ (ea.xs @ ea.cs @ ea.uis @ [j; n])
-  and sk' n = st.stack @@ (ea.xs @ ea.cs @ ea.uis @ [j + one; n]) in
+  let sk n = st.stack @@ (forall_vars ea @ [j; n])
+  and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] in
   (* the new top word is the result of applying op to the previous two *)
   (sk' (sc - sanum 2) == op (sk (sc - sanum 1)) (sk (sc - sanum 2)))
@@ -186,8 +222,8 @@ let enc_xor ea st j = enc_binop ea st j (Z3.BitVector.mk_xor !ctxt)
 
 let enc_addmod ea st j =
   let open Z3Ops in
-  let sk n = st.stack @@ (ea.xs @ ea.cs @ ea.uis @ [j; n])
-  and sk' n = st.stack @@ (ea.xs @ ea.cs @ ea.uis @ [j + one; n]) in
+  let sk n = st.stack @@ (forall_vars ea @ [j; n])
+  and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   let denom = sk (sc - sanum 3) and x =  sk (sc - sanum 2) and y =  sk (sc - sanum 1) in
   sk' (sc' - sanum 1) ==
@@ -200,8 +236,8 @@ let enc_addmod ea st j =
 
 let enc_mulmod ea st j =
   let open Z3Ops in
-  let sk n = st.stack @@ (ea.xs @ ea.cs @ ea.uis @ [j; n])
-  and sk' n = st.stack @@ (ea.xs @ ea.cs @ ea.uis @ [j + one; n]) in
+  let sk n = st.stack @@ (forall_vars ea @ [j; n])
+  and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   let denom = sk (sc - sanum 3) and x =  sk (sc - sanum 2) and y =  sk (sc - sanum 1) in
   sk' (sc' - sanum 1) ==
@@ -214,16 +250,16 @@ let enc_mulmod ea st j =
 
 let enc_not ea st j =
   let open Z3Ops in
-  let sk n = st.stack @@ (ea.xs @ ea.cs @ ea.uis @ [j; n])
-  and sk' n = st.stack @@ (ea.xs @ ea.cs @ ea.uis @ [j + one; n]) in
+  let sk n = st.stack @@ (forall_vars ea @ [j; n])
+  and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   (* the new top word is the bitwise negation of the old top word *)
   (sk' (sc' - sanum 1) == Z3.BitVector.mk_not !ctxt (sk (sc - sanum 1)))
 
 let enc_iszero ea st j =
   let open Z3Ops in
-  let sk n = st.stack @@ (ea.xs @ ea.cs @ ea.uis @ [j; n])
-  and sk' n = st.stack @@ (ea.xs @ ea.cs @ ea.uis @ [j + one; n]) in
+  let sk n = st.stack @@ (forall_vars ea @ [j; n])
+  and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   (* if the old top word is 0 then the new top word is 1 and 0 otherwise *)
   (sk' (sc' - sanum 1) == ite (sk (sc - sanum 1) == (senum 0)) (senum 1) (senum 0))
@@ -231,8 +267,8 @@ let enc_iszero ea st j =
 let enc_swap ea st j idx =
   let sc_idx = sanum (idx + 1) in
   let open Z3Ops in
-  let sk n = st.stack @@ (ea.xs @ ea.cs @ ea.uis @ [j; n])
-  and sk' n = st.stack @@ (ea.xs @ ea.cs @ ea.uis @ [j + one; n]) in
+  let sk n = st.stack @@ (forall_vars ea @ [j; n])
+  and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   (* the new top word is the 1+idx'th from the old stack *)
   (sk' (sc' - sanum 1) == sk (sc - sc_idx)) &&
@@ -246,8 +282,8 @@ let enc_swap ea st j idx =
 let enc_dup ea st j idx =
   let sc_idx = sanum idx in
   let open Z3Ops in
-  let sk n = st.stack @@ (ea.xs @ ea.cs @ ea.uis @ [j; n])
-  and sk' n = st.stack @@ (ea.xs @ ea.cs @ ea.uis @ [j + one; n]) in
+  let sk n = st.stack @@ (forall_vars ea @ [j; n])
+  and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   (* the new top word is the idx'th from the old stack *)
   (sk' (sc' - sanum 1) == sk (sc - sc_idx)) &&
@@ -259,6 +295,17 @@ let enc_dup ea st j idx =
 let enc_const_uninterpreted ea st j i =
   let name = List.hd_exn @@ Instruction.unint_names 0 i in
   enc_push ea st j (Const name)
+
+let enc_balance ea st j =
+  (* balance as read-only memory *)
+  let open Z3Ops in
+  let sc = st.stack_ctr @@ [j]
+  and sk n = st.stack @@ (forall_vars ea @ [j; n])
+  and sk' n = st.stack @@ (forall_vars ea @ [j + one; n])
+  and sc'= st.stack_ctr @@ [j + one] in
+  let arg = (forall_vars ea) @ [sk (sc - sanum 1)] in
+  (* push value of balance *)
+  (sk' (sc' - sanum 1)) == (ea.brom @@ arg)
 
 (* effect of instruction on state st after j steps *)
 let enc_instruction ea st j is =
@@ -287,6 +334,7 @@ let enc_instruction ea st j is =
     | NOT -> enc_not ea st j
     | SWAP idx -> enc_swap ea st j (idx_to_enum idx)
     | DUP idx -> enc_dup ea st j (idx_to_enum idx)
+    | BALANCE -> enc_balance ea st j
     | _ when List.mem constant_uninterpreted is ~equal:Instruction.equal ->
       enc_const_uninterpreted ea st j is
     | i -> failwith ("Encoding for " ^ [%show: Instruction.t] i ^ " not implemented.")
@@ -294,8 +342,8 @@ let enc_instruction ea st j is =
   let (d, a) = delta_alpha is in let diff = (a - d) in
   let open Z3Ops in
   let sc = st.stack_ctr @@ [j] in
-  let sk n = st.stack @@ (ea.xs @ ea.cs @ ea.uis @ [j; n])
-  and sk' n = st.stack @@ (ea.xs @ ea.cs @ ea.uis @ [j + one; n]) in
+  let sk n = st.stack @@ (forall_vars ea @ [j; n])
+  and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
   let enc_used_gas =
     st.used_gas @@ [j + one] == ((st.used_gas @@ [j]) + (num (gas_cost is)))
   in
@@ -346,8 +394,8 @@ let enc_equivalence_at ea sts stt js jt =
   (* source and target stack are equal below the stack counter;
      note that it doesn't matter which stack counter is used, they are equal *)
   (forall n ((n < stt.stack_ctr @@ [jt]) ==>
-             ((sts.stack @@ (ea.xs @ ea.cs @ ea.uis @ [js; n]))
-              == (stt.stack @@ (ea.xs @ ea.cs @ ea.uis @ [jt; n])))))
+             ((sts.stack @@ (forall_vars ea @ [js; n]))
+              == (stt.stack @@ (forall_vars ea @ [jt; n])))))
 
 (* we only demand equivalence at kt *)
 let enc_equivalence ea sts stt =
@@ -369,7 +417,7 @@ let enc_super_opt ea =
   let sts = mk_state ea "_s" in
   let stt = mk_state ea "_t" in
   let ks = List.length ea.p in
-  foralls (ea.xs @ ea.cs @ ea.uis)
+  foralls (ea.xs @ ea.cs @ ea.uis @ ea.blncs)
     (enc_program ea sts &&
      enc_search_space ea stt &&
      enc_equivalence ea sts stt &&
