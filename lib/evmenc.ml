@@ -134,7 +134,7 @@ let enc_opcode ea i = List.Assoc.find_exn ea.opcodes ~equal:[%eq: Instruction.t]
 let dec_opcode ea i =
   List.Assoc.find_exn (List.Assoc.inverse ea.opcodes) ~equal:[%eq: int] i
 
-let enc_top ea st j =
+let enc_top_of_st ea st j =
   let open Z3Ops in
   let top_pos = (st.stack_ctr @@ [j]) - sanum 1 in
   st.stack @@ (forall_vars ea @ [j; top_pos])
@@ -144,7 +144,7 @@ let init_balance_rom ea st =
   let open Z3Ops in
   let pos = poss_of_instr ea.p BALANCE in
   let pos_blncs = List.zip_exn pos ea.blncs in
-  let arg = enc_top ea st in
+  let arg = enc_top_of_st ea st in
   forall k (
   match pos_blncs with
   | (p, b) :: [] ->
