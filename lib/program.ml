@@ -167,3 +167,5 @@ let rec enumerate g cis m = match Int.Map.find m g with
     in
     let ps = List.stable_dedup ps in
     (ps, Int.Map.add_exn m' ~key:g ~data:ps)
+
+let poss_of_instr _ _ = failwith "not implemented"

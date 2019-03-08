@@ -399,6 +399,17 @@ let suite =
           2 (compute_word_size [ADD; PUSH (Val "3"); PUSH (Val "3"); PUSH (Val "3"); PUSH (Val "40")] 256)
       );
 
+    (* pos *)
+
+    "get position of instruction BALANCE" >:: (fun _ ->
+        assert_equal ~cmp:[%eq: int list]  ~printer:[%show: int list]
+          [0; 2] (poss_of_instr [BALANCE; POP; BALANCE] BALANCE)
+      );
+
+    "get position of instruction BALANCE" >:: (fun _ ->
+        assert_equal ~cmp:[%eq: int list]  ~printer:[%show: int list]
+          [] (poss_of_instr [POP; POP] BALANCE);
+      );
   ]
 
 let () =
