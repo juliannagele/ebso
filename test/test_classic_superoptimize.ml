@@ -54,8 +54,7 @@ let suite =
         let ea = mk_enc_consts p cis in
         let js = List.init (List.length pc) ~f:(fun i -> intconst ("j" ^ Int.to_string i)) in
         let c = enc_classic_so_test ea pc js in
-        let m = solve_model [c] in
-        assert_bool "not unsat" (Option.is_none m)
+        assert_bool "not unsat" (is_unsat [c])
       );
 
     "correct candidate program with two PUSHs" >::(fun _ ->
@@ -77,8 +76,7 @@ let suite =
         let ea = mk_enc_consts p cis in
         let js = List.init (List.length pc) ~f:(fun i -> intconst ("j" ^ Int.to_string i)) in
         let c = enc_classic_so_test ea pc js in
-        let m = solve_model [c] in
-        assert_bool "not unsat" (Option.is_none m)
+        assert_bool "not unsat" (is_unsat [c])
       );
 
     "correct candidate program with two PUSHs and optimization" >::(fun _ ->

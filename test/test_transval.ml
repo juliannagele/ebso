@@ -12,7 +12,6 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 *)
-open Core
 open OUnit2
 open Z3util
 open Instruction
@@ -30,8 +29,7 @@ let suite =
         let tp =  [PUSH (Val "3"); SUB] in
         let ea = mk_enc_consts sp `All in
         let c = enc_trans_val ea tp in
-        let m = solve_model [c] in
-        assert_bool "not unsat" (Option.is_none m)
+        assert_bool "not unsat" (is_unsat [c])
       );
 
     "show difference of 3 + (0 - x) and (4 - x)" >::(fun _ ->
@@ -39,8 +37,7 @@ let suite =
         let tp =  [PUSH (Val "4"); SUB] in
         let ea = mk_enc_consts sp `All in
         let c = enc_trans_val ea tp in
-        let m = solve_model [c] in
-        assert_bool "no model found" (Option.is_some m)
+        assert_bool "no model found" (is_sat [c])
       );
 
     "show equivalence with long source program" >::(fun _ ->
@@ -51,8 +48,7 @@ let suite =
         let tp =  [PUSH (Val "0"); DUP II] in
         let ea = mk_enc_consts sp `All in
         let c = enc_trans_val ea tp in
-        let m = solve_model [c] in
-        assert_bool "not unsat" (Option.is_none m)
+        assert_bool "not unsat" (is_unsat [c])
       );
 
     "disprove equivalence that would be valid with 2 bit words" >::(fun _ ->
@@ -60,8 +56,7 @@ let suite =
         let tp =  [NOT] in
         let ea = mk_enc_consts sp `All in
         let c = enc_trans_val ea tp in
-        let m = solve_model [c] in
-        assert_bool "no model found" (Option.is_some m)
+        assert_bool "no model found" (is_sat [c])
       );
 
     "disprove equivalence that holds for 4 bit" >::(fun _ ->
@@ -69,8 +64,7 @@ let suite =
         let tp = [] in
         let ea = mk_enc_consts sp `All in
         let c = enc_trans_val ea tp in
-        let m = solve_model [c] in
-        assert_bool "no model found" (Option.is_some m)
+        assert_bool "no model found" (is_sat [c])
       );
 
     "validation with uninterpreted instruction" >::(fun _ ->
@@ -78,8 +72,7 @@ let suite =
         let tp = [PC] in
         let ea = mk_enc_consts sp `All in
         let c = enc_trans_val ea tp in
-        let m = solve_model [c] in
-        assert_bool "not unsat" (Option.is_none m)
+        assert_bool "not unsat" (is_unsat [c])
       );
 
   ]

@@ -92,11 +92,7 @@ let suite =
           enc_search_space ea st <&>
           (ea.kt <==> (num (List.length p)))
         in
-        let slvr = Z3.Solver.mk_simple_solver !ctxt in
-        let () = Z3.Solver.add slvr [c] in
-        assert_equal
-          Z3.Solver.UNSATISFIABLE
-          (Z3.Solver.check slvr [])
+        assert_bool "not unsat" (is_unsat [c])
       );
 
     (* enc_equivalence *)
@@ -358,9 +354,7 @@ let suite =
         let cis = `Progr in
         let ea = mk_enc_consts p cis in
         let c = enc_super_opt ea in
-        let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          p (dec_super_opt ea m)
+        assert_bool "not unsat" (is_unsat [c])
       );
 
     "twice BALANCE for same address optimizes to DUP" >: test_case ~length:Long (fun _ ->
@@ -378,9 +372,7 @@ let suite =
         let cis = `Progr in
         let ea = mk_enc_consts p cis in
         let c = enc_super_opt ea in
-        let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          p (dec_super_opt ea m)
+        assert_bool "not unsat" (is_unsat [c])
       );
 
     "twice BALANCE for same address to be computed optimizes to DUP" >:: (fun _ ->
