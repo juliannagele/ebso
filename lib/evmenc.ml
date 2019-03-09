@@ -139,27 +139,26 @@ let enc_top_of_st ea st j =
   let top_pos = (st.stack_ctr @@ [j]) - sanum 1 in
   st.stack @@ (forall_vars ea @ [j; top_pos])
 
-let init_balance_rom ea st =
-  let k = seconst "k" in
+let enc_brom ias r =
   let open Z3Ops in
-  let pos = poss_of_instr ea.p BALANCE in
-  let pos_blncs = List.zip_exn pos ea.blncs in
-  let arg = enc_top_of_st ea st in
-  forall k (
-  match pos_blncs with
-  | (p, b) :: [] ->
-    (ea.brom @@ (forall_vars ea @ [arg (num p)])) == b &&
-    ((k != arg (num p)) ==> ((ea.brom @@ (forall_vars ea @ [k])) != b))
-  | (p1, b1) :: (p2, b2) :: [] ->
-    let a1 = forall_vars ea @ [arg (num p1)] in
-    let a2 = forall_vars ea @ [arg (num p2)] in
-    (ea.brom @@ a1) == b1 &&
-    (ea.brom @@ a2) == (ite (arg (num p1) == arg (num p2)) b1 b2) &&
-    ((k != arg (num p1)) ==> (ea.brom @@ forall_vars ea @ [k] != b1)) &&
-    ((k != arg (num p2)) ==> (ea.brom @@ forall_vars ea @ [k] != b2))
-  | [] -> top
-  | _ -> failwith "Currently only works with up to two BALANCE instructions." )
+  let ite_build (a,b) =
+    List.fold_right ~init:b ~f:(fun (ai, bi) enc -> ite (ai == a) bi enc)
+  in
+  let in_brom =
+  List.fold_left ias ~init:(top, [])
+    ~f:(fun (enc, ias') (a, b) -> (enc && (r a == ite_build (a,b) ias'), ias' @ [(a,b)]))
+  in
+  let not_in_brom =
+    let k = seconst "k" in
+    forall k (
+      conj (List.map ias ~f:(fun (ai, bi) -> (k != ai) ==> (r k != bi)))
+    )
+  in fst in_brom && not_in_brom
 
+let init_balance_rom ea st =
+  let pos = poss_of_instr ea.p BALANCE in
+  let ias = List.map pos ~f:(fun p -> enc_top_of_st ea st (num p)) in
+  enc_brom (List.zip_exn ias ea.blncs) (fun ia -> ea.brom <@@> (forall_vars ea @ [ia]))
 
 let init ea st =
   let open Z3Ops in
