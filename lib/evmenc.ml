@@ -58,7 +58,7 @@ let mk_const_vars p = List.map (Program.consts p) ~f:(seconst)
 
 (* list of free variables for uninterpreted instructions *)
 (* based on list of names of uninterpreted instructions  *)
-let mk_unint_vars unint_names = List.map (List.concat unint_names) ~f:(seconst)
+let mk_unint_vars unint_names = List.map unint_names ~f:(seconst)
 
 (* list of free variables for every BALANCE instruction in program p *)
 let mk_blnc_vars p = List.map (Program.unint_balance_names p) ~f:(seconst)
@@ -307,7 +307,7 @@ let enc_dup ea st j idx =
       (sk' (sc - sc_iidx) == sk (sc - sc_iidx))))
 
 let enc_const_uninterpreted ea st j i =
-  let name = List.hd_exn @@ Instruction.unint_names 0 i in
+  let name = Instruction.unint_name 0 i in
   enc_push ea st j (Const name)
 
 let enc_balance ea st j =

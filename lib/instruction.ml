@@ -137,12 +137,9 @@ let delta_alpha = function
   | _ -> failwith "not implemented"
 
 (* names of variables for representing an uninterpreted instruction *)
-let unint_names j i =
+let unint_name j i =
   let (d, _) = delta_alpha i in
-  let j =
-    if d > 0 then Int.to_string j ^ "-" else ""
-  in
-  List.init (d + 1) ~f:(fun io -> show i ^ "-" ^ j ^  Int.to_string io)
+  show i ^ (if d > 0 then Int.to_string j else "")
 
 (* list of instructions that remain uninterpreted *)
 let uninterpreted = [
