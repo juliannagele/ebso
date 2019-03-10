@@ -141,19 +141,11 @@ let enc_top_of_st ea st j =
 
 let enc_brom ias r =
   let open Z3Ops in
-  let ite_build (a,b) =
-    List.fold_right ~init:b ~f:(fun (ai, bi) enc -> ite (ai == a) bi enc)
-  in
-  let in_brom =
-  List.fold_left ias ~init:(top, [])
-    ~f:(fun (enc, ias') (a, b) -> (enc && (r a == ite_build (a,b) ias'), ias' @ [(a,b)]))
-  in
-  let not_in_brom =
-    let k = seconst "k" in
-    forall k (
-      conj (List.map ias ~f:(fun (ai, bi) -> (k != ai) ==> (r k != bi)))
+  let k = seconst "k" in
+  forall k (
+    r k ==
+      List.fold_right ias ~init:(senum 0) ~f:(fun (ai, bi) enc -> ite (ai == k) bi enc)
     )
-  in fst in_brom && not_in_brom
 
 let init_balance_rom ea st =
   let pos = poss_of_instr ea.p BALANCE in
