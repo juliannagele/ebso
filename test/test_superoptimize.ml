@@ -359,7 +359,7 @@ let suite =
 
     "twice BALANCE for same address optimizes to DUP" >: test_case ~length:Long (fun _ ->
         let p = [PUSH (Val "1"); BALANCE; PUSH (Val "1"); BALANCE] in
-        let cis = `Progr in
+        let cis = `User [PUSH Tmpl; BALANCE; DUP I] in
         let ea = mk_enc_consts p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
@@ -377,7 +377,7 @@ let suite =
 
     "twice BALANCE for same address to be computed optimizes to DUP" >:: (fun _ ->
         let p = [PUSH (Val "2"); BALANCE; PUSH (Val "1"); PUSH (Val "1"); ADD; BALANCE] in
-        let cis = `Progr in
+        let cis = `User [PUSH Tmpl; BALANCE; DUP I] in
         let ea = mk_enc_consts p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
