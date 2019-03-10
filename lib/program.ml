@@ -74,9 +74,8 @@ let unints p =
 let unints_const p =
   unints_aux p Instruction.constant_uninterpreted
 
-let unint_balance_names p =
-  let bs = List.filter p ~f:(Instruction.equal BALANCE) in
-  List.mapi bs ~f:(fun k i -> [%show: Instruction.t] i ^ [%show: int] k)
+let unint_blnc p =
+  unints_aux p [BALANCE]
 
 let compute_word_size p max_ws =
   let d = stack_depth p in

@@ -61,7 +61,7 @@ let mk_const_vars p = List.map (Program.consts p) ~f:(seconst)
 let mk_unint_const_vars unint_names = List.map unint_names ~f:(seconst)
 
 (* list of free variables for every BALANCE instruction in program p *)
-let mk_blnc_vars p = List.map (Program.unint_balance_names p) ~f:(seconst)
+let mk_blnc_vars blnc_names = List.map blnc_names ~f:(seconst)
 
 (* list of wsorts for every variable in vs *)
 let mk_vars_sorts vs = List.map vs ~f:(fun _ -> !wsort)
@@ -76,11 +76,12 @@ let mk_cis unints p = function
 
 let mk_enc_consts p cis_mde =
   let (unints_const, unint_const_names) = List.unzip (Program.unints_const p) in
+  let (_, unint_blncs_names) = List.unzip (Program.unint_blnc p) in
   let cis = mk_cis unints_const p cis_mde in
   let xs = mk_input_vars p in
   let cs = mk_const_vars p in
   let uis = mk_unint_const_vars unint_const_names in
-  let blncs = mk_blnc_vars p in
+  let blncs = mk_blnc_vars unint_blncs_names in
 { (* source program *)
   p = p;
   (* candidate instruction set: instructions to choose from in target program *)
