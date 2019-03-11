@@ -136,7 +136,10 @@ let delta_alpha = function
   | SELFDESTRUCT -> (1, 0)
   | _ -> failwith "not implemented"
 
-(* names of variables for representing an uninterpreted instruction *)
+(* names of variables for representing an uninterpreted instruction
+   constant uninterpreted instructions have only one variable,
+   uninterpreted instructions with arguments need one variable per use
+   *)
 let unint_name j i =
   let (d, _) = delta_alpha i in
   show i ^ (if d > 0 then Int.to_string j else "")
