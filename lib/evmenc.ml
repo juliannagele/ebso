@@ -142,10 +142,11 @@ let enc_top_of_st ea st j =
 
 let enc_brom ias r =
   let open Z3Ops in
+  let dflt = 0 in
   let k = seconst "k" in
   forall k (
     r k ==
-      List.fold_right ias ~init:(senum 0) ~f:(fun (ai, bi) enc -> ite (ai == k) bi enc)
+      List.fold_right ias ~init:(senum dflt) ~f:(fun (ai, bi) enc -> ite (ai == k) bi enc)
     )
 
 let init_balance_rom ea st =
