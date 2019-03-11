@@ -142,8 +142,8 @@ let is_sat cs = Option.is_some (solve_model cs)
 
 let is_unsat cs = not (is_sat cs)
 
-let eval_func_decl m j ?(n = []) ?(xs = []) f =
-  Option.value_exn (Model.eval m (f <@@> (xs @ [num j] @ n)) true)
+let eval_func_decl m f args =
+  Option.value_exn (Model.eval m (f <@@> args) true)
     ~message:("could not eval " ^ Z3.FuncDecl.to_string f)
 
 let eval_const m k =

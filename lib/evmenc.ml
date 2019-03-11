@@ -477,18 +477,21 @@ let enc_classic_so_test ea cp js =
      (* and their final state is the same *)
      (enc_equivalence_at ea sts stc ks kt))
 
+let eval_state_func_decl  m j ?(n = []) ?(xs = []) f =
+  eval_func_decl m f (xs @ [num j] @ n)
+
 let eval_stack ?(xs = []) st m i n =
-  eval_func_decl m i ~n:[sanum n] ~xs:xs st.stack
+  eval_state_func_decl m i ~n:[sanum n] ~xs:xs st.stack
 
-let eval_stack_ctr st m i = eval_func_decl m i st.stack_ctr
+let eval_stack_ctr st m i = eval_state_func_decl m i st.stack_ctr
 
-let eval_exc_halt st m i = eval_func_decl m i st.exc_halt
+let eval_exc_halt st m i = eval_state_func_decl m i st.exc_halt
 
-let eval_gas st m i = eval_func_decl m i st.used_gas |> Z3.Arithmetic.Integer.get_int
+let eval_gas st m i = eval_state_func_decl m i st.used_gas |> Z3.Arithmetic.Integer.get_int
 
-let eval_fis ea m j = eval_func_decl m j ea.fis |> Z3.Arithmetic.Integer.get_int
+let eval_fis ea m j = eval_state_func_decl m j ea.fis |> Z3.Arithmetic.Integer.get_int
 
-let eval_a ea m j = eval_func_decl m j ea.a |> Z3.Arithmetic.Integer.numeral_to_string
+let eval_a ea m j = eval_state_func_decl m j ea.a |> Z3.Arithmetic.Integer.numeral_to_string
 
 let dec_push ea m j = function
   | PUSH Tmpl -> PUSH (Val (eval_a ea m j))
