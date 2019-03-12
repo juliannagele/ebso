@@ -433,6 +433,20 @@ let suite =
         let m = [%show: Instruction.t list] uis ^ " does not contain BLOCKHASH and NUMBER" in
         assert_bool m (List.mem uis BLOCKHASH ~equal:Instruction.equal && List.mem uis NUMBER ~equal:Instruction.equal)
       );
+
+    (* check whether instruction is uninterpreted *)
+
+    "BALANCE is an uninterpreted unary instruction" >:: (fun _ ->
+        assert_bool "BALANCE is an uinterpreted instruction" (Instruction.is_uninterpreted BALANCE)
+      );
+
+    "NUMBER is an uninterpreted constant instruction" >:: (fun _ ->
+        assert_bool "NUMBER is an uinterpreted instruction" (Instruction.is_uninterpreted NUMBER)
+      );
+
+    "ADD is not an uninterpreted instruction" >:: (fun _ ->
+        assert_bool "ADD is not an uinterpreted instruction" (not (Instruction.is_uninterpreted ADD))
+      );
   ]
 
 let () =

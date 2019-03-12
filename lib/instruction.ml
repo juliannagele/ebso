@@ -178,6 +178,8 @@ let uninterpreted = [
   ; GAS
   ]
 
+let is_uninterpreted _ = failwith "not implemented"
+
 (* uninterpreted instructions that do not consume words from the stack *)
 let constant_uninterpreted =
   List.filter uninterpreted ~f:(fun i -> Tuple.T2.get1 (delta_alpha i) = 0)
