@@ -145,6 +145,9 @@ let unint_name j i =
   let suff = if d = 0 then "" else "_" ^ Int.to_string j in
   "x_" ^ show i ^ suff
 
+let unint_rom_name i =
+  "f_" ^ show i
+
 (* list of instructions that remain uninterpreted *)
 let uninterpreted = [
     EXP
