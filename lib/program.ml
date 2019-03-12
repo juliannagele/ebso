@@ -61,6 +61,8 @@ let const_to_val p =
 let consts p = List.stable_dedup
     (List.filter_map p ~f:(function | PUSH (Const c) -> Some c | _ -> None))
 
+let is_unint_const i = List.mem Instruction.uninterpreted i ~equal:Instruction.equal
+
 let unints_aux p is =
   List.stable_dedup @@
   List.filter_mapi p ~f:(fun j i ->
