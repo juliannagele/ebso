@@ -178,7 +178,7 @@ let uninterpreted = [
   ; GAS
   ]
 
-let is_uninterpreted _ = failwith "not implemented"
+let is_uninterpreted i = List.mem uninterpreted i ~equal:[%eq: t]
 
 (* uninterpreted instructions that do not consume words from the stack *)
 let constant_uninterpreted =
