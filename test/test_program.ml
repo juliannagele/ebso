@@ -410,6 +410,29 @@ let suite =
         assert_equal ~cmp:[%eq: int list]  ~printer:[%show: int list]
           [] (poss_of_instr [POP; POP] BALANCE);
       );
+
+    (* filter uninterpreted constants *)
+
+    "no uninterpreted constant" >:: (fun _ ->
+        assert_equal ~cmp:[%eq: Instruction.t list]  ~printer:[%show: Instruction.t list]
+          [] (filter_unint_consts [POP; POP; PUSH Tmpl; BALANCE]);
+      );
+
+    "one uninterpreted constant" >:: (fun _ ->
+        assert_equal ~cmp:[%eq: Instruction.t list]  ~printer:[%show: Instruction.t list]
+          [NUMBER] (filter_unint_consts [ADD; NUMBER]);
+      );
+
+    "twice the same uninterpreted constant" >:: (fun _ ->
+        assert_equal ~cmp:[%eq: Instruction.t list]  ~printer:[%show: Instruction.t list]
+          [NUMBER] (filter_unint_consts [ADD; NUMBER; NUMBER]);
+      );
+
+    "two uninterpreted constants" >:: (fun _ ->
+        let uis = filter_unint_consts [ADD; BLOCKHASH; NUMBER] in
+        let m = [%show: Instruction.t list] uis ^ " does not contain BLOCKHASH and NUMBER" in
+        assert_bool m (List.mem uis BLOCKHASH ~equal:Instruction.equal && List.mem uis NUMBER ~equal:Instruction.equal)
+      );
   ]
 
 let () =

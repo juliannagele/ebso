@@ -72,7 +72,7 @@ let mk_cis p = function
   | `User cis -> List.stable_dedup cis
   | `All ->
     let const_pushs = List.map (Program.consts p) ~f:(fun c -> PUSH (Const c)) in
-    let unints_const = List.stable_dedup @@ List.filter p ~f:(Program.is_unint_const) in
+    let unints_const = filter_unint_consts p in
     Instruction.encodable @ const_pushs @ unints_const
 
 let mk_enc_consts p cis_mde =
