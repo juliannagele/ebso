@@ -142,7 +142,8 @@ let delta_alpha = function
    *)
 let unint_name j i =
   let (d, _) = delta_alpha i in
-  show i ^ (if d > 0 then Int.to_string j else "")
+  let suff = if d = 0 then "" else "_" ^ Int.to_string j in
+  "x_" ^ show i ^ suff
 
 (* list of instructions that remain uninterpreted *)
 let uninterpreted = [
