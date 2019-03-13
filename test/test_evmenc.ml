@@ -29,14 +29,14 @@ let test_stack_pres oc =
   let p = ip @ [oc] in
   let ea = mk_enc_consts p (`User []) in
   let st = mk_state ea "" in
-  let c = foralls ea.uis (enc_program ea st) in
+  let c = foralls (forall_vars ea) (enc_program ea st) in
   let m = solve_model_exn [c] in
   (* check all words below delta *)
   assert_equal ~cmp:[%eq: Z3.Expr.t list]
     ~printer:(List.to_string ~f:Z3.Expr.to_string)
     [(senum 0); (senum 1)]
-    [(eval_stack ~xs:(List.map ea.uis ~f:(fun _ -> senum 1)) st m (List.length p) 0);
-     (eval_stack ~xs:(List.map ea.uis ~f:(fun _ -> senum 1)) st m (List.length p) 1)]
+    [(eval_stack ~xs:(List.map (forall_vars ea) ~f:(fun _ -> senum 1)) st m (List.length p) 0);
+     (eval_stack ~xs:(List.map (forall_vars ea) ~f:(fun _ -> senum 1)) st m (List.length p) 1)]
 
 let test_stack_ctr p =
   let d = stack_depth p in
@@ -1091,7 +1091,7 @@ let effect =
         let p = [NUMBER] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
-        let c = foralls ea.uis (enc_program ea st) in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
           (senum 3)
@@ -1102,7 +1102,7 @@ let effect =
         let p = [NUMBER; NUMBER] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
-        let c = foralls ea.uis (enc_program ea st) in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t list]
@@ -1438,7 +1438,7 @@ let misc =
     "inital balance for arg in range">:: (fun _ ->
         let ea = mk_enc_consts [PUSH (Val "2"); BALANCE] (`User []) in
         let st = mk_state ea "" in
-        let c = foralls ea.blncs (enc_program ea st) in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
         let i = senum 3 in (* set for all quantified variable to 3 for test *)
         let m = solve_model_exn [c] in
         let brom = Map.find_exn ea.roms BALANCE in
@@ -1452,7 +1452,7 @@ let misc =
     "initial balance for given args not in range">:: (fun _ ->
         let ea = mk_enc_consts [PUSH (Val "2"); BALANCE] (`User []) in
         let st = mk_state ea "" in
-        let c = foralls ea.blncs (enc_program ea st) in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         let brom = Map.find_exn ea.roms BALANCE in
         let ias = [0; 1; 3] in (* not 2, as this is the argument of BALANCE *)
@@ -1464,7 +1464,7 @@ let misc =
     "inital balance for computed arg in range">:: (fun _ ->
         let ea = mk_enc_consts [PUSH (Val "1"); PUSH (Val "1"); ADD; BALANCE] (`User []) in
         let st = mk_state ea "" in
-        let c = foralls ea.blncs (enc_program ea st) in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
         let i = senum 3 in (* set for all quantified variable to 3 for test *)
         let m = solve_model_exn [c] in
         let brom = Map.find_exn ea.roms BALANCE in
@@ -1478,7 +1478,7 @@ let misc =
     "initial balance for computed arg where given args are not in range">:: (fun _ ->
         let ea = mk_enc_consts [PUSH (Val "1"); PUSH (Val "1"); ADD; BALANCE] (`User []) in
         let st = mk_state ea "" in
-        let c = foralls ea.blncs (enc_program ea st) in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         let ias = [0; 1; 3] in (* not 2, as this is the argument of BALANCE *)
         let brom = Map.find_exn ea.roms BALANCE in
