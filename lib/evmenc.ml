@@ -57,6 +57,7 @@ let mk_unint_vars p =
                                          | None -> [seconst (Instruction.unint_name 0 i)])
       else ue)
 
+let mk_unint_funs _ _ = failwith "not implemented"
 
 (* list of free variables x_0 .. x_(stack_depth -1) for words already on stack *)
 (* careful: no check that this does not generate more than max stacksize variables *)
