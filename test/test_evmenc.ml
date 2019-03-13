@@ -1495,14 +1495,14 @@ let misc =
         let p = [NUMBER] in
         let ue = mk_unint_vars p in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [(seconst "x_NUMBER")] (Option.value_exn (Map.find ue BALANCE))
+          [(seconst "x_NUMBER")] (Option.value_exn (Map.find ue NUMBER))
       );
 
     "[NUMBER; NUMBER] generates one variable">:: (fun _ ->
         let p = [NUMBER; NUMBER] in
         let ue = mk_unint_vars p in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [(seconst "x_NUMBER")] (Option.value_exn (Map.find ue BALANCE))
+          [(seconst "x_NUMBER")] (Option.value_exn (Map.find ue NUMBER))
       );
 
     "[BALANCE] generates one variable">:: (fun _ ->
