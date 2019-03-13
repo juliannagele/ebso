@@ -121,11 +121,12 @@ let mk_enc_consts p cis_mde =
   (* integer encoding of opcodes *)
   opcodes = List.mapi cis ~f:(fun i oc -> (oc, i));
   xs = xs;
-  (* read only memory for balance "balance_rom" returns a word
-     depending on a given argument, i.e., the argument of BALANCE in
-     the program, _and_ depending on the forall quantified variables *)
-  (* source and target program use the same brom, hence brom cannot be
-     in state without adapting equvivalence *)
+  (* read only memories for uninterpreted instructions: return a word
+     depending on given arguments, i.e., the arguments of the
+     instruction in the program, _and_ depending on the forall
+     quantified variables, source and target program use the same
+     roms, hence roms cannot be in state without adapting equvivalence
+     *)
   roms = mk_unint_roms p (List.length (xs @ cs @ uis @ blncs));
   blncs = blncs;
 }
