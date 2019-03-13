@@ -1483,6 +1483,41 @@ let misc =
           (List.map ias ~f:(fun ia -> Z3util.eval_func_decl m ea.brom (forall_vars ea @ [senum ia])))
       );
 
+    (* mk_uint_vars *)
+
+    "ADD does not generate variables">:: (fun _ ->
+        let p = [ADD; NUMBER] in
+        let ue = mk_unint_vars p in
+        assert_bool "No entry found for ADD" (Option.is_none (Map.find ue ADD))
+      );
+
+    "[NUMBER] generates one variable">:: (fun _ ->
+        let p = [NUMBER] in
+        let ue = mk_unint_vars p in
+        assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
+          [(seconst "x_NUMBER")] (Option.value_exn (Map.find ue BALANCE))
+      );
+
+    "[NUMBER; NUMBER] generates one variable">:: (fun _ ->
+        let p = [NUMBER; NUMBER] in
+        let ue = mk_unint_vars p in
+        assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
+          [(seconst "x_NUMBER")] (Option.value_exn (Map.find ue BALANCE))
+      );
+
+    "[BALANCE] generates one variable">:: (fun _ ->
+        let p = [BALANCE] in
+        let ue = mk_unint_vars p in
+        assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
+          [(seconst "x_BALANCE_0")] (Option.value_exn (Map.find ue BALANCE))
+      );
+
+    "[BALANCE; BALANCE] generates two variables">:: (fun _ ->
+        let p = [BALANCE; BALANCE] in
+        let ue = mk_unint_vars p in
+        assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
+          [(seconst "x_BALANCE_0"); (seconst "x_BALANCE_1")] (Option.value_exn (Map.find ue BALANCE))
+      );
 ]
 
 let suite =

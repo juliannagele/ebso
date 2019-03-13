@@ -48,6 +48,8 @@ type enc_consts = {
   blncs : Z3.Expr.expr list;
 }
 
+let mk_unint_vars _ = failwith "not implemented"
+
 (* list of free variables x_0 .. x_(stack_depth -1) for words already on stack *)
 (* careful: no check that this does not generate more than max stacksize variables *)
 let mk_input_vars p =
