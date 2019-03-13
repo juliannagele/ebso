@@ -75,9 +75,6 @@ let unints_aux p is =
 let unints p =
   unints_aux p Instruction.uninterpreted
 
-let unints_const p =
-  unints_aux p Instruction.constant_uninterpreted
-
 let unint_blnc p =
   unints_aux p [BALANCE]
 
