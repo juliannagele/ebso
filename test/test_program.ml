@@ -466,6 +466,19 @@ let suite =
         assert_bool "SUB is a constant instruction" (not (Instruction.is_const SUB))
       );
 
+    (* check arity *)
+
+    "NUMBER has arity 0" >:: (fun _ ->
+        assert_equal 0 (Instruction.arity NUMBER)
+      );
+
+    "BLOCKHASH has arity 1" >:: (fun _ ->
+        assert_equal 1 (Instruction.arity BLOCKHASH)
+      );
+
+    "ADD has arity 2" >:: (fun _ ->
+        assert_equal 2 (Instruction.arity ADD)
+      );
   ]
 
 let () =
