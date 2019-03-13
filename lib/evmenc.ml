@@ -54,7 +54,7 @@ let mk_unint_vars p =
   in List.fold p ~init:M.empty ~f:(fun ue i ->
       if Instruction.is_uninterpreted i
       then Map.update ue i ~f:(function | Some xs -> if Instruction.is_const i then xs else add_xi i xs
-                                         | None -> [seconst (Instruction.unint_name 0 i)])
+                                        | None -> [seconst (Instruction.unint_name 0 i)])
       else ue)
 
 let mk_unint_funs _ _ = failwith "not implemented"
