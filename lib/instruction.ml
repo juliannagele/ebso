@@ -143,8 +143,7 @@ let is_const i = let (d, _) = delta_alpha i in d = 0
    uninterpreted instructions with arguments need one variable per use
    *)
 let unint_name j i =
-  let (d, _) = delta_alpha i in
-  let suff = if d = 0 then "" else "_" ^ Int.to_string j in
+  let suff = if is_const i then "" else "_" ^ Int.to_string j in
   "x_" ^ show i ^ suff
 
 let unint_rom_name i =
