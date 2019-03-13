@@ -41,11 +41,10 @@ type enc_consts = {
   fis : Z3.FuncDecl.func_decl;
   a : Z3.FuncDecl.func_decl;
   cs : Z3.Expr.expr list;
-  uis : Z3.Expr.expr list;
+  uis : Z3.Expr.expr list Map.Make_plain(Instruction).t;
   opcodes : (Instruction.t * int) list;
   xs : Z3.Expr.expr list;
   roms : Z3.FuncDecl.func_decl Map.Make_plain(Instruction).t;
-  blncs : Z3.Expr.expr list;
 }
 
 let mk_unint_vars p =
@@ -104,8 +103,7 @@ let mk_enc_consts p cis_mde =
   let cis = mk_cis p cis_mde in
   let xs = mk_input_vars p in
   let cs = mk_push_const_vars p in
-  let uis = mk_unint_const_vars p in
-  let blncs = mk_blnc_vars p in
+  let uis = mk_unint_vars p in
 { (* source program *)
   p = p;
   (* candidate instruction set: instructions to choose from in target program *)
@@ -127,12 +125,11 @@ let mk_enc_consts p cis_mde =
      quantified variables, source and target program use the same
      roms, hence roms cannot be in state without adapting equvivalence
      *)
-  roms = mk_unint_roms p (List.length (xs @ cs @ uis @ blncs));
-  blncs = blncs;
+  roms = mk_unint_roms p (List.length (xs @ cs @ List.concat (Map.data uis)));
 }
 
 (* project all forall quantified variables *)
-let forall_vars ea = ea.xs @ ea.cs @ ea.uis @ ea.blncs
+let forall_vars ea = ea.xs @ ea.cs @ List.concat (Map.data ea.uis)
 
 type state = {
   stack : Z3.FuncDecl.func_decl;
@@ -145,8 +142,7 @@ let mk_state ea idx =
   { (* stack(x0 ... x(sd-1), j, n) = nth word on stack after j instructions
        starting from a stack that contained words x0 ... x(sd-1) *)
     stack = func_decl ("stack" ^ idx)
-        ((mk_vars_sorts (ea.xs @ ea.cs @ ea.uis @ ea.blncs))
-         @ [int_sort; !sasort]) !wsort;
+        (mk_vars_sorts (forall_vars ea) @ [int_sort; !sasort]) !wsort;
     (* sc(j) = index of the next free slot on the stack after j instructions *)
     stack_ctr = func_decl ("sc" ^ idx) [int_sort] !sasort;
     (* exc_halt(j) is true if exceptional halting occurs after j instructions *)
@@ -175,9 +171,10 @@ let enc_brom ias r =
     )
 
 let init_balance_rom ea st brom =
+  let blncs = Map.find_exn ea.uis BALANCE in
   let pos = poss_of_instr ea.p BALANCE in
   let ias = List.map pos ~f:(fun p -> enc_top_of_st ea st (num p)) in
-  enc_brom (List.zip_exn ias ea.blncs) (fun ia -> brom <@@> (forall_vars ea @ [ia]))
+  enc_brom (List.zip_exn ias blncs) (fun ia -> brom <@@> (forall_vars ea @ [ia]))
 
 let init ea st =
   let open Z3Ops in
@@ -458,7 +455,7 @@ let enc_super_opt ea =
   let sts = mk_state ea "_s" in
   let stt = mk_state ea "_t" in
   let ks = List.length ea.p in
-  foralls (ea.xs @ ea.cs @ ea.uis @ ea.blncs)
+  foralls (forall_vars ea)
     (enc_program ea sts &&
      enc_search_space ea stt &&
      enc_equivalence ea sts stt &&
@@ -473,7 +470,7 @@ let enc_trans_val ea tp =
   let stt = mk_state ea "_t" in
   let kt = num (List.length tp) and ks = num (List.length ea.p) in
   (* we're asking for inputs that distinguish the programs *)
-  existss (ea.xs @ ea.uis)
+  existss (ea.xs @ List.concat (Map.data ea.uis))
     (* encode source and target program *)
     ((List.foldi tp ~init:(enc_program ea sts)
         ~f:(fun j enc oc -> enc <&> enc_instruction ea stt (num j) oc)) &&
@@ -489,7 +486,7 @@ let enc_classic_so_test ea cp js =
   let sts = mk_state ea "_s" in
   let stc = mk_state ea "_c" in
   let kt = num (List.length cp) and ks = num (List.length ea.p) in
-  foralls (ea.xs @ ea.cs @ ea.uis)
+  foralls (forall_vars ea)
     (* encode source program*)
     ((enc_program ea sts) &&
      (* all instructions from candidate program are used in some order *)
