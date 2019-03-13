@@ -44,7 +44,7 @@ type enc_consts = {
   uis : Z3.Expr.expr list;
   opcodes : (Instruction.t * int) list;
   xs : Z3.Expr.expr list;
-  brom : Z3.FuncDecl.func_decl;
+  roms : Z3.FuncDecl.func_decl Map.Make_plain(Instruction).t;
   blncs : Z3.Expr.expr list;
 }
 
@@ -126,7 +126,7 @@ let mk_enc_consts p cis_mde =
      the program, _and_ depending on the forall quantified variables *)
   (* source and target program use the same brom, hence brom cannot be
      in state without adapting equvivalence *)
-  brom = func_decl (Instruction.unint_rom_name BALANCE) (!wsort :: (mk_vars_sorts (xs @ cs @ uis @ blncs))) !wsort;
+  roms = mk_unint_funs p (List.length (xs @ cs @ uis @ blncs));
   blncs = blncs;
 }
 
@@ -173,10 +173,10 @@ let enc_brom ias r =
       List.fold_right ias ~init:(senum dflt) ~f:(fun (ai, bi) enc -> ite (ai == k) bi enc)
     )
 
-let init_balance_rom ea st =
+let init_balance_rom ea st brom =
   let pos = poss_of_instr ea.p BALANCE in
   let ias = List.map pos ~f:(fun p -> enc_top_of_st ea st (num p)) in
-  enc_brom (List.zip_exn ias ea.blncs) (fun ia -> ea.brom <@@> (forall_vars ea @ [ia]))
+  enc_brom (List.zip_exn ias ea.blncs) (fun ia -> brom <@@> (forall_vars ea @ [ia]))
 
 let init ea st =
   let open Z3Ops in
@@ -189,7 +189,7 @@ let init ea st =
       st.stack @@ (forall_vars ea @ [num 0; sanum i]) == x))
   && (st.exc_halt @@ [num 0] == btm)
   && (st.used_gas @@ [num 0] == num 0)
-  && init_balance_rom ea st
+  && Map.fold ea.roms ~init:top ~f:(fun ~key:i ~data:f e -> e && match i with | BALANCE -> init_balance_rom ea st f | _ -> failwith "not implemented" )
 
 (* TODO: check data layout on stack *)
 let enc_stackarg ea j = function
@@ -337,7 +337,7 @@ let enc_const_uninterpreted ea st j i =
   enc_push ea st j (Const name)
 
 let enc_balance ea st j =
-  (* balance as read-only memory *)
+  let brom = Map.find_exn ea.roms BALANCE in
   let open Z3Ops in
   let sc = st.stack_ctr @@ [j]
   and sk n = st.stack @@ (forall_vars ea @ [j; n])
@@ -345,7 +345,7 @@ let enc_balance ea st j =
   and sc'= st.stack_ctr @@ [j + one] in
   let arg = (forall_vars ea) @ [sk (sc - sanum 1)] in
   (* push value of balance *)
-  (sk' (sc' - sanum 1)) == (ea.brom @@ arg)
+  (sk' (sc' - sanum 1)) == (brom @@ arg)
 
 (* effect of instruction on state st after j steps *)
 let enc_instruction ea st j is =

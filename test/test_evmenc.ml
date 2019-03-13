@@ -1441,11 +1441,12 @@ let misc =
         let c = foralls ea.blncs (enc_program ea st) in
         let i = senum 3 in (* set for all quantified variable to 3 for test *)
         let m = solve_model_exn [c] in
+        let brom = Map.find_exn ea.roms BALANCE in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
           i
-          (Z3util.eval_func_decl m ea.brom ([i] @ [senum 2]))
+          (Z3util.eval_func_decl m brom ([i] @ [senum 2]))
       );
 
     "initial balance for given args not in range">:: (fun _ ->
@@ -1453,10 +1454,11 @@ let misc =
         let st = mk_state ea "" in
         let c = foralls ea.blncs (enc_program ea st) in
         let m = solve_model_exn [c] in
+        let brom = Map.find_exn ea.roms BALANCE in
         let ias = [0; 1; 3] in (* not 2, as this is the argument of BALANCE *)
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
           [senum 0; senum 0; senum 0] (* return default value 0 *)
-          (List.map ias ~f:(fun ia -> Z3util.eval_func_decl m ea.brom (forall_vars ea @ [senum ia])))
+          (List.map ias ~f:(fun ia -> Z3util.eval_func_decl m brom (forall_vars ea @ [senum ia])))
       );
 
     "inital balance for computed arg in range">:: (fun _ ->
@@ -1465,11 +1467,12 @@ let misc =
         let c = foralls ea.blncs (enc_program ea st) in
         let i = senum 3 in (* set for all quantified variable to 3 for test *)
         let m = solve_model_exn [c] in
+        let brom = Map.find_exn ea.roms BALANCE in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
           i
-          (Z3util.eval_func_decl m ea.brom ([i] @ [senum 2]))
+          (Z3util.eval_func_decl m brom ([i] @ [senum 2]))
       );
 
     "initial balance for computed arg where given args are not in range">:: (fun _ ->
@@ -1478,9 +1481,10 @@ let misc =
         let c = foralls ea.blncs (enc_program ea st) in
         let m = solve_model_exn [c] in
         let ias = [0; 1; 3] in (* not 2, as this is the argument of BALANCE *)
+        let brom = Map.find_exn ea.roms BALANCE in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
           [senum 0; senum 0; senum 0] (* return default value 0 *)
-          (List.map ias ~f:(fun ia -> Z3util.eval_func_decl m ea.brom (forall_vars ea @ [senum ia])))
+          (List.map ias ~f:(fun ia -> Z3util.eval_func_decl m brom (forall_vars ea @ [senum ia])))
       );
 
     (* mk_uint_vars *)
