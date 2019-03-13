@@ -57,12 +57,15 @@ let mk_unint_vars p =
                                         | None -> [seconst (Instruction.unint_name 0 i)])
       else ue)
 
-let mk_unint_funs p vs =
+let mk_unint_funs p vc =
   let module M = Map.Make_plain(Instruction) in
   List.fold p ~init:M.empty ~f:(fun ue i ->
-      if Instruction.is_uninterpreted i && not Instruction.is_const i
-      then Map.update ue i ~f:(fun
-      else ue
+      if Instruction.is_uninterpreted i && not (Instruction.is_const i)
+      then Map.update ue i ~f:(function | Some f -> f
+                                        | None ->
+                                          let arity = Instruction.arity i + vc in
+                                          func_decl (Instruction.unint_rom_name i) (List.init arity ~f:(fun _ -> !wsort)) !wsort)
+      else ue)
 
 (* list of free variables x_0 .. x_(stack_depth -1) for words already on stack *)
 (* careful: no check that this does not generate more than max stacksize variables *)
