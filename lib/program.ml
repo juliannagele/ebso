@@ -65,6 +65,9 @@ let filter_unint_consts p =
   let is_unint_const i = Instruction.is_uninterpreted i && Instruction.is_const i in
   List.stable_dedup @@ List.filter p ~f:(is_unint_const)
 
+let filter_balance p =
+  List.filter p ~f:(Instruction.equal BALANCE)
+
 let unints_aux p is =
   List.stable_dedup @@
   List.filter_mapi p ~f:(fun j i ->
@@ -74,9 +77,6 @@ let unints_aux p is =
 
 let unints p =
   unints_aux p Instruction.uninterpreted
-
-let unint_blnc p =
-  unints_aux p [BALANCE]
 
 let compute_word_size p max_ws =
   let d = stack_depth p in
