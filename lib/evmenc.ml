@@ -58,7 +58,10 @@ let mk_const_vars p = List.map (Program.consts p) ~f:(seconst)
 
 (* list of free variables for uninterpreted instructions *)
 (* based on list of names of uninterpreted instructions  *)
-let mk_unint_const_vars unint_names = List.map unint_names ~f:(seconst)
+let mk_unint_const_vars p =
+  let unints_const = filter_unint_consts p in
+  let unint_names = List.mapi unints_const ~f:(Instruction.unint_name) in
+  List.map unint_names ~f:(seconst)
 
 (* list of free variables for every BALANCE instruction in program p *)
 let mk_blnc_vars blnc_names = List.map blnc_names ~f:(seconst)
@@ -76,12 +79,11 @@ let mk_cis p = function
     Instruction.encodable @ const_pushs @ unints_const
 
 let mk_enc_consts p cis_mde =
-  let (_, unint_const_names) = List.unzip (Program.unints_const p) in
   let (_, unint_blncs_names) = List.unzip (Program.unint_blnc p) in
   let cis = mk_cis p cis_mde in
   let xs = mk_input_vars p in
   let cs = mk_const_vars p in
-  let uis = mk_unint_const_vars unint_const_names in
+  let uis = mk_unint_const_vars p in
   let blncs = mk_blnc_vars unint_blncs_names in
 { (* source program *)
   p = p;
