@@ -429,9 +429,9 @@ let suite =
       );
 
     "two uninterpreted constants" >:: (fun _ ->
-        let uis = filter_unint_consts [ADD; BLOCKHASH; NUMBER] in
-        let m = [%show: Instruction.t list] uis ^ " does not contain BLOCKHASH and NUMBER" in
-        assert_bool m (List.mem uis BLOCKHASH ~equal:Instruction.equal && List.mem uis NUMBER ~equal:Instruction.equal)
+        let uis = filter_unint_consts [ADD; TIMESTAMP; NUMBER] in
+        let m = [%show: Instruction.t list] uis ^ " does not contain TIMESTAMP and NUMBER" in
+        assert_bool m (List.mem uis TIMESTAMP ~equal:Instruction.equal && List.mem uis NUMBER ~equal:Instruction.equal)
       );
 
     (* check whether instruction is uninterpreted *)
@@ -448,11 +448,14 @@ let suite =
         assert_bool "ADD is not an uinterpreted instruction" (not (Instruction.is_uninterpreted ADD))
       );
 
-
     (* check whether instruction is constant *)
 
     "NUMBER is a constant instruction" >:: (fun _ ->
         assert_bool "NUMBER is a constant instruction" (Instruction.is_const NUMBER)
+      );
+
+    "BLOCKHASH is not a constant instruction" >:: (fun _ ->
+        assert_bool "BLOCKHASH is a constant instruction" (not (Instruction.is_const BLOCKHASH))
       );
 
     "BALANCE is not a constant instruction" >:: (fun _ ->
