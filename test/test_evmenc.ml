@@ -1527,20 +1527,20 @@ let misc =
 
     "ADD does not generate function">:: (fun _ ->
         let p = [ADD;] in
-        let ue = mk_unint_funs p 0 in
+        let ue = mk_unint_roms p 0 in
         assert_bool "Some entry for ADD is found" (Option.is_none (Map.find ue ADD))
       );
 
     "NUMBER does not generate function">:: (fun _ ->
         let p = [ADD;] in
-        let ue = mk_unint_funs p 0 in
+        let ue = mk_unint_roms p 0 in
         assert_bool "Some entry for NUMBER is found" (Option.is_none (Map.find ue NUMBER))
       );
 
     "[BALANCE] generates one function">:: (fun _ ->
         let p = [BALANCE] in
         let vs = 1 in
-        let ue = mk_unint_funs p vs in
+        let ue = mk_unint_roms p vs in
         let f = Option.value_exn (Map.find ue BALANCE) in
         assert_equal ~cmp:[%eq: string * int] ~printer:[%show: string * int]
           ("f_BALANCE", vs + 1) (Z3.Symbol.to_string (Z3.FuncDecl.get_name f), Z3.FuncDecl.get_arity f)
@@ -1549,7 +1549,7 @@ let misc =
     "[BALANCE; BALANCE] generates one function">:: (fun _ ->
         let p = [BALANCE; BALANCE] in
         let vs = 1 in
-        let ue = mk_unint_funs p vs in
+        let ue = mk_unint_roms p vs in
         let f = Option.value_exn (Map.find ue BALANCE) in
         assert_equal ~cmp:[%eq: string * int] ~printer:[%show: string * int]
           ("f_BALANCE", vs + 1) (Z3.Symbol.to_string (Z3.FuncDecl.get_name f), Z3.FuncDecl.get_arity f)
@@ -1558,7 +1558,7 @@ let misc =
     "[BALANCE; BLOCKHASH] generate function for BALANCE">:: (fun _ ->
         let p = [BALANCE; BLOCKHASH] in
         let vs = 1 in
-        let ue = mk_unint_funs p vs in
+        let ue = mk_unint_roms p vs in
         let f = Option.value_exn (Map.find ue BALANCE) in
         assert_equal ~cmp:[%eq: string * int] ~printer:[%show: string * int]
           ("f_BALANCE", vs + 1) (Z3.Symbol.to_string (Z3.FuncDecl.get_name f), Z3.FuncDecl.get_arity f)
@@ -1567,7 +1567,7 @@ let misc =
     "[BALANCE; BLOCKHASH] generate function for BLOCKHASH">:: (fun _ ->
         let p = [BALANCE; BLOCKHASH] in
         let vs = 1 in
-        let ue = mk_unint_funs p vs in
+        let ue = mk_unint_roms p vs in
         let f = Option.value_exn (Map.find ue BLOCKHASH) in
         assert_equal ~cmp:[%eq: string * int] ~printer:[%show: string * int]
           ("f_BLOCKHASH", vs + 1) (Z3.Symbol.to_string (Z3.FuncDecl.get_name f), Z3.FuncDecl.get_arity f)
@@ -1576,7 +1576,7 @@ let misc =
     "[EXP] generates one function">:: (fun _ ->
         let p = [EXP] in
         let vs = 1 in
-        let ue = mk_unint_funs p vs in
+        let ue = mk_unint_roms p vs in
         let f = Option.value_exn (Map.find ue EXP) in
         assert_equal ~cmp:[%eq: string * int] ~printer:[%show: string * int]
           ("f_EXP", vs + 2) (Z3.Symbol.to_string (Z3.FuncDecl.get_name f), Z3.FuncDecl.get_arity f)

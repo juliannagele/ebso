@@ -57,7 +57,7 @@ let mk_unint_vars p =
                                         | None -> [seconst (Instruction.unint_name 0 i)])
       else ue)
 
-let mk_unint_funs p vc =
+let mk_unint_roms p vc =
   let module M = Map.Make_plain(Instruction) in
   List.fold p ~init:M.empty ~f:(fun ue i ->
       if Instruction.is_uninterpreted i && not (Instruction.is_const i)
@@ -126,7 +126,7 @@ let mk_enc_consts p cis_mde =
      the program, _and_ depending on the forall quantified variables *)
   (* source and target program use the same brom, hence brom cannot be
      in state without adapting equvivalence *)
-  roms = mk_unint_funs p (List.length (xs @ cs @ uis @ blncs));
+  roms = mk_unint_roms p (List.length (xs @ cs @ uis @ blncs));
   blncs = blncs;
 }
 
