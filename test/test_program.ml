@@ -455,7 +455,7 @@ let suite =
       );
 
     "BLOCKHASH is not a constant instruction" >:: (fun _ ->
-        assert_bool "BLOCKHASH is a constant instruction" (not (Instruction.is_const BLOCKHASH))
+        assert_bool "BLOCKHASH is a not constant instruction" (not (Instruction.is_const BLOCKHASH))
       );
 
     "BALANCE is not a constant instruction" >:: (fun _ ->
