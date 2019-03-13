@@ -73,7 +73,7 @@ let mk_input_vars p =
   List.init (stack_depth p) ~f:(fun i -> seconst ("x_" ^ Int.to_string i))
 
 (* arguments of PUSH which are too large to fit in word size *)
-let mk_const_vars p = List.map (Program.consts p) ~f:(seconst)
+let mk_push_const_vars p = List.map (Program.consts p) ~f:(seconst)
 
 (* list of free variables for uninterpreted instructions *)
 (* based on list of names of uninterpreted instructions  *)
@@ -103,7 +103,7 @@ let mk_cis p = function
 let mk_enc_consts p cis_mde =
   let cis = mk_cis p cis_mde in
   let xs = mk_input_vars p in
-  let cs = mk_const_vars p in
+  let cs = mk_push_const_vars p in
   let uis = mk_unint_const_vars p in
   let blncs = mk_blnc_vars p in
 { (* source program *)
