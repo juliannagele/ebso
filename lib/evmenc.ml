@@ -51,11 +51,12 @@ type enc_consts = {
 let mk_unint_vars p =
   let module M = Map.Make_plain(Instruction) in
   let add_xi i xs = xs @ [seconst (Instruction.unint_name (List.length xs) i)]
-  in List.fold p ~init:M.empty ~f:(fun ue' i ->
+  in List.fold p ~init:M.empty ~f:(fun ue i ->
       if Instruction.is_uninterpreted i
-      then Map.update ue' i ~f:(function | Some xs -> if Instruction.is_const i then xs else add_xi i xs
+      then Map.update ue i ~f:(function | Some xs -> if Instruction.is_const i then xs else add_xi i xs
                                          | None -> [seconst (Instruction.unint_name 0 i)])
-      else ue')
+      else ue)
+
 
 (* list of free variables x_0 .. x_(stack_depth -1) for words already on stack *)
 (* careful: no check that this does not generate more than max stacksize variables *)
