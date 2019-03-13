@@ -136,6 +136,8 @@ let delta_alpha = function
   | SELFDESTRUCT -> (1, 0)
   | _ -> failwith "not implemented"
 
+let is_const i = let (d, _) = delta_alpha i in d = 0
+
 (* names of variables for representing an uninterpreted instruction
    constant uninterpreted instructions have only one variable,
    uninterpreted instructions with arguments need one variable per use

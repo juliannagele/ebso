@@ -447,6 +447,22 @@ let suite =
     "ADD is not an uninterpreted instruction" >:: (fun _ ->
         assert_bool "ADD is not an uinterpreted instruction" (not (Instruction.is_uninterpreted ADD))
       );
+
+
+    (* check whether instruction is constant *)
+
+    "NUMBER is a constant instruction" >:: (fun _ ->
+        assert_bool "NUMBER is a constant instruction" (Instruction.is_const NUMBER)
+      );
+
+    "BALANCE is not a constant instruction" >:: (fun _ ->
+        assert_bool "BALANCE is a constant instruction" (not (Instruction.is_const BALANCE))
+      );
+
+    "SUB is not a constant instruction" >:: (fun _ ->
+        assert_bool "SUB is a constant instruction" (not (Instruction.is_const SUB))
+      );
+
   ]
 
 let () =
