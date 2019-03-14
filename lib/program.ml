@@ -61,10 +61,6 @@ let const_to_val p =
 let consts p = List.stable_dedup
     (List.filter_map p ~f:(function | PUSH (Const c) -> Some c | _ -> None))
 
-let filter_unint_consts p =
-  let is_unint_const i = Instruction.is_uninterpreted i && Instruction.is_const i in
-  List.stable_dedup @@ List.filter p ~f:(is_unint_const)
-
 let compute_word_size p max_ws =
   let d = stack_depth p in
   let abstr_vals ws =

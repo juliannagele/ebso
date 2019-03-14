@@ -378,29 +378,6 @@ let suite =
           [] (poss_of_instr [POP; POP] BALANCE);
       );
 
-    (* filter uninterpreted constants *)
-
-    "no uninterpreted constant" >:: (fun _ ->
-        assert_equal ~cmp:[%eq: Instruction.t list]  ~printer:[%show: Instruction.t list]
-          [] (filter_unint_consts [POP; POP; PUSH Tmpl; BALANCE]);
-      );
-
-    "one uninterpreted constant" >:: (fun _ ->
-        assert_equal ~cmp:[%eq: Instruction.t list]  ~printer:[%show: Instruction.t list]
-          [NUMBER] (filter_unint_consts [ADD; NUMBER]);
-      );
-
-    "twice the same uninterpreted constant" >:: (fun _ ->
-        assert_equal ~cmp:[%eq: Instruction.t list]  ~printer:[%show: Instruction.t list]
-          [NUMBER] (filter_unint_consts [ADD; NUMBER; NUMBER]);
-      );
-
-    "two uninterpreted constants" >:: (fun _ ->
-        let uis = filter_unint_consts [ADD; TIMESTAMP; NUMBER] in
-        let m = [%show: Instruction.t list] uis ^ " does not contain TIMESTAMP and NUMBER" in
-        assert_bool m (List.mem uis TIMESTAMP ~equal:Instruction.equal && List.mem uis NUMBER ~equal:Instruction.equal)
-      );
-
     (* check whether instruction is uninterpreted *)
 
     "BALANCE is an uninterpreted unary instruction" >:: (fun _ ->
