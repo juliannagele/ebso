@@ -143,7 +143,7 @@ let is_const i = arity i = 0
 (* names of variables for representing an uninterpreted instruction
    constant uninterpreted instructions have only one variable,
    uninterpreted instructions with arguments need one variable per use
-   *)
+*)
 let unint_name j i =
   let suff = if is_const i then "" else "_" ^ Int.to_string j in
   "x_" ^ show i ^ suff
