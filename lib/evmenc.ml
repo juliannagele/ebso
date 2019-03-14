@@ -78,19 +78,18 @@ let mk_push_const_vars p = List.map (Program.consts p) ~f:(seconst)
 let mk_vars_sorts vs = List.map vs ~f:(fun _ -> !wsort)
 
 (* list of candidate instructions *)
-let mk_cis p = function
+let mk_cis p uis = function
   | `Progr -> cis_of_progr p
   | `User cis -> List.stable_dedup cis
   | `All ->
     let const_pushs = List.map (Program.consts p) ~f:(fun c -> PUSH (Const c)) in
-    let unints_const = filter_unint_consts p in
-    Instruction.encodable @ const_pushs @ unints_const
+    Instruction.encodable @ const_pushs @ uis
 
 let mk_enc_consts p cis_mde =
-  let cis = mk_cis p cis_mde in
+  let uis = mk_unint_vars p in
+  let cis = mk_cis p (Map.keys uis) cis_mde in
   let xs = mk_input_vars p in
   let cs = mk_push_const_vars p in
-  let uis = mk_unint_vars p in
 { (* source program *)
   p = p;
   (* candidate instruction set: instructions to choose from in target program *)
