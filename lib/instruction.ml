@@ -136,7 +136,7 @@ let delta_alpha = function
   | SELFDESTRUCT -> (1, 0)
   | _ -> failwith "not implemented"
 
-let arity i = let (d, _) = delta_alpha i in d
+let arity i = delta_alpha i |> Tuple.T2.get1
 
 let is_const i = arity i = 0
 
