@@ -82,11 +82,11 @@ let suite =
 
     "split program at multiple locations" >::(fun _ ->
         let p =
-          [OR; ADD; SWAP I; JUMPDEST; MLOAD; POP; JUMP; DUP III;
+          [OR; ADD; SWAP I; JUMPDEST; LOG1; POP; JUMP; DUP III;
            PUSH (Val "0"); ISZERO; JUMPI; POP; RETURN]
         in
         assert_equal ~cmp:[%eq: Program.bb list] ~printer:[%show: Program.bb list]
-          [Next [OR; ADD; SWAP I]; Terminal ([JUMPDEST; MLOAD; POP], JUMP);
+          [Next [OR; ADD; SWAP I]; Terminal ([JUMPDEST; LOG1; POP], JUMP);
            Terminal ([DUP III; PUSH (Val "0"); ISZERO], JUMPI);
            Terminal ([POP], RETURN)]
           (split_into_bbs ~split_non_encodable:false p)
@@ -94,7 +94,7 @@ let suite =
 
     "splitting a program into BBs and then concatenating them back" >::(fun _ ->
         let p =
-          [OR; ADD; SWAP I; JUMPDEST; MLOAD; POP; JUMP; DUP III;
+          [OR; ADD; SWAP I; JUMPDEST; LOG1; POP; JUMP; DUP III;
            PUSH (Val "0"); ISZERO; JUMPI; POP; RETURN]
         in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -104,11 +104,11 @@ let suite =
 
     "split program at non-encodable instructions" >::(fun _ ->
         let p =
-          [OR; ADD; SWAP I; JUMPDEST; MLOAD; POP; JUMP; DUP III;
+          [OR; ADD; SWAP I; JUMPDEST; LOG1; POP; JUMP; DUP III;
            PUSH (Val "0"); ISZERO; JUMPI; POP; RETURN]
         in
         assert_equal ~cmp:[%eq: Program.bb list] ~printer:[%show: Program.bb list]
-          [Next [OR; ADD; SWAP I]; NotEncodable [JUMPDEST; MLOAD];
+          [Next [OR; ADD; SWAP I]; NotEncodable [JUMPDEST; LOG1];
            Terminal ([POP], JUMP);
            Terminal ([DUP III; PUSH (Val "0"); ISZERO], JUMPI);
            Terminal ([POP], RETURN)]
@@ -117,7 +117,7 @@ let suite =
 
     "splitting into BBs and concatenating back with non-encodable split" >::(fun _ ->
         let p =
-          [OR; ADD; SWAP I; JUMPDEST; MLOAD; POP; JUMP; DUP III;
+          [OR; ADD; SWAP I; JUMPDEST; LOG1; POP; JUMP; DUP III;
            PUSH (Val "0"); ISZERO; JUMPI; POP; RETURN]
         in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
