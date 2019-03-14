@@ -184,8 +184,7 @@ let uninterpreted = [
 let is_uninterpreted i = List.mem uninterpreted i ~equal:[%eq: t]
 
 (* uninterpreted instructions that do not consume words from the stack *)
-let constant_uninterpreted =
-  List.filter uninterpreted ~f:(fun i -> Tuple.T2.get1 (delta_alpha i) = 0)
+let constant_uninterpreted = List.filter uninterpreted ~f:is_const
 
 (* list of instructions that have an effect on the outside world that is
    not encodable, i.e., effects on memory, storage, and logs *)
