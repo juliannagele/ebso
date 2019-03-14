@@ -74,19 +74,6 @@ let mk_input_vars p =
 (* arguments of PUSH which are too large to fit in word size *)
 let mk_push_const_vars p = List.map (Program.consts p) ~f:(seconst)
 
-(* list of free variables for uninterpreted instructions *)
-(* based on list of names of uninterpreted instructions  *)
-let mk_unint_const_vars p =
-  let unints_const = filter_unint_consts p in
-  let unint_names = List.mapi unints_const ~f:(Instruction.unint_name) in
-  List.map unint_names ~f:(seconst)
-
-(* list of free variables for every BALANCE instruction in program p *)
-let mk_blnc_vars p =
-  let blncs = filter_balance p in
-  let blnc_names = List.mapi blncs ~f:(Instruction.unint_name) in
-  List.map blnc_names ~f:(seconst)
-
 (* list of wsorts for every variable in vs *)
 let mk_vars_sorts vs = List.map vs ~f:(fun _ -> !wsort)
 

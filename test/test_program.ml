@@ -283,39 +283,6 @@ let suite =
           (consts p')
       );
 
-    (* unints *)
-
-    "uninterpreted instrucions of NUMBER" >:: (fun _ ->
-        assert_equal
-          ~cmp:[%eq: (Instruction.t * string) list]
-          ~printer:[%show: (Instruction.t * string) list]
-          [NUMBER, "x_NUMBER"] (Program.unints [NUMBER])
-      );
-
-    "uninterpreted instrucions of NUMBER NUMBER" >:: (fun _ ->
-        assert_equal
-          ~cmp:[%eq: (Instruction.t * string) list]
-          ~printer:[%show: (Instruction.t * string) list]
-          [NUMBER, "x_NUMBER"] (Program.unints [NUMBER; NUMBER])
-      );
-
-    "uninterpreted instrucions of SHA3" >:: (fun _ ->
-        assert_equal
-          ~cmp:[%eq: (Instruction.t * string) list]
-          ~printer:[%show: (Instruction.t * string) list]
-          [SHA3, "x_SHA3_0"] (Program.unints [SHA3])
-      );
-
-    "uninterpreted instrucions of SHA3 NUMBER SHA3 NUMBER" >:: (fun _ ->
-        assert_equal
-          ~cmp:[%eq: (Instruction.t * string) list]
-          ~printer:[%show: (Instruction.t * string) list]
-          [SHA3, "x_SHA3_0";
-           NUMBER, "x_NUMBER";
-           SHA3, "x_SHA3_2"]
-          (Program.unints [SHA3; NUMBER; SHA3; NUMBER])
-      );
-
     (* enumerate programs *)
 
     "enumerate programs of cost 1" >:: (fun _ ->
