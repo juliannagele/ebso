@@ -237,4 +237,4 @@ let () =
         | CLASSIC ->
           List.fold_left bbs ~init:[] ~f:(classic_super_optimize_bb `All  tval) |> ignore
     ]
-  |> Command.run ~version:"0.1"
+  |> Command.run ~version:"1.0"
