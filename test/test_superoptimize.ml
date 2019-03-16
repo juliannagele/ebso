@@ -405,6 +405,17 @@ let suite =
           [BALANCE; DUP I] (dec_super_opt ea m)
       );
 
+    "twice EXP for same arguments optimizes to DUP" >: test_case ~length:Long (fun _ ->
+        let p = [PUSH (Val "1"); PUSH (Val "2"); EXP; PUSH (Val "1"); PUSH (Val "2"); EXP] in
+        let cis = `User [PUSH Tmpl; EXP; DUP I] in
+        let ea = mk_enc_consts p cis in
+        let c = enc_super_opt ea in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
+          [PUSH (Val "1"); PUSH (Val "2"); EXP; DUP I]  (dec_super_opt ea m)
+      );
+
+
   ]
 
 let () =
