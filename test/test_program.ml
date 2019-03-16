@@ -366,6 +366,27 @@ let suite =
           2 (compute_word_size [ADD; PUSH (Val "3"); PUSH (Val "3"); PUSH (Val "3"); PUSH (Val "40")] 256)
       );
 
+    "uninterpreted instruction needs a variable" >:: (fun _ ->
+        assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
+          1 (compute_word_size [PUSH (Val "2"); EXP] 256)
+      );
+
+    "tie-breaker with uninterpreted instruction" >:: (fun _ ->
+        assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
+          2 (compute_word_size [ADDRESS; PUSH (Val "2")] 256)
+      );
+
+    "uninterpreted instruction results in abstracting value" >:: (fun _ ->
+        assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
+          1 (compute_word_size [BLOCKHASH; PUSH (Val "2")] 256)
+      );
+
+    "fitting some values and abstracting another" >:: (fun _ ->
+        assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
+          2 (compute_word_size [BLOCKHASH; PUSH (Val "3"); PUSH (Val "3"); PUSH (Val "3"); PUSH (Val "40")] 256)
+      );
+
+
     (* pos *)
 
     "get position of instruction BALANCE" >:: (fun _ ->
