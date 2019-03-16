@@ -142,25 +142,25 @@ let enc_opcode ea i = List.Assoc.find_exn ea.opcodes ~equal:[%eq: Instruction.t]
 let dec_opcode ea i =
   List.Assoc.find_exn (List.Assoc.inverse ea.opcodes) ~equal:[%eq: int] i
 
-let enc_top_of_st ea st j =
+(* get the top d elements of the stack *)
+let enc_top_d_of_st ea st j d =
   let open Z3Ops in
-  let top_pos = (st.stack_ctr @@ [j]) - sanum 1 in
-  st.stack @@ (forall_vars ea @ [j; top_pos])
+  let pos l = (st.stack_ctr @@ [j]) - sanum (Int.succ l) in
+  List.init d ~f:(fun l -> st.stack @@ (forall_vars ea @ [j; pos l]))
 
-let enc_brom ias r =
+let init_rom ea st i rom =
   let open Z3Ops in
-  let dflt = 0 in
-  let k = seconst "k" in
-  forall k (
-    r k ==
-      List.fold_right ias ~init:(senum dflt) ~f:(fun (ai, bi) enc -> ite (ai == k) bi enc)
-    )
-
-let init_balance_rom ea st brom =
-  let blncs = Map.find_exn ea.uis BALANCE in
-  let pos = poss_of_instr ea.p BALANCE in
-  let ias = List.map pos ~f:(fun p -> enc_top_of_st ea st (num p)) in
-  enc_brom (List.zip_exn ias blncs) (fun ia -> brom <@@> (forall_vars ea @ [ia]))
+  let d = arity i in
+  let js = poss_of_instr ea.p i in
+  let us = Map.find_exn ea.uis i in
+  let ajs = List.map js ~f:(fun j -> enc_top_d_of_st ea st (num j) d) in
+  let w_dflt = senum 0 in
+  let ws = List.init d ~f:(fun l -> seconst ("w" ^ [%show: int] l)) in
+  foralls ws (
+    (rom @@ (forall_vars ea @ ws)) ==
+      List.fold_right (List.zip_exn ajs us) ~init:w_dflt
+        ~f:(fun (aj, uj) enc -> ite (conj (List.map2_exn aj ws ~f:(==))) uj enc)
+  )
 
 let init ea st =
   let open Z3Ops in
@@ -173,7 +173,7 @@ let init ea st =
       st.stack @@ (forall_vars ea @ [num 0; sanum i]) == x))
   && (st.exc_halt @@ [num 0] == btm)
   && (st.used_gas @@ [num 0] == num 0)
-  && Map.fold ea.roms ~init:top ~f:(fun ~key:i ~data:f e -> e && match i with | BALANCE -> init_balance_rom ea st f | _ -> failwith "not implemented" )
+  && Map.fold ea.roms ~init:top ~f:(fun ~key:i ~data:f e -> e && init_rom ea st i f)
 
 (* TODO: check data layout on stack *)
 let enc_stackarg ea j = function
@@ -320,16 +320,13 @@ let enc_const_uninterpreted ea st j i =
   let name = Instruction.unint_name 0 i in
   enc_push ea st j (Const name)
 
-let enc_balance ea st j =
-  let brom = Map.find_exn ea.roms BALANCE in
+let enc_nonconst_uninterpreted ea st j i =
+  let rom = Map.find_exn ea.roms i in
   let open Z3Ops in
-  let sc = st.stack_ctr @@ [j]
-  and sk n = st.stack @@ (forall_vars ea @ [j; n])
-  and sk' n = st.stack @@ (forall_vars ea @ [j + one; n])
+  let sk' n = st.stack @@ (forall_vars ea @ [j + one; n])
   and sc'= st.stack_ctr @@ [j + one] in
-  let arg = (forall_vars ea) @ [sk (sc - sanum 1)] in
-  (* push value of balance *)
-  (sk' (sc' - sanum 1)) == (brom @@ arg)
+  let ajs = enc_top_d_of_st ea st j (arity i) in
+  (sk' (sc' - sanum 1)) == (rom @@ ((forall_vars ea) @ ajs))
 
 (* effect of instruction on state st after j steps *)
 let enc_instruction ea st j is =
@@ -358,9 +355,9 @@ let enc_instruction ea st j is =
     | NOT -> enc_not ea st j
     | SWAP idx -> enc_swap ea st j (idx_to_enum idx)
     | DUP idx -> enc_dup ea st j (idx_to_enum idx)
-    | BALANCE -> enc_balance ea st j
-    | _ when List.mem constant_uninterpreted is ~equal:Instruction.equal ->
-      enc_const_uninterpreted ea st j is
+    | _ when List.mem uninterpreted is ~equal:Instruction.equal ->
+      if is_const is then enc_const_uninterpreted ea st j is
+      else enc_nonconst_uninterpreted ea st j is
     | i -> failwith ("Encoding for " ^ [%show: Instruction.t] i ^ " not implemented.")
   in
   let (d, a) = delta_alpha is in let diff = (a - d) in
