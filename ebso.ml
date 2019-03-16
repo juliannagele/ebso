@@ -28,9 +28,9 @@ type output_options =
 let outputcfg =
   ref {pmodel = false; psmt = false; pcnstrnt = false; pinter = false; csv = None}
 
-let set_options stackes stackas pm psmt pc pinter csv =
+let set_options wordsize stackas pm psmt pc pinter csv =
   outputcfg := {pmodel = pm; psmt = psmt; pcnstrnt = pc; pinter = pinter; csv = csv};
-  Option.iter stackes ~f:(fun stackes -> set_wsz stackes);
+  Option.iter wordsize ~f:(fun wordsize -> set_wsz wordsize);
   Option.iter stackas ~f:(fun stackas -> set_sas stackas)
 
 let log e =
