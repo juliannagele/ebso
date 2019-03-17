@@ -259,6 +259,19 @@ let suite =
           (Program.show_hex @@ parse buf)
       );
 
+    "parse contract from bytecode with leading 0x and print back" >:: (fun _ ->
+        let s =
+          "6080604052348015601057600080fd5b5060a680601f6000396000f300608060\
+           405260043610603e5763ffffffff6000350416633120d43481146043575b600080fd\
+           5b348015604e57600080fd5b50605b60ff600435166071565b6040805160ff909216\
+           8252519081900360200190f35b600003602a01905600"
+        in
+        let buf = Latin1.from_string ("0x" ^ s) in
+        assert_equal ~cmp:[%eq: string] ~printer:[%show: string]
+          s
+          (Program.show_hex @@ parse buf)
+      );
+
   ]
 
 let () =
