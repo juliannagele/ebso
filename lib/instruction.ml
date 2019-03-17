@@ -66,6 +66,7 @@ let compare i i2 = match (i, i2) with
   | _ -> [%compare: t] i i2
 
 let delta_alpha = function
+  | STOP -> (0, 0)
   | ADD -> (2, 1)
   | MUL -> (2, 1)
   | SUB -> (2, 1)
@@ -96,10 +97,12 @@ let delta_alpha = function
   | CALLVALUE -> (0, 1)
   | CALLDATALOAD -> (1, 1)
   | CALLDATASIZE -> (0, 1)
+  | CALLDATACOPY -> (3, 0)
   | CODESIZE -> (0, 1)
   | GASPRICE -> (0, 1)
   | EXTCODESIZE -> (1, 1)
   | RETURNDATASIZE -> (0, 1)
+  | RETURNDATACOPY -> (3, 0)
   | BLOCKHASH -> (1, 1)
   | COINBASE -> (0, 1)
   | TIMESTAMP -> (0, 1)
