@@ -219,7 +219,10 @@ let () =
           else Sedlexing.Latin1.from_channel (In_channel.create progr)
         in
         let p = Parser.parse buf in
-        let wordsize = Option.value wordsize ~default:(Program.compute_word_size p 256) in
+        let wordsize = match wordsize with
+          | Some wsz -> wsz
+          | None -> Program.compute_word_size p 256
+        in
         set_options wordsize stackas p_model p_smt p_constr p_inter csv;
         let p = Program.val_to_const !wsz p in
         let bbs = Program.split_into_bbs p in
