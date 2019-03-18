@@ -1587,21 +1587,22 @@ let misc =
     "For ADD no variable is generated">:: (fun _ ->
         let p = [ADD;] in
         let xs = mk_store_vars p in
-        assert_bool "Some entry for ADD is found" (Option.is_none (Map.find xs ADD))
+        assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
+          [] xs
       );
 
     "[SSTORE] generates one variable">:: (fun _ ->
         let p = [PUSH (Val "1"); SSTORE;] in
         let xs = mk_store_vars p in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [(seconst "x_SSTORE_0")] (Option.value_exn (Map.find xs SSTORE))
+          [(seconst "x_SSTORE_0")] xs
       );
 
     "Two SSTOREs generate two variables">:: (fun _ ->
         let p = [PUSH (Val "1"); SSTORE; PUSH (Val "2"); PUSH (Val "1"); SSTORE;] in
         let xs = mk_store_vars p in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [(seconst "x_SSTORE_0"); (seconst "x_SSTORE_1")] (Option.value_exn (Map.find xs SSTORE))
+          [(seconst "x_SSTORE_0"); (seconst "x_SSTORE_1")] xs
     );
 ]
 
