@@ -66,6 +66,8 @@ let mk_unint_roms p vc =
                                           func_decl (Instruction.unint_rom_name i) (List.init arity ~f:(fun _ -> !wsort)) !wsort)
       else ue)
 
+let mk_store_vars _ = failwith "mk_store_vars not implemented"
+
 (* list of free variables x_0 .. x_(stack_depth -1) for words already on stack *)
 (* careful: no check that this does not generate more than max stacksize variables *)
 let mk_input_vars p =

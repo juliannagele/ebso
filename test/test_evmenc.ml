@@ -1582,6 +1582,27 @@ let misc =
           ("f_EXP", vs + 2) (Z3.Symbol.to_string (Z3.FuncDecl.get_name f), Z3.FuncDecl.get_arity f)
       );
 
+    (* mk_store_vars *)
+
+    "For ADD no variable is generated">:: (fun _ ->
+        let p = [ADD;] in
+        let xs = mk_store_vars p in
+        assert_bool "Some entry for ADD is found" (Option.is_none (Map.find xs ADD))
+      );
+
+    "[SSTORE] generates one variable">:: (fun _ ->
+        let p = [PUSH (Val "1"); SSTORE;] in
+        let xs = mk_store_vars p in
+        assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
+          [(seconst "x_SSTORE_0")] (Option.value_exn (Map.find xs SSTORE))
+      );
+
+    "Two SSTOREs generate two variables">:: (fun _ ->
+        let p = [PUSH (Val "1"); SSTORE; PUSH (Val "2"); PUSH (Val "1"); SSTORE;] in
+        let xs = mk_store_vars p in
+        assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
+          [(seconst "x_SSTORE_0"); (seconst "x_SSTORE_1")] (Option.value_exn (Map.find xs SSTORE))
+    );
 ]
 
 let suite =
