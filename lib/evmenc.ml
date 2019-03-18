@@ -67,10 +67,9 @@ let mk_unint_roms p vc =
       else ue)
 
 let mk_store_vars p = List.fold p ~init:[] ~f:(fun vs i ->
-    if Instruction.equal SSTORE i
+    if Instruction.equal SLOAD i
     then vs @ [seconst (Instruction.unint_name (List.length vs) i)]
-    else vs
-  )
+    else vs)
 
 (* list of free variables x_0 .. x_(stack_depth -1) for words already on stack *)
 (* careful: no check that this does not generate more than max stacksize variables *)

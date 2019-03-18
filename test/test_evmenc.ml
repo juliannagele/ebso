@@ -1584,25 +1584,25 @@ let misc =
 
     (* mk_store_vars *)
 
-    "For ADD no variable is generated">:: (fun _ ->
-        let p = [ADD;] in
+    "For SSTORE no variable is generated">:: (fun _ ->
+        let p = [SSTORE] in
         let xs = mk_store_vars p in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
           [] xs
       );
 
-    "[SSTORE] generates one variable">:: (fun _ ->
-        let p = [PUSH (Val "1"); SSTORE;] in
+    "[SLOAD] generates one variable">:: (fun _ ->
+        let p = [PUSH (Val "1"); SLOAD;] in
         let xs = mk_store_vars p in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [(seconst "x_SSTORE_0")] xs
+          [(seconst "x_SLOAD_0")] xs
       );
 
-    "Two SSTOREs generate two variables">:: (fun _ ->
-        let p = [PUSH (Val "1"); SSTORE; PUSH (Val "2"); PUSH (Val "1"); SSTORE;] in
+    "Two SLOADs generate two variables">:: (fun _ ->
+        let p = [PUSH (Val "1"); SLOAD; PUSH (Val "2"); PUSH (Val "1"); SLOAD;] in
         let xs = mk_store_vars p in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [(seconst "x_SSTORE_0"); (seconst "x_SSTORE_1")] xs
+          [(seconst "x_SLOAD_0"); (seconst "x_SLOAD_1")] xs
     );
 ]
 
