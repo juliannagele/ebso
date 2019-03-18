@@ -1490,7 +1490,7 @@ let misc =
     (* mk_uint_vars *)
 
     "ADD does not generate variables">:: (fun _ ->
-        let p = [ADD; NUMBER] in
+        let p = [ADD] in
         let ue = mk_unint_vars p in
         assert_bool "Some entry for ADD is found" (Option.is_none (Map.find ue ADD))
       );
