@@ -82,11 +82,11 @@ let suite =
 
     "split program at multiple locations" >::(fun _ ->
         let p =
-          [OR; ADD; SWAP I; JUMPDEST; MLOAD; POP; JUMP; DUP III;
+          [OR; ADD; SWAP I; JUMPDEST; LOG1; POP; JUMP; DUP III;
            PUSH (Val "0"); ISZERO; JUMPI; POP; RETURN]
         in
         assert_equal ~cmp:[%eq: Program.bb list] ~printer:[%show: Program.bb list]
-          [Next [OR; ADD; SWAP I]; Terminal ([JUMPDEST; MLOAD; POP], JUMP);
+          [Next [OR; ADD; SWAP I]; Terminal ([JUMPDEST; LOG1; POP], JUMP);
            Terminal ([DUP III; PUSH (Val "0"); ISZERO], JUMPI);
            Terminal ([POP], RETURN)]
           (split_into_bbs ~split_non_encodable:false p)
@@ -94,7 +94,7 @@ let suite =
 
     "splitting a program into BBs and then concatenating them back" >::(fun _ ->
         let p =
-          [OR; ADD; SWAP I; JUMPDEST; MLOAD; POP; JUMP; DUP III;
+          [OR; ADD; SWAP I; JUMPDEST; LOG1; POP; JUMP; DUP III;
            PUSH (Val "0"); ISZERO; JUMPI; POP; RETURN]
         in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -104,11 +104,11 @@ let suite =
 
     "split program at non-encodable instructions" >::(fun _ ->
         let p =
-          [OR; ADD; SWAP I; JUMPDEST; MLOAD; POP; JUMP; DUP III;
+          [OR; ADD; SWAP I; JUMPDEST; LOG1; POP; JUMP; DUP III;
            PUSH (Val "0"); ISZERO; JUMPI; POP; RETURN]
         in
         assert_equal ~cmp:[%eq: Program.bb list] ~printer:[%show: Program.bb list]
-          [Next [OR; ADD; SWAP I]; NotEncodable [JUMPDEST; MLOAD];
+          [Next [OR; ADD; SWAP I]; NotEncodable [JUMPDEST; LOG1];
            Terminal ([POP], JUMP);
            Terminal ([DUP III; PUSH (Val "0"); ISZERO], JUMPI);
            Terminal ([POP], RETURN)]
@@ -117,7 +117,7 @@ let suite =
 
     "splitting into BBs and concatenating back with non-encodable split" >::(fun _ ->
         let p =
-          [OR; ADD; SWAP I; JUMPDEST; MLOAD; POP; JUMP; DUP III;
+          [OR; ADD; SWAP I; JUMPDEST; LOG1; POP; JUMP; DUP III;
            PUSH (Val "0"); ISZERO; JUMPI; POP; RETURN]
         in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -283,39 +283,6 @@ let suite =
           (consts p')
       );
 
-    (* unints *)
-
-    "uninterpreted instrucions of NUMBER" >:: (fun _ ->
-        assert_equal
-          ~cmp:[%eq: (Instruction.t * string) list]
-          ~printer:[%show: (Instruction.t * string) list]
-          [NUMBER, "x_NUMBER"] (Program.unints [NUMBER])
-      );
-
-    "uninterpreted instrucions of NUMBER NUMBER" >:: (fun _ ->
-        assert_equal
-          ~cmp:[%eq: (Instruction.t * string) list]
-          ~printer:[%show: (Instruction.t * string) list]
-          [NUMBER, "x_NUMBER"] (Program.unints [NUMBER; NUMBER])
-      );
-
-    "uninterpreted instrucions of SHA3" >:: (fun _ ->
-        assert_equal
-          ~cmp:[%eq: (Instruction.t * string) list]
-          ~printer:[%show: (Instruction.t * string) list]
-          [SHA3, "x_SHA3_0"] (Program.unints [SHA3])
-      );
-
-    "uninterpreted instrucions of SHA3 NUMBER SHA3 NUMBER" >:: (fun _ ->
-        assert_equal
-          ~cmp:[%eq: (Instruction.t * string) list]
-          ~printer:[%show: (Instruction.t * string) list]
-          [SHA3, "x_SHA3_0";
-           NUMBER, "x_NUMBER";
-           SHA3, "x_SHA3_2"]
-          (Program.unints [SHA3; NUMBER; SHA3; NUMBER])
-      );
-
     (* enumerate programs *)
 
     "enumerate programs of cost 1" >:: (fun _ ->
@@ -399,6 +366,27 @@ let suite =
           2 (compute_word_size [ADD; PUSH (Val "3"); PUSH (Val "3"); PUSH (Val "3"); PUSH (Val "40")] 256)
       );
 
+    "uninterpreted instruction needs a variable" >:: (fun _ ->
+        assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
+          1 (compute_word_size [PUSH (Val "2"); EXP] 256)
+      );
+
+    "tie-breaker with uninterpreted instruction" >:: (fun _ ->
+        assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
+          2 (compute_word_size [ADDRESS; PUSH (Val "2")] 256)
+      );
+
+    "uninterpreted instruction results in abstracting value" >:: (fun _ ->
+        assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
+          1 (compute_word_size [BLOCKHASH; PUSH (Val "2")] 256)
+      );
+
+    "fitting some values and abstracting another" >:: (fun _ ->
+        assert_equal ~cmp:[%eq: int] ~printer:[%show: int]
+          2 (compute_word_size [BLOCKHASH; PUSH (Val "3"); PUSH (Val "3"); PUSH (Val "3"); PUSH (Val "40")] 256)
+      );
+
+
     (* pos *)
 
     "get position of instruction BALANCE" >:: (fun _ ->
@@ -409,29 +397,6 @@ let suite =
     "get position of instruction BALANCE" >:: (fun _ ->
         assert_equal ~cmp:[%eq: int list]  ~printer:[%show: int list]
           [] (poss_of_instr [POP; POP] BALANCE);
-      );
-
-    (* filter uninterpreted constants *)
-
-    "no uninterpreted constant" >:: (fun _ ->
-        assert_equal ~cmp:[%eq: Instruction.t list]  ~printer:[%show: Instruction.t list]
-          [] (filter_unint_consts [POP; POP; PUSH Tmpl; BALANCE]);
-      );
-
-    "one uninterpreted constant" >:: (fun _ ->
-        assert_equal ~cmp:[%eq: Instruction.t list]  ~printer:[%show: Instruction.t list]
-          [NUMBER] (filter_unint_consts [ADD; NUMBER]);
-      );
-
-    "twice the same uninterpreted constant" >:: (fun _ ->
-        assert_equal ~cmp:[%eq: Instruction.t list]  ~printer:[%show: Instruction.t list]
-          [NUMBER] (filter_unint_consts [ADD; NUMBER; NUMBER]);
-      );
-
-    "two uninterpreted constants" >:: (fun _ ->
-        let uis = filter_unint_consts [ADD; TIMESTAMP; NUMBER] in
-        let m = [%show: Instruction.t list] uis ^ " does not contain TIMESTAMP and NUMBER" in
-        assert_bool m (List.mem uis TIMESTAMP ~equal:Instruction.equal && List.mem uis NUMBER ~equal:Instruction.equal)
       );
 
     (* check whether instruction is uninterpreted *)

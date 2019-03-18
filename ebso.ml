@@ -28,10 +28,10 @@ type output_options =
 let outputcfg =
   ref {pmodel = false; psmt = false; pcnstrnt = false; pinter = false; csv = None}
 
-let set_options stackes stackas pm psmt pc pinter csv =
+let set_options wordsize stackas pm psmt pc pinter csv =
   outputcfg := {pmodel = pm; psmt = psmt; pcnstrnt = pc; pinter = pinter; csv = csv};
-  Option.iter stackes ~f:(fun stackes -> set_wsz stackes);
-  Option.iter stackas ~f:(fun stackas -> set_sas stackas)
+  Option.iter stackas ~f:(fun stackas -> set_sas stackas);
+  set_wsz wordsize
 
 let log e =
   let log b s = if b then Out_channel.prerr_endline s else () in
@@ -214,13 +214,17 @@ let () =
       and progr = anon ("PROGRAM" %: string)
       in
       fun () ->
-        set_options wordsize stackas p_model p_smt p_constr p_inter csv;
         let buf =
           if direct then Sedlexing.Latin1.from_string progr
           else Sedlexing.Latin1.from_channel (In_channel.create progr)
         in
         let p = Parser.parse buf in
-        let p = if Option.is_some wordsize then Program.val_to_const !wsz p else p in
+        let wordsize = match wordsize with
+          | Some wsz -> wsz
+          | None -> Program.compute_word_size p 256
+        in
+        set_options wordsize stackas p_model p_smt p_constr p_inter csv;
+        let p = Program.val_to_const !wsz p in
         let bbs = Program.split_into_bbs p in
         match opt_mode with
         | NO ->
@@ -236,4 +240,4 @@ let () =
         | CLASSIC ->
           List.fold_left bbs ~init:[] ~f:(classic_super_optimize_bb `All  tval) |> ignore
     ]
-  |> Command.run ~version:"0.1"
+  |> Command.run ~version:"1.0"

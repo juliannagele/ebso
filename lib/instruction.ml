@@ -66,6 +66,7 @@ let compare i i2 = match (i, i2) with
   | _ -> [%compare: t] i i2
 
 let delta_alpha = function
+  | STOP -> (0, 0)
   | ADD -> (2, 1)
   | MUL -> (2, 1)
   | SUB -> (2, 1)
@@ -96,10 +97,12 @@ let delta_alpha = function
   | CALLVALUE -> (0, 1)
   | CALLDATALOAD -> (1, 1)
   | CALLDATASIZE -> (0, 1)
+  | CALLDATACOPY -> (3, 0)
   | CODESIZE -> (0, 1)
   | GASPRICE -> (0, 1)
   | EXTCODESIZE -> (1, 1)
   | RETURNDATASIZE -> (0, 1)
+  | RETURNDATACOPY -> (3, 0)
   | BLOCKHASH -> (1, 1)
   | COINBASE -> (0, 1)
   | TIMESTAMP -> (0, 1)
@@ -134,16 +137,16 @@ let delta_alpha = function
   | STATICCALL -> (6, 1)
   | REVERT -> (2, 0)
   | SELFDESTRUCT -> (1, 0)
-  | _ -> failwith "not implemented"
+  | i -> failwith ("delta_alpha not implemented for " ^ show i)
 
-let arity i = let (d, _) = delta_alpha i in d
+let arity i = delta_alpha i |> Tuple.T2.get1
 
 let is_const i = arity i = 0
 
 (* names of variables for representing an uninterpreted instruction
    constant uninterpreted instructions have only one variable,
    uninterpreted instructions with arguments need one variable per use
-   *)
+*)
 let unint_name j i =
   let suff = if is_const i then "" else "_" ^ Int.to_string j in
   "x_" ^ show i ^ suff
@@ -184,8 +187,7 @@ let uninterpreted = [
 let is_uninterpreted i = List.mem uninterpreted i ~equal:[%eq: t]
 
 (* uninterpreted instructions that do not consume words from the stack *)
-let constant_uninterpreted =
-  List.filter uninterpreted ~f:(fun i -> Tuple.T2.get1 (delta_alpha i) = 0)
+let constant_uninterpreted = List.filter uninterpreted ~f:is_const
 
 (* list of instructions that have an effect on the outside world that is
    not encodable, i.e., effects on memory, storage, and logs *)
