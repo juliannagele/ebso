@@ -1408,6 +1408,150 @@ let gas_cost =
       );
   ]
 
+let storage =
+  [
+    "No SLOAD, all default values">::(fun _ ->
+        let p = [PUSH (Val "1"); PUSH (Val "2"); SSTORE] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
+        let m = solve_model_exn [c] in
+        let keys = [senum 0; senum 1; senum 2] in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
+          [senum 0; senum 0; senum 0]
+          (List.map keys ~f:(eval_storage st m 0))
+      );
+
+    "SLOAD a key" >:: (fun _ ->
+        let k = Stackarg.Val "1" in
+        let p = [PUSH k; SLOAD] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
+        let m = solve_model_exn [c] in
+        let xsload0 = senum 3 in (* set for all quantified variable to 3 for test *)
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          xsload0
+          (eval_storage ~xs:[xsload0] st m 0 k)
+      );
+
+    "SLOAD a key not in range" >:: (fun _ ->
+        let k1 = Stackarg.Val "1" in
+        let k2 = Stackarg.Val "2" in
+        let p = [PUSH k1; SLOAD] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
+        let m = solve_model_exn [c] in
+        let xsload0 = senum 3 in (* set for all quantified variable to 3 for test *)
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 0)
+          (eval_storage ~xs:[xsload0] st m 0 k2)
+      );
+
+    "SLOAD twice from same key" >:: (fun _ ->
+        let k = Stackarg.Val "1" in
+        let p = [PUSH k; SLOAD; PUSH k; SLOAD] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
+        let m = solve_model_exn [c] in
+        let xsload0 = senum 3 and xsload1 = senum 2 in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          xsload0
+          (eval_storage ~xs:[xsload0; xsload1] st m 0 k)
+      );
+
+    "SLOAD twice from different key" >:: (fun _ ->
+        let k1 = Stackarg.Val "1" and k2 = Stackarg.Val "2" in
+        let p = [PUSH k1; SLOAD; PUSH k2; SLOAD] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
+        let m = solve_model_exn [c] in
+        let xsload0 = senum 3 and xsload1 = senum 2 in
+        assert_equal ~cmp:[%eq: Z3.Expr.t list]
+          ~printer:(List.to_string ~f:Z3.Expr.to_string)
+          [xsload0; xsload1]
+          [(eval_storage ~xs:[xsload0; xsload1] st m 0 k1);
+           (eval_storage ~xs:[xsload0; xsload1] st m 0 k2)]
+      );
+
+    "SLOAD from key after SSTORE" >:: (fun _ ->
+        let k = Stackarg.Val "1" in
+        let v = Stackarg.Val "2" in
+        let p = [PUSH v; PUSH k; SSTORE; PUSH k; SLOAD] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
+        let m = solve_model_exn [c] in
+        let xsload0 = senum 3 in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          xsload0
+          (eval_storage ~xs:[xsload0] st m 0 k)
+      );
+
+    "SLOAD twice from same key with SSTORE in between" >:: (fun _ ->
+        let k = Stackarg.Val "1" in
+        let v = Stackarg.Val "2" in
+        let p = [PUSH k; SLOAD; PUSH v; PUSH k; SSTORE; PUSH k; SLOAD] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
+        let m = solve_model_exn [c] in
+        let xsload0 = senum 3 and xsload1 = senum 2 in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          xsload0
+          (eval_storage ~xs:[xsload0; xsload1] st m 0 k)
+      );
+
+    "SLOAD SSTOREd value" >:: (fun _ ->
+        let k = Stackarg.Val "1" in
+        let v = Stackarg.Val "2" in
+        let p = [PUSH k; SLOAD; PUSH v; PUSH k; SSTORE; PUSH k; SLOAD] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
+        let m = solve_model_exn [c] in
+        let xsload0 = senum 3 and xsload1 = senum 2 in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 2)
+          (eval_storage ~xs:[xsload0; xsload1] st m (List.length p) k)
+      );
+
+    "SSTORE to SLOADed key" >:: (fun _ ->
+        let k1 = Stackarg.Val "1" and k2 = Stackarg.Val "3" in
+        let v = Stackarg.Val "4" in
+        let p = [PUSH k1; SLOAD; PUSH v; PUSH k1; SSTORE; PUSH k2; SLOAD] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
+        let m = solve_model_exn [c] in
+        let xsload0 = senum 3 and xsload1 = senum 2 in
+        assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
+          [(senum 4); (senum 2)]
+          [(eval_storage ~xs:[xsload0; xsload1] st m (List.length p) k1);
+           (eval_storage ~xs:[xsload0; xsload1] st m (List.length p) k2)]
+      );
+
+    "SSTORE twice to same key" >:: (fun _ ->
+        let k = Stackarg.Val "1" in
+        let v1 = Stackarg.Val "2" and v2 = Stackarg.Val "3" in
+        let p1 = [PUSH v1; PUSH k; SSTORE] and p2 = [PUSH v2; PUSH k; SSTORE] in
+        let p = p1 @ p2 in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
+          [(senum 2); (senum 3)]
+          [(eval_storage st m (List.length p1) k);
+           (eval_storage st m (List.length p) k)]
+      );
+
+  ]
+
 let misc =
   [
     (* enc dec opcode *)
@@ -1611,7 +1755,7 @@ let suite =
   set_wsz 3; set_sas 6;
   "suite" >:::
   effect @ pres_stack @ stack_ctr @ exc_halt @ forced_stack_underflow
-  @ gas_cost @ misc
+  @ gas_cost @ storage @ misc
 
 let () =
   run_test_tt_main suite

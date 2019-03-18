@@ -496,6 +496,8 @@ let eval_stack ?(xs = []) st m i n =
 
 let eval_stack_ctr st m i = eval_state_func_decl m i st.stack_ctr
 
+let eval_storage ?(xs = []) _ _ _ _ = ignore xs |> failwith "eval_storage not implemented"
+
 let eval_exc_halt st m i = eval_state_func_decl m i st.exc_halt
 
 let eval_gas st m i = eval_state_func_decl m i st.used_gas |> Z3.Arithmetic.Integer.get_int
