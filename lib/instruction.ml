@@ -286,7 +286,7 @@ let gas_cost = function
   | PUSH _ -> 3
   | SWAP _ -> 3
   | DUP _ -> 3
-  | _ -> failwith "not implemented"
+  | i -> failwith ("gas_cost not implemented for instruction " ^ [%show: t] i)
 
 let show_hex = function
   | STOP -> "00"
