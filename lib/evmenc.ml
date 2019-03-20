@@ -44,6 +44,7 @@ type enc_consts = {
   uis : Z3.Expr.expr list Map.Make_plain(Instruction).t;
   opcodes : (Instruction.t * int) list;
   xs : Z3.Expr.expr list;
+  ss : Z3.Expr.expr list;
   roms : Z3.FuncDecl.func_decl Map.Make_plain(Instruction).t;
 }
 
@@ -95,6 +96,7 @@ let mk_enc_consts p cis_mde =
   let cis = mk_cis p (Map.keys uis) cis_mde in
   let xs = mk_input_vars p in
   let cs = mk_push_const_vars p in
+  let ss = mk_store_vars p in
 { (* source program *)
   p = p;
   (* candidate instruction set: instructions to choose from in target program *)
@@ -110,6 +112,8 @@ let mk_enc_consts p cis_mde =
   (* integer encoding of opcodes *)
   opcodes = List.mapi cis ~f:(fun i oc -> (oc, i));
   xs = xs;
+  (* intial words in storage *)
+  ss = ss;
   (* read only memories for uninterpreted instructions: return a word
      depending on given arguments, i.e., the arguments of the
      instruction in the program, _and_ depending on the forall
@@ -120,11 +124,12 @@ let mk_enc_consts p cis_mde =
 }
 
 (* project all forall quantified variables *)
-let forall_vars ea = ea.xs @ ea.cs @ List.concat (Map.data ea.uis)
+let forall_vars ea = ea.xs @ ea.ss @ ea.cs @ List.concat (Map.data ea.uis)
 
 type state = {
   stack : Z3.FuncDecl.func_decl;
   stack_ctr : Z3.FuncDecl.func_decl;
+  storage : Z3.FuncDecl.func_decl;
   exc_halt : Z3.FuncDecl.func_decl;
   used_gas : Z3.FuncDecl.func_decl;
 }
@@ -136,6 +141,9 @@ let mk_state ea idx =
         (mk_vars_sorts (forall_vars ea) @ [int_sort; !sasort]) !wsort;
     (* sc(j) = index of the next free slot on the stack after j instructions *)
     stack_ctr = func_decl ("sc" ^ idx) [int_sort] !sasort;
+    (* storage(_, j, k) = v if storage after j instructions contains word v for key k *)
+    storage = func_decl ("storage" ^ idx)
+        (mk_vars_sorts (forall_vars ea) @ [int_sort; !wsort]) !wsort;
     (* exc_halt(j) is true if exceptional halting occurs after j instructions *)
     exc_halt = func_decl ("exc_halt" ^ idx) [int_sort] bool_sort;
     (* gas(j) = amount of gas used to execute the first j instructions *)
@@ -167,6 +175,17 @@ let init_rom ea st i rom =
         ~f:(fun (aj, uj) enc -> ite (conj (List.map2_exn aj ws ~f:(==))) uj enc)
   )
 
+let init_storage ea st =
+  let open Z3Ops in
+  let js = poss_of_instr ea.p SLOAD in
+  let ks = List.concat_map js ~f:(fun j -> enc_top_d_of_st ea st (num j) 1) in
+  let w_dflt = senum 0 in
+  let w = seconst "w" in
+  forall w (
+    (st.storage @@ (forall_vars ea @ [num 0; w]) ==
+     List.fold_right (List.zip_exn ks ea.ss) ~init:w_dflt
+       ~f:(fun (k, s) enc -> ite (w == k) s enc)))
+
 let init ea st =
   let open Z3Ops in
   (* careful: if stack_depth is larger than 2^sas, no checks *)
@@ -178,6 +197,7 @@ let init ea st =
       st.stack @@ (forall_vars ea @ [num 0; sanum i]) == x))
   && (st.exc_halt @@ [num 0] == btm)
   && (st.used_gas @@ [num 0] == num 0)
+  && init_storage ea st
   && Map.fold ea.roms ~init:top ~f:(fun ~key:i ~data:f e -> e && init_rom ea st i f)
 
 (* TODO: check data layout on stack *)
@@ -333,6 +353,22 @@ let enc_nonconst_uninterpreted ea st j i =
   let ajs = enc_top_d_of_st ea st j (arity i) in
   (sk' (sc' - sanum 1)) == (rom @@ ((forall_vars ea) @ ajs))
 
+let enc_sload ea st j =
+  let open Z3Ops in
+  let sk n = st.stack @@ (forall_vars ea @ [j; n])
+  and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
+  let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
+  (sk' (sc' - sanum 1)) ==
+  (st.storage @@ ((forall_vars ea) @ [j; sk (sc - sanum 1)]))
+
+let enc_sstore ea st j =
+  let open Z3Ops in
+  let sk n = st.stack @@ (forall_vars ea @ [j; n]) and sc = st.stack_ctr @@ [j] in
+  let strg w = st.storage @@ (forall_vars ea @ [j; w]) in
+  let strg' w = st.storage @@ (forall_vars ea @ [j + one; w]) in
+  let w = seconst "w" in
+  forall w (strg' w == (ite (w == sk (sc - sanum 1)) (sk (sc - sanum 2)) (strg w)))
+
 (* effect of instruction on state st after j steps *)
 let enc_instruction ea st j is =
   let enc_effect =
@@ -360,6 +396,8 @@ let enc_instruction ea st j is =
     | NOT -> enc_not ea st j
     | SWAP idx -> enc_swap ea st j (idx_to_enum idx)
     | DUP idx -> enc_dup ea st j (idx_to_enum idx)
+    | SLOAD -> enc_sload ea st j
+    | SSTORE -> enc_sstore ea st j
     | _ when List.mem uninterpreted is ~equal:Instruction.equal ->
       if is_const is then enc_const_uninterpreted ea st j is
       else enc_nonconst_uninterpreted ea st j is
@@ -370,6 +408,8 @@ let enc_instruction ea st j is =
   let sc = st.stack_ctr @@ [j] in
   let sk n = st.stack @@ (forall_vars ea @ [j; n])
   and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
+  let strg w = st.storage @@ (forall_vars ea @ [j; w])
+  and strg' w = st.storage @@ (forall_vars ea @ [j + one; w]) in
   let enc_used_gas =
     st.used_gas @@ [j + one] == ((st.used_gas @@ [j]) + (num (gas_cost is)))
   in
@@ -389,9 +429,15 @@ let enc_instruction ea st j is =
     st.exc_halt @@ [j + one] == (st.exc_halt @@ [j] || underflow || overflow)
   in
   let enc_pres =
+    let pres_storage = match is with
+      | SSTORE -> top
+      | _ ->
+        let w = seconst "w" in
+        forall w (strg' w == strg w)
+    in
     let n = saconst "n" in
     (* all words below d stay the same *)
-    forall n ((n < sc - sanum d) ==> (sk' n == sk n))
+    (forall n ((n < sc - sanum d) ==> (sk' n == sk n))) && pres_storage
   in
   enc_effect && enc_used_gas && enc_stack_ctr && enc_pres && enc_exc_halt
 
@@ -496,7 +542,8 @@ let eval_stack ?(xs = []) st m i n =
 
 let eval_stack_ctr st m i = eval_state_func_decl m i st.stack_ctr
 
-let eval_storage ?(xs = []) _ _ _ _ = ignore xs |> failwith "eval_storage not implemented"
+let eval_storage ?(xs = []) st m j k =
+  eval_state_func_decl m j ~n:[k] ~xs:xs st.storage
 
 let eval_exc_halt st m i = eval_state_func_decl m i st.exc_halt
 

@@ -178,7 +178,6 @@ let uninterpreted = [
   ; DIFFICULTY
   ; GASLIMIT
   ; MLOAD
-  ; SLOAD
   ; PC
   ; MSIZE
   ; GAS
@@ -280,6 +279,8 @@ let gas_cost = function
   | POP -> 2
   | MLOAD -> 2
   | SLOAD -> 200
+  (* fix to 5000 for testing encoding *)
+  | SSTORE -> 5000
   | PC -> 2
   | MSIZE -> 2
   | GAS -> 2

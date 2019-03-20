@@ -1433,7 +1433,7 @@ let storage =
         let xsload0 = senum 3 in (* set for all quantified variable to 3 for test *)
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
           xsload0
-          (eval_storage ~xs:[xsload0] st m 0 k)
+          (eval_storage ~xs:[xsload0] st m 0 (enc_stackarg ea (num 0) k))
       );
 
     "SLOAD a key not in range" >:: (fun _ ->
@@ -1447,7 +1447,7 @@ let storage =
         let xsload0 = senum 3 in (* set for all quantified variable to 3 for test *)
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
           (senum 0)
-          (eval_storage ~xs:[xsload0] st m 0 k2)
+          (eval_storage ~xs:[xsload0] st m 0 (enc_stackarg ea (num 0) k2))
       );
 
     "SLOAD twice from same key" >:: (fun _ ->
@@ -1460,7 +1460,7 @@ let storage =
         let xsload0 = senum 3 and xsload1 = senum 2 in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
           xsload0
-          (eval_storage ~xs:[xsload0; xsload1] st m 0 k)
+          (eval_storage ~xs:[xsload0; xsload1] st m 0 (enc_stackarg ea (num 0) k))
       );
 
     "SLOAD twice from different key" >:: (fun _ ->
@@ -1474,8 +1474,8 @@ let storage =
         assert_equal ~cmp:[%eq: Z3.Expr.t list]
           ~printer:(List.to_string ~f:Z3.Expr.to_string)
           [xsload0; xsload1]
-          [(eval_storage ~xs:[xsload0; xsload1] st m 0 k1);
-           (eval_storage ~xs:[xsload0; xsload1] st m 0 k2)]
+          [(eval_storage ~xs:[xsload0; xsload1] st m 0 (enc_stackarg ea (num 0) k1));
+           (eval_storage ~xs:[xsload0; xsload1] st m 0 (enc_stackarg ea (num 0) k2))]
       );
 
     "SLOAD from key after SSTORE" >:: (fun _ ->
@@ -1489,7 +1489,7 @@ let storage =
         let xsload0 = senum 3 in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
           xsload0
-          (eval_storage ~xs:[xsload0] st m 0 k)
+          (eval_storage ~xs:[xsload0] st m 0 (enc_stackarg ea (num 0) k))
       );
 
     "SLOAD twice from same key with SSTORE in between" >:: (fun _ ->
@@ -1503,7 +1503,7 @@ let storage =
         let xsload0 = senum 3 and xsload1 = senum 2 in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
           xsload0
-          (eval_storage ~xs:[xsload0; xsload1] st m 0 k)
+          (eval_storage ~xs:[xsload0; xsload1] st m 0 (enc_stackarg ea (num 0) k))
       );
 
     "SLOAD SSTOREd value" >:: (fun _ ->
@@ -1517,7 +1517,7 @@ let storage =
         let xsload0 = senum 3 and xsload1 = senum 2 in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
           (senum 2)
-          (eval_storage ~xs:[xsload0; xsload1] st m (List.length p) k)
+          (eval_storage ~xs:[xsload0; xsload1] st m (List.length p) (enc_stackarg ea (num 0) k))
       );
 
     "SSTORE to SLOADed key" >:: (fun _ ->
@@ -1531,8 +1531,8 @@ let storage =
         let xsload0 = senum 3 and xsload1 = senum 2 in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
           [(senum 4); (senum 2)]
-          [(eval_storage ~xs:[xsload0; xsload1] st m (List.length p) k1);
-           (eval_storage ~xs:[xsload0; xsload1] st m (List.length p) k2)]
+          [(eval_storage ~xs:[xsload0; xsload1] st m (List.length p) (enc_stackarg ea (num 0) k1));
+           (eval_storage ~xs:[xsload0; xsload1] st m (List.length p) (enc_stackarg ea (num 0) k2))]
       );
 
     "SSTORE twice to same key" >:: (fun _ ->
@@ -1546,8 +1546,8 @@ let storage =
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
           [(senum 2); (senum 3)]
-          [(eval_storage st m (List.length p1) k);
-           (eval_storage st m (List.length p) k)]
+          [(eval_storage st m (List.length p1) (enc_stackarg ea (num 0) k));
+           (eval_storage st m (List.length p) (enc_stackarg ea (num 0) k))]
       );
 
   ]
