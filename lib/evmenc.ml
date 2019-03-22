@@ -459,6 +459,7 @@ let enc_search_space ea st =
 let enc_equivalence_at ea sts stt js jt =
   let open Z3Ops in
   let n = saconst "n" in
+  let w = seconst "w" in
   (* source and target stack counter are equal *)
   sts.stack_ctr @@ [js] == stt.stack_ctr @@ [jt] &&
   (* source and target exceptional halting are equal *)
@@ -467,7 +468,10 @@ let enc_equivalence_at ea sts stt js jt =
      note that it doesn't matter which stack counter is used, they are equal *)
   (forall n ((n < stt.stack_ctr @@ [jt]) ==>
              ((sts.stack @@ (forall_vars ea @ [js; n]))
-              == (stt.stack @@ (forall_vars ea @ [jt; n])))))
+              == (stt.stack @@ (forall_vars ea @ [jt; n]))))) &&
+  (* source and target storage are equal *)
+  (forall w ((sts.storage @@ (forall_vars ea @ [js; w]))
+              == (stt.storage @@ (forall_vars ea @ [jt; w]))))
 
 (* we only demand equivalence at kt *)
 let enc_equivalence ea sts stt =
