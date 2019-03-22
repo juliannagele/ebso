@@ -411,18 +411,21 @@ let enc_instruction ea st j is =
   and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
   let strg w = st.storage @@ (forall_vars ea @ [j; w])
   and strg' w = st.storage @@ (forall_vars ea @ [j + one; w]) in
-  let ug = st.used_gas @@ (forall_vars ea @ [j + one])
-  and ug' = (st.used_gas @@ (forall_vars ea @ [j])) in
+  let ug = st.used_gas @@ (forall_vars ea @ [j])
+  and ug' = st.used_gas @@ (forall_vars ea @ [j + one]) in
   let enc_used_gas =
     let cost =
+      let k = sk (sc - sanum 1) in
+      let v' = sk (sc - sanum 2) in
+      let refund = num 15000 and set = num 20000 and reset = num 5000 in
       match is with
       | SSTORE ->
-        ite (strg (sk (sc - sanum 1)) == senum 0)
-          (ite (sk (sc - sanum 2) == senum 0) (num 5000) (num 20000))
-          (ite (sk (sc - sanum 2) == senum 0) (num (Int.neg 10000)) (num 5000))
+        ite (strg k == senum 0)
+          (ite (v' == senum 0) reset set)
+          (ite (v' == senum 0) (reset - refund) reset)
       | _ -> num (gas_cost is)
     in
-    ug == (ug' + cost)
+    ug' == (ug + cost)
   in
   let enc_stack_ctr =
     st.stack_ctr @@ [j + one] == (sc + sanum diff)
