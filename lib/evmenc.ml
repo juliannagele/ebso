@@ -147,7 +147,8 @@ let mk_state ea idx =
     (* exc_halt(j) is true if exceptional halting occurs after j instructions *)
     exc_halt = func_decl ("exc_halt" ^ idx) [int_sort] bool_sort;
     (* gas(j) = amount of gas used to execute the first j instructions *)
-    used_gas = func_decl ("used_gas" ^ idx) [int_sort] int_sort;
+    used_gas = func_decl ("used_gas" ^ idx)
+        (mk_vars_sorts (forall_vars ea) @ [int_sort]) int_sort;
   }
 
 let enc_opcode ea i = List.Assoc.find_exn ea.opcodes ~equal:[%eq: Instruction.t] i
@@ -196,7 +197,7 @@ let init ea st =
   && conj (List.mapi ea.xs ~f:(fun i x ->
       st.stack @@ (forall_vars ea @ [num 0; sanum i]) == x))
   && (st.exc_halt @@ [num 0] == btm)
-  && (st.used_gas @@ [num 0] == num 0)
+  && (st.used_gas @@ (forall_vars ea @ [num 0]) == num 0)
   && init_storage ea st
   && Map.fold ea.roms ~init:top ~f:(fun ~key:i ~data:f e -> e && init_rom ea st i f)
 
@@ -410,8 +411,18 @@ let enc_instruction ea st j is =
   and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
   let strg w = st.storage @@ (forall_vars ea @ [j; w])
   and strg' w = st.storage @@ (forall_vars ea @ [j + one; w]) in
+  let ug = st.used_gas @@ (forall_vars ea @ [j + one])
+  and ug' = (st.used_gas @@ (forall_vars ea @ [j])) in
   let enc_used_gas =
-    st.used_gas @@ [j + one] == ((st.used_gas @@ [j]) + (num (gas_cost is)))
+    let cost =
+      match is with
+      | SSTORE ->
+        ite (strg (sk (sc - sanum 1)) == senum 0)
+          (ite (sk (sc - sanum 2) == senum 0) (num 5000) (num 20000))
+          (ite (sk (sc - sanum 2) == senum 0) (num (Int.neg 10000)) (num 5000))
+      | _ -> num (gas_cost is)
+    in
+    ug == (ug' + cost)
   in
   let enc_stack_ctr =
     st.stack_ctr @@ [j + one] == (sc + sanum diff)
@@ -480,7 +491,8 @@ let enc_equivalence ea sts stt =
   (* intially source and target states equal *)
   enc_equivalence_at ea sts stt (num 0) (num 0) &&
   (* initally source and target gas are equal *)
-  sts.used_gas @@ [num 0] == stt.used_gas @@ [num 0] &&
+  sts.used_gas @@ (forall_vars ea @ [num 0]) ==
+  stt.used_gas @@ (forall_vars ea @ [num 0]) &&
   (* after the programs have run source and target states equal *)
   enc_equivalence_at ea sts stt ks kt
 
@@ -497,10 +509,11 @@ let enc_super_opt ea =
     (enc_program ea sts &&
      enc_search_space ea stt &&
      enc_equivalence ea sts stt &&
-     sts.used_gas @@ [num ks] > stt.used_gas @@ [ea.kt] &&
+     sts.used_gas @@ (forall_vars ea @ [num ks]) >
+     stt.used_gas @@ (forall_vars ea @ [ea.kt]) &&
      (* bound the number of instructions in the target; aids solver in showing
         unsat, i.e., that program is optimal *)
-     ea.kt <= sts.used_gas @@ [num ks])
+     ea.kt <= sts.used_gas @@ (forall_vars ea @ [num ks]))
 
 let enc_trans_val ea tp =
   let open Z3Ops in
@@ -514,7 +527,8 @@ let enc_trans_val ea tp =
         ~f:(fun j enc oc -> enc <&> enc_instruction ea stt (num j) oc)) &&
      (* they start in the same state *)
      (enc_equivalence_at ea sts stt (num 0) (num 0)) &&
-     sts.used_gas @@ [num 0] == stt.used_gas @@ [num 0] &&
+     sts.used_gas @@ (forall_vars ea @ [num 0]) ==
+     stt.used_gas @@ (forall_vars ea @ [num 0]) &&
      (* but their final state is different *)
      ~! (enc_equivalence_at ea sts stt ks kt))
 
@@ -534,7 +548,8 @@ let enc_classic_so_test ea cp js =
      conj (List.map2_exn cp js ~f:(fun i j -> enc_instruction ea stc j i)) &&
      (* they start in the same state *)
      (enc_equivalence_at ea sts stc (num 0) (num 0)) &&
-     sts.used_gas @@ [num 0] == stc.used_gas @@ [num 0] &&
+     sts.used_gas @@ (forall_vars ea @ [num 0]) ==
+     stc.used_gas @@ (forall_vars ea @ [num 0]) &&
      (* and their final state is the same *)
      (enc_equivalence_at ea sts stc ks kt))
 
@@ -551,7 +566,8 @@ let eval_storage ?(xs = []) st m j k =
 
 let eval_exc_halt st m i = eval_state_func_decl m i st.exc_halt
 
-let eval_gas st m i = eval_state_func_decl m i st.used_gas |> Z3.Arithmetic.Integer.get_int
+let eval_gas ?(xs = []) st m i =
+  eval_state_func_decl ~xs:xs m i st.used_gas |> Z3.Arithmetic.Integer.get_int
 
 let eval_fis ea m j = eval_state_func_decl m j ea.fis |> Z3.Arithmetic.Integer.get_int
 
