@@ -1412,7 +1412,7 @@ let gas_cost =
         let p = [PUSH (Val "0"); PUSH k; SSTORE] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
-        let c = enc_program ea st in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         let xsload0 = senum 0 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
@@ -1425,7 +1425,7 @@ let gas_cost =
         let p = [PUSH (Val "0"); PUSH k; SSTORE] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
-        let c = enc_program ea st in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         let xsload0 = senum 2 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
@@ -1438,7 +1438,7 @@ let gas_cost =
         let p = [PUSH (Val "2"); PUSH k; SSTORE] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
-        let c = enc_program ea st in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         let xsload0 = senum 0 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
@@ -1451,7 +1451,7 @@ let gas_cost =
         let p = [PUSH (Val "3"); PUSH k; SSTORE] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
-        let c = enc_program ea st in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         let xsload0 = senum 2 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
@@ -1464,7 +1464,7 @@ let gas_cost =
         let p = [PUSH (Val "0"); PUSH k; SSTORE; PUSH (Val "0"); PUSH k; SSTORE] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
-        let c = enc_program ea st in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         let xsload0 = senum 0 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
@@ -1477,7 +1477,7 @@ let gas_cost =
         let p = [PUSH (Val "0"); PUSH k; SSTORE; PUSH (Val "0"); PUSH k; SSTORE] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
-        let c = enc_program ea st in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         let xsload0 = senum 2 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
@@ -1490,7 +1490,7 @@ let gas_cost =
         let p = [PUSH (Val "0"); PUSH k; SSTORE; PUSH (Val "2"); PUSH k; SSTORE] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
-        let c = enc_program ea st in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         let xsload0 = senum 0 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
@@ -1503,7 +1503,7 @@ let gas_cost =
         let p = [PUSH (Val "0"); PUSH k; SSTORE; PUSH (Val "2"); PUSH k; SSTORE] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
-        let c = enc_program ea st in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         let xsload0 = senum 2 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
@@ -1516,7 +1516,7 @@ let gas_cost =
         let p = [PUSH (Val "2"); PUSH k; SSTORE; PUSH (Val "0"); PUSH k; SSTORE] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
-        let c = enc_program ea st in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         let xsload0 = senum 0 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
@@ -1529,7 +1529,7 @@ let gas_cost =
         let p = [PUSH (Val "2"); PUSH k; SSTORE; PUSH (Val "0"); PUSH k; SSTORE] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
-        let c = enc_program ea st in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         let xsload0 = senum 2 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
@@ -1542,7 +1542,7 @@ let gas_cost =
         let p = [PUSH (Val "2"); PUSH k; SSTORE; PUSH (Val "3"); PUSH k; SSTORE] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
-        let c = enc_program ea st in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         let xsload0 = senum 0 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
@@ -1555,7 +1555,7 @@ let gas_cost =
         let p = [PUSH (Val "2"); PUSH k; SSTORE; PUSH (Val "3"); PUSH k; SSTORE] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
-        let c = enc_program ea st in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         let xsload0 = senum 2 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
