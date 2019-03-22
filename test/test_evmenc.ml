@@ -1469,7 +1469,7 @@ let gas_cost =
         let xsstore0 = senum 0 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
           10012
-          (eval_gas ~xs:[xsstore0] st m (List.length p))
+          (eval_gas ~xs:[xsstore0; xsstore0] st m (List.length p))
       );
 
     "cost of SSTORing 0 to same key twice, with refund" >:: (fun _ ->
@@ -1482,7 +1482,7 @@ let gas_cost =
         let xsstore0 = senum 2 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
           (-4988)
-          (eval_gas ~xs:[xsstore0] st m (List.length p))
+          (eval_gas ~xs:[xsstore0; xsstore0] st m (List.length p))
       );
 
     "cost of SSTORing 0 then non-zero to same key, no refund" >:: (fun _ ->
@@ -1495,7 +1495,7 @@ let gas_cost =
         let xsstore0 = senum 0 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
           25012
-          (eval_gas ~xs:[xsstore0] st m (List.length p))
+          (eval_gas ~xs:[xsstore0; xsstore0] st m (List.length p))
       );
 
     "cost of SSTORing 0 then non-zero to same key, with refund" >:: (fun _ ->
@@ -1508,7 +1508,7 @@ let gas_cost =
         let xsstore0 = senum 2 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
           10012
-          (eval_gas ~xs:[xsstore0] st m (List.length p))
+          (eval_gas ~xs:[xsstore0; xsstore0] st m (List.length p))
       );
 
     "cost of SSTORing non-zero then zero to same key, overwriting zero" >:: (fun _ ->
@@ -1521,7 +1521,7 @@ let gas_cost =
         let xsstore0 = senum 0 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
           10012
-          (eval_gas ~xs:[xsstore0] st m (List.length p))
+          (eval_gas ~xs:[xsstore0; xsstore0] st m (List.length p))
       );
 
     "cost of SSTORing non-zero then zero to same key, overwriting non-zero" >:: (fun _ ->
@@ -1534,7 +1534,7 @@ let gas_cost =
         let xsstore0 = senum 2 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
           (-4988)
-          (eval_gas ~xs:[xsstore0] st m (List.length p))
+          (eval_gas ~xs:[xsstore0; xsstore0] st m (List.length p))
       );
 
     "cost of SSTORing non-zero to same key twice, overwriting zero" >:: (fun _ ->
@@ -1547,7 +1547,7 @@ let gas_cost =
         let xsstore0 = senum 0 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
           25012
-          (eval_gas ~xs:[xsstore0] st m (List.length p))
+          (eval_gas ~xs:[xsstore0; xsstore0] st m (List.length p))
       );
 
     "cost of SSTORing non-zero to same key twice, overwriting non-zero" >:: (fun _ ->
@@ -1560,7 +1560,7 @@ let gas_cost =
         let xsstore0 = senum 2 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
           10012
-          (eval_gas ~xs:[xsstore0] st m (List.length p))
+          (eval_gas ~xs:[xsstore0; xsstore0] st m (List.length p))
       );
   ]
 
