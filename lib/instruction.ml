@@ -197,7 +197,6 @@ let outsideeffect = [
   ; RETURNDATACOPY
   ; MSTORE
   ; MSTORE8
-  ; SSTORE
   ; LOG0
   ; LOG1
   ; LOG2
