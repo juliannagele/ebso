@@ -305,6 +305,21 @@ let effect =
           (eval_storage ~xs:[xsload0; xsload1; xsstore0] st m (List.length p) (enc_stackarg ea (num 0) k))
       );
 
+    "SSTORE to SLOADed key" >: test_case ~length:Long (fun _ ->
+        let k1 = Stackarg.Val "1" and k2 = Stackarg.Val "3" in
+        let v = Stackarg.Val "4" in
+        let p = [PUSH k1; SLOAD; PUSH v; PUSH k1; SSTORE; PUSH k2; SLOAD] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
+        let m = solve_model_exn [c] in
+        let xsload0 = senum 3 and xsload1 = senum 2 and xsstore0 = senum 5 in
+        assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
+          [(senum 4); (senum 2)]
+          [(eval_storage ~xs:[xsload0; xsload1; xsstore0] st m (List.length p) (enc_stackarg ea (num 0) k1));
+           (eval_storage ~xs:[xsload0; xsload1; xsstore0] st m (List.length p) (enc_stackarg ea (num 0) k2))]
+      );
+
     "SSTORE twice to same key" >:: (fun _ ->
         let k = Stackarg.Val "1" in
         let v1 = Stackarg.Val "2" and v2 = Stackarg.Val "3" in
