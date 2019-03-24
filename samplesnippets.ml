@@ -22,17 +22,6 @@ module Snippet_mod = struct
 
     let set_wsz s = wsz := s
 
-    let drop_terminal sp =
-      let bbs =
-        Sedlexing.Latin1.from_string sp |> Parser.parse
-        |> Program.split_into_bbs
-      in
-      match bbs with
-      | [Terminal (p, _)] -> Program.show_hex p
-      | [Next p] -> Program.show_hex p
-      | [NotEncodable p] -> Program.show_hex p
-      | _ -> failwith "multiple bbs"
-
     let abstract_pusharg sp =
       Sedlexing.Latin1.from_string sp |> Parser.parse
       |> Program.val_to_const !wsz
@@ -70,7 +59,6 @@ let () =
         let m = Map.empty (module Snippet_mod) in
         let c = Csv.Rows.load ~has_header:true f |> List.map ~f:Csv.Row.to_list in
         let ps = List.map c ~f:List.hd_exn in
-        let ps = List.map ps ~f:Snippet_mod.drop_terminal in
         let m =
           List.fold_left ps ~init:m
             ~f:(Map.update ~f:(function | None -> Z.one | Some n -> Z.succ n))
