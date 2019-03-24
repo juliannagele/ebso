@@ -162,15 +162,16 @@ let classic_super_optimize_bb cis tval hist_bbs = function
   | Terminal (p, _) -> classic_super_optimize_encbl p cis tval hist_bbs
   | NotEncodable _ -> hist_bbs
 
+let ebso_snippet = function
+  | Terminal (p, _) when List.length p > 1 -> Some p
+  | Next p when List.length p > 1 -> Some p
+  | _ -> None
+
 let stats_bb bb =
-  let len p = Int.to_string (List.length p) in
-  let p =
-    match bb with
-    | Terminal (p, _) -> Some p
-    | Next p -> Some p
-    | NotEncodable _ -> None
+  let show_snippet s =
+    [Program.show_hex s; Program.show_h s; [%show: int] (List.length s)]
   in
-  Option.map p ~f:(fun p -> [Program.show_hex p; Program.show_h p; len p])
+  ebso_snippet bb |> Option.map ~f:(show_snippet)
 
 type opt_mode =
   | NO
