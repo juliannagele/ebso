@@ -57,12 +57,12 @@ let () =
       fun () ->
         Snippet_mod.set_wsz wordsize;
         let m = Map.empty (module Snippet_mod) in
-        let c = Csv.Rows.load ~has_header:false f |> List.map ~f:Csv.Row.to_list in
-        let (header, data) = (List.hd_exn c, List.tl_exn c) in
+        let c = Csv.Rows.load ~has_header:false f in
+        let (header, data) = (Csv.Row.to_list (List.hd_exn c), List.tl_exn c) in
         let m =
           List.fold_left data ~init:m
             ~f:(fun m' r ->
-                let (h, t) =  List.split_n r 1 in
+                let (h, t) =  List.split_n (Csv.Row.to_list r) 1 in
                 Map.update m' (List.hd_exn h)
                   ~f:(function | None -> (t, Z.one) | Some (d, n) -> (d, Z.succ n)))
         in
