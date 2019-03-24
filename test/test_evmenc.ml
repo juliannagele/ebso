@@ -1618,7 +1618,7 @@ let suite =
   set_wsz 3; set_sas 6;
   "suite" >:::
   effect @ pres_stack @ stack_ctr @ exc_halt @ forced_stack_underflow
-  @ gas_cost @ storage @ misc
+  @ gas_cost @ misc
 
 let () =
   run_test_tt_main suite
