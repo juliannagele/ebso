@@ -175,6 +175,7 @@ let stats_bb bb =
     ; [%show: int] (List.length s)
     ; [%show: int] (List.length ea.xs)
     ; [%show: int] (List.length (List.concat (Map.data ea.uis)))
+    ; [%show: int] (List.length ea.ss)
     ]
   in
   ebso_snippet bb |> Option.map ~f:(show_snippet)
@@ -243,6 +244,7 @@ let () =
                             ; "instruction count"
                             ; "stack depth"
                             ; "uninterpreted count"
+                            ; "storage access count"
                             ] ::
                             (List.filter_map bbs ~f:stats_bb))
             | None -> Program.pp Format.std_formatter (concat_bbs bbs);
