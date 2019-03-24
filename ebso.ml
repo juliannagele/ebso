@@ -166,11 +166,11 @@ let stats_bb bb =
   let len p = Int.to_string (List.length p) in
   match bb with
   | Terminal (p, _) ->
-    [Program.show_hex p; Program.show_h p; "Terminal"; len p]
+    [Program.show_hex p; Program.show_h p; len p]
   | Next p ->
-    [Program.show_hex p; Program.show_h p; "Next"; len p]
+    [Program.show_hex p; Program.show_h p; len p]
   | NotEncodable p ->
-    [Program.show_hex p; Program.show_h p; "NotEncodable"; len p]
+    [Program.show_hex p; Program.show_h p; len p]
 
 type opt_mode =
   | NO
@@ -231,7 +231,7 @@ let () =
           begin
             match csv with
             | Some fn -> Csv.save fn
-                           (["byte code";"op code";"type";"instruction count"] ::
+                           (["byte code";"op code";"instruction count"] ::
                             (List.map bbs ~f:stats_bb))
             | None -> Program.pp Format.std_formatter (concat_bbs bbs);
           end
