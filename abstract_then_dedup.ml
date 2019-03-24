@@ -46,7 +46,7 @@ end
 
 let () =
   let open Command.Let_syntax in
-  Command.basic ~summary:"sample snippets from csv"
+  Command.basic ~summary:"First abstract PUSH arguments using given word size, then remove duplicate snippets"
     [%map_open
       let f = anon ("CSVFILE" %: string)
       and wordsize = flag "word-size" (required int)
