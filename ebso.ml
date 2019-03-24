@@ -165,8 +165,8 @@ let classic_super_optimize_bb cis tval hist_bbs = function
 let stats_bb bb =
   let len p = Int.to_string (List.length p) in
   match bb with
-  | Terminal (p, i) ->
-    [Program.show_hex (p @ [i]); Program.show_h (p @ [i]); "Terminal"; len (p @ [i])]
+  | Terminal (p, _) ->
+    [Program.show_hex p; Program.show_h p; "Terminal"; len p]
   | Next p ->
     [Program.show_hex p; Program.show_h p; "Next"; len p]
   | NotEncodable p ->
