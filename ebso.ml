@@ -169,10 +169,11 @@ let ebso_snippet = function
 
 let stats_bb bb =
   let show_snippet s =
+    let ea = mk_enc_consts s `All in
     [ Program.show_hex s
     ; Program.show_h s
     ; [%show: int] (List.length s)
-    ; [%show: int] (Program.stack_depth s)
+    ; [%show: int] (List.length ea.xs)
     ]
   in
   ebso_snippet bb |> Option.map ~f:(show_snippet)
