@@ -70,7 +70,12 @@ let output_step hist hist_bbs =
   match !outputcfg.csv with
   | None -> print_step (List.hd_exn hist)
   | Some fn ->
-    Csv.save fn (["input";"optimized";"gas saved"; "known optimal"; "translation validation"] ::
+    Csv.save fn ([ "source"
+                 ; "target"
+                 ; "gas saved"
+                 ; "known optimal"
+                 ; "translation validation"
+                 ] ::
                  List.rev_map ~f:step_to_csv_string (hist @ List.concat hist_bbs))
 
 let add_step step = function
