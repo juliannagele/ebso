@@ -1426,21 +1426,6 @@ let storage =
            (eval_storage ~xs:[xsload0; xsload1] st m (List.length p) (enc_stackarg ea (num 0) k2))]
       );
 
-    "SSTORE twice to same key" >:: (fun _ ->
-        let k = Stackarg.Val "1" in
-        let v1 = Stackarg.Val "2" and v2 = Stackarg.Val "3" in
-        let p1 = [PUSH v1; PUSH k; SSTORE] and p2 = [PUSH v2; PUSH k; SSTORE] in
-        let p = p1 @ p2 in
-        let ea = mk_enc_consts p (`User []) in
-        let st = mk_state ea "" in
-        let c = foralls (forall_vars ea) (enc_program ea st) in
-        let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [(senum 2); (senum 3)]
-          [(eval_storage st m (List.length p1) (enc_stackarg ea (num 0) k));
-           (eval_storage st m (List.length p) (enc_stackarg ea (num 0) k))]
-      );
-
   ]
 
 let misc =
