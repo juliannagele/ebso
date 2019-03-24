@@ -189,7 +189,7 @@ let is_uninterpreted i = List.mem uninterpreted i ~equal:[%eq: t]
 let constant_uninterpreted = List.filter uninterpreted ~f:is_const
 
 (* list of instructions that have an effect on the outside world that is
-   not encodable, i.e., effects on memory, storage, and logs *)
+   not encodable, i.e., effects on memory and logs *)
 let outsideeffect = [
     CALLDATACOPY
   ; CODECOPY
@@ -226,6 +226,8 @@ let encodable = [
   ; XOR
   ; NOT
   ; POP
+  ; SLOAD
+  ; SSTORE
 ] @ List.map Stackarg.all ~f:(fun a -> PUSH a)
   @ List.map all_of_idx ~f:(fun i -> SWAP i)
   @ List.map all_of_idx ~f:(fun i -> DUP i)
