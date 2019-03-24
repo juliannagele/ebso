@@ -48,8 +48,13 @@ type step = {input: Program.t; opt: Program.t; optimal: bool; tval: bool option}
 
 let step_to_csv_string step =
   let g = (total_gas_cost step.input - total_gas_cost step.opt) in
-  [show_hex step.input; show_hex step.opt; Int.to_string g; Bool.to_string step.optimal]
-  @ Option.to_list (Option.map step.tval ~f:Bool.to_string)
+  [ show_hex step.input
+  ; show_hex step.opt
+  ; Int.to_string g
+  ; Bool.to_string step.optimal]
+  @ Option.to_list (Option.map step.tval ~f:Bool.to_string) @
+  [ [%show: int] (List.length step.input)
+  ; [%show: int] (List.length step.opt)]
 
 let print_step step =
   let g = (total_gas_cost step.input - total_gas_cost step.opt) in
@@ -75,6 +80,8 @@ let output_step hist hist_bbs =
                  ; "gas saved"
                  ; "known optimal"
                  ; "translation validation"
+                 ; "source instruction count"
+                 ; "target instruction count"
                  ] ::
                  List.rev_map ~f:step_to_csv_string (hist @ List.concat hist_bbs))
 
