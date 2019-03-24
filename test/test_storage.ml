@@ -337,11 +337,104 @@ let effect =
       );
   ]
 
+let superoptimize =
+  [
+    "sload from same key twice" >:: (fun _ ->
+        let key = Stackarg.Val "1" in
+        let p = [PUSH key; SLOAD; PUSH key; SLOAD] in
+        let cis = `User [PUSH Tmpl; SLOAD; DUP I] in
+        let ea = mk_enc_consts p cis in
+        let c = enc_super_opt ea in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
+          [PUSH key; SLOAD; DUP I] (dec_super_opt ea m)
+      );
+
+    "sload from same computed key twice" >:: (fun _ ->
+        let key = Stackarg.Val "2" in
+        let p = [PUSH key; SLOAD; PUSH (Val "1"); PUSH (Val "1"); ADD; SLOAD] in
+        let cis = `User [PUSH Tmpl; SLOAD; DUP I] in
+        let ea = mk_enc_consts p cis in
+        let c = enc_super_opt ea in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
+          [PUSH key; SLOAD; DUP I] (dec_super_opt ea m)
+      );
+
+    "sload from two different keys is optimal" >:: (fun _ ->
+        let key1 = Stackarg.Val "1" in
+        let key2 = Stackarg.Val "2" in
+        let p = [PUSH key1; SLOAD; PUSH key2; SLOAD] in
+        let cis = `User [PUSH Tmpl; SLOAD; DUP I] in
+        let ea = mk_enc_consts p cis in
+        let c = enc_super_opt ea in
+        assert_bool "not unsat" (is_unsat [c])
+      );
+
+    "sload from two different computed keys" >: test_case ~length:Long (fun _ ->
+        let key1 = Stackarg.Val "1" in
+        let key2 = Stackarg.Val "2" in
+        let p = [PUSH key1; SLOAD; PUSH (Val "1"); PUSH (Val "1"); ADD; SLOAD] in
+        let cis = `User [PUSH Tmpl; SLOAD; ADD] in
+        let ea = mk_enc_consts p cis in
+        let c = enc_super_opt ea in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
+          [PUSH key1; SLOAD; PUSH key2; SLOAD] (dec_super_opt ea m)
+      );
+
+    "sload sstored value" >:: (fun _ ->
+        let value = Stackarg.Val "1" in
+        let key = Stackarg.Val "2" in
+        let p = [PUSH value; PUSH key; SSTORE; PUSH key; SLOAD] in
+        let cis = `User [PUSH Tmpl; SSTORE; SLOAD] in
+        let ea = mk_enc_consts p cis in
+        let c = enc_super_opt ea in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
+          [PUSH value; PUSH key; SSTORE; PUSH value] (dec_super_opt ea m)
+      );
+
+    "sstore sloaded value" >:: (fun _ ->
+        let key = Stackarg.Val "2" in
+        let p = [PUSH key; SLOAD; PUSH key; SSTORE] in
+        let cis = `User [PUSH Tmpl; SSTORE; SLOAD] in
+        let ea = mk_enc_consts p cis in
+        let c = enc_super_opt ea in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
+          [] (dec_super_opt ea m)
+      );
+
+    "overwrite sstored value" >:: (fun _ ->
+        let value1 = Stackarg.Val "1" and value2 = Stackarg.Val "2" in
+        let key = Stackarg.Val "3" in
+        let p = [PUSH value1; PUSH key; SSTORE; PUSH value2; PUSH key; SSTORE] in
+        let cis = `User [PUSH Tmpl; SSTORE] in
+        let ea = mk_enc_consts p cis in
+        let c = enc_super_opt ea in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
+          [PUSH value2; PUSH key; SSTORE] (dec_super_opt ea m)
+      );
+
+    "sstore to two different keys is optimal" >:: (fun _ ->
+        let key1 = Stackarg.Val "1" in
+        let key2 = Stackarg.Val "2" in
+        let value = Stackarg.Val "3" in
+        let p = [PUSH value; PUSH key1; SSTORE; PUSH value; PUSH key2; SSTORE] in
+        let cis = `User [PUSH Tmpl; SSTORE; DUP I] in
+        let ea = mk_enc_consts p cis in
+        let c = enc_super_opt ea in
+        assert_bool "not unsat" (is_unsat [c])
+      );
+  ]
+
 let suite =
   (* set low for fast testing *)
   set_wsz 2; set_sas 6;
   "suite" >:::
-  effect @ gas_cost
+  effect @ gas_cost @ superoptimize
 
 let () =
   run_test_tt_main suite
