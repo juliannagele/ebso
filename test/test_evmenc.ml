@@ -1410,18 +1410,6 @@ let gas_cost =
 
 let storage =
   [
-    "No SLOAD, all default values">::(fun _ ->
-        let p = [PUSH (Val "1"); PUSH (Val "2"); SSTORE] in
-        let ea = mk_enc_consts p (`User []) in
-        let st = mk_state ea "" in
-        let c = foralls (forall_vars ea) (enc_program ea st) in
-        let m = solve_model_exn [c] in
-        let keys = [senum 0; senum 1; senum 2] in
-        assert_equal
-          ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [senum 0; senum 0; senum 0]
-          (List.map keys ~f:(eval_storage st m 0))
-      );
 
     "SLOAD a key" >:: (fun _ ->
         let k = Stackarg.Val "1" in

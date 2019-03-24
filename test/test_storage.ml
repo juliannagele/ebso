@@ -177,7 +177,35 @@ let gas_cost =
       );
   ]
 
-let effect = []
+let effect =
+  [
+    "Non-accessed keys evaluate to default value" >:: (fun _ ->
+        let p = [PUSH (Val "1"); PUSH (Val "2"); SSTORE] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
+        let m = solve_model_exn [c] in
+        let keys = [senum 0; senum 1] in
+        let xsstore0 = senum 3 in
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
+          [senum 0; senum 0]
+          (List.map keys ~f:(eval_storage ~xs:[xsstore0] st m 0))
+      );
+
+    "No SLOAD, return variable for key of SSTORE" >:: (fun _ ->
+        let p = [PUSH (Val "1"); PUSH (Val "2"); SSTORE] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
+        let m = solve_model_exn [c] in
+        let xsstore0 = senum 3 in (* initialize universally quantified variable to 3 *)
+        assert_equal
+          ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          xsstore0
+          (eval_storage ~xs:[xsstore0] st m 0 (senum 2))
+      );
+  ]
 
 let suite =
   (* set low for fast testing *)
