@@ -57,16 +57,18 @@ let () =
       fun () ->
         Snippet_mod.set_wsz wordsize;
         let m = Map.empty (module Snippet_mod) in
-        let c = Csv.Rows.load ~has_header:true f |> List.map ~f:Csv.Row.to_list in
-        let ps = List.map c ~f:List.hd_exn in
+        let c = Csv.Rows.load ~has_header:false f |> List.map ~f:Csv.Row.to_list in
+        let ss = List.map (List.tl_exn c) ~f:(fun s -> List.split_n s 1) in
         let m =
-          List.fold_left ps ~init:m
-            ~f:(Map.update ~f:(function | None -> Z.one | Some n -> Z.succ n))
+          List.fold_left ss ~init:m
+            ~f:(fun m' (h, t) ->
+                Map.update m' (List.hd_exn h)
+                  ~f:(function | None -> (t, Z.one) | Some (d, n) -> (d, Z.succ n)))
         in
         let outcsv =
           List.map (Map.to_alist ~key_order:`Increasing m)
-            ~f:(fun (k, d) -> [k; Z.to_string d])
+            ~f:(fun (k, (d, c)) -> [k] @ d @ [Z.to_string c])
         in
-        Csv.save outfile (["byte code"; "count"] :: outcsv)
+        Csv.save outfile ((List.hd_exn c @ ["snippet count"]) :: outcsv)
     ]
   |> Command.run
