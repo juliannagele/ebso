@@ -1884,11 +1884,18 @@ let misc =
 
     (* mk_store_vars *)
 
-    "For SSTORE no variable is generated">:: (fun _ ->
-        let p = [SSTORE] in
+    "For ADD no variable is generated">:: (fun _ ->
+        let p = [ADD] in
         let xs = mk_store_vars p in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
           [] xs
+      );
+
+    "For SSTORE one variable is generated">:: (fun _ ->
+        let p = [SSTORE] in
+        let xs = mk_store_vars p in
+        assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
+          [(seconst "x_SSTORE_0")] xs
       );
 
     "[SLOAD] generates one variable">:: (fun _ ->

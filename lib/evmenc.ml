@@ -68,7 +68,7 @@ let mk_unint_roms p vc =
       else ue)
 
 let mk_store_vars p = List.fold p ~init:[] ~f:(fun vs i ->
-    if Instruction.equal SLOAD i
+    if Instruction.equal SLOAD i || Instruction.equal SSTORE i
     then vs @ [seconst (Instruction.unint_name (List.length vs) i)]
     else vs)
 
@@ -178,7 +178,7 @@ let init_rom ea st i rom =
 
 let init_storage ea st =
   let open Z3Ops in
-  let js = poss_of_instr ea.p SLOAD in
+  let js = poss_of_instr ea.p SLOAD @ poss_of_instr ea.p SSTORE in
   let ks = List.concat_map js ~f:(fun j -> enc_top_d_of_st ea st (num j) 1) in
   let w_dflt = senum 0 in
   let w = seconst "w" in
