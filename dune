@@ -16,9 +16,3 @@
  (libraries core sedlex ebso zarith csv)
  (preprocess (pps ppx_jane ppx_deriving.std))
 )
-
-(executable (name addinstructioncount)
- (modules addinstructioncount)
- (libraries core sedlex ebso zarith csv)
- (preprocess (pps ppx_jane ppx_deriving.std))
-)
