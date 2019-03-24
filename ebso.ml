@@ -165,12 +165,9 @@ let classic_super_optimize_bb cis tval hist_bbs = function
 let stats_bb bb =
   let len p = Int.to_string (List.length p) in
   match bb with
-  | Terminal (p, _) ->
-    [Program.show_hex p; Program.show_h p; len p]
-  | Next p ->
-    [Program.show_hex p; Program.show_h p; len p]
-  | NotEncodable p ->
-    [Program.show_hex p; Program.show_h p; len p]
+  | Terminal (p, _) -> Some [Program.show_hex p; Program.show_h p; len p]
+  | Next p -> Some [Program.show_hex p; Program.show_h p; len p]
+  | NotEncodable _ -> None
 
 type opt_mode =
   | NO
@@ -232,7 +229,7 @@ let () =
             match csv with
             | Some fn -> Csv.save fn
                            (["byte code";"op code";"instruction count"] ::
-                            (List.map bbs ~f:stats_bb))
+                            (List.filter_map bbs ~f:stats_bb))
             | None -> Program.pp Format.std_formatter (concat_bbs bbs);
           end
         | UNBOUNDED ->
