@@ -290,6 +290,20 @@ let effect =
           xsload0
           (eval_storage ~xs:[xsload0; xsload1; xsstore0] st m 0 (enc_stackarg ea (num 0) k))
       );
+
+    "SLOAD SSTOREd value" >:: (fun _ ->
+        let k = Stackarg.Val "1" in
+        let v = Stackarg.Val "2" in
+        let p = [PUSH k; SLOAD; PUSH v; PUSH k; SSTORE; PUSH k; SLOAD] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
+        let m = solve_model_exn [c] in
+        let xsload0 = senum 3 and xsload1 = senum 2 and xsstore0 = senum 4 in
+        assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
+          (senum 2)
+          (eval_storage ~xs:[xsload0; xsload1; xsstore0] st m (List.length p) (enc_stackarg ea (num 0) k))
+      );
   ]
 
 let suite =
