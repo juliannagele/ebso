@@ -75,6 +75,24 @@ let suite =
         assert_bool "not unsat" (is_unsat [c])
       );
 
+    "validation with storage: sload from same key twice" >:: (fun _ ->
+        let key = Stackarg.Val "1" in
+        let sp = [PUSH key; SLOAD; PUSH key; SLOAD] in
+        let tp = [PUSH key; SLOAD; DUP I] in
+        let ea = mk_enc_consts sp `All in
+        let c = enc_trans_val ea tp in
+        assert_bool "not unsat" (is_unsat [c])
+      );
+
+    "validation with storage: overwrite sstored value" >:: (fun _ ->
+        let value1 = Stackarg.Val "1" and value2 = Stackarg.Val "2" in
+        let key = Stackarg.Val "3" in
+        let sp = [PUSH value1; PUSH key; SSTORE; PUSH value2; PUSH key; SSTORE] in
+        let tp = [PUSH value2; PUSH key; SSTORE] in
+        let ea = mk_enc_consts sp `All in
+        let c = enc_trans_val ea tp in
+        assert_bool "not unsat" (is_unsat [c])
+      );
   ]
 
 let () =
