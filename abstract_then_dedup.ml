@@ -51,7 +51,7 @@ let () =
       let f = anon ("CSVFILE" %: string)
       and wordsize = flag "word-size" (required int)
           ~doc:"wsz word size, i.e., number of bits used for stack elements"
-      and outfile = flag "outfile" (optional_with_default "sorted.csv" string)
+      and outfile = flag "outfile" (required string)
           ~doc:"f.csv save result to f.csv"
       in
       fun () ->
