@@ -169,7 +169,11 @@ let ebso_snippet = function
 
 let stats_bb bb =
   let show_snippet s =
-    [Program.show_hex s; Program.show_h s; [%show: int] (List.length s)]
+    [ Program.show_hex s
+    ; Program.show_h s
+    ; [%show: int] (List.length s)
+    ; [%show: int] (Program.stack_depth s)
+    ]
   in
   ebso_snippet bb |> Option.map ~f:(show_snippet)
 
@@ -232,7 +236,10 @@ let () =
           begin
             match csv with
             | Some fn -> Csv.save fn
-                           (["byte code";"op code";"instruction count"] ::
+                           ([ "byte code"
+                            ; "op code"
+                            ; "instruction count"
+                            ; "stack depth"] ::
                             (List.filter_map bbs ~f:stats_bb))
             | None -> Program.pp Format.std_formatter (concat_bbs bbs);
           end
