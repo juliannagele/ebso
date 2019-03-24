@@ -11,12 +11,6 @@
  (preprocess (pps ppx_jane ppx_deriving.std))
 )
 
-(executable (name snippetseq)
- (modules snippetseq)
- (libraries core sedlex ebso zarith)
- (preprocess (pps ppx_jane ppx_deriving.std))
-)
-
 (executable (name samplesnippets)
  (modules samplesnippets)
  (libraries core sedlex ebso zarith csv)
