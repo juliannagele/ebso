@@ -59,10 +59,10 @@ let () =
         let m = Map.empty (module Snippet_mod) in
         let c = Csv.Rows.load ~has_header:false f |> List.map ~f:Csv.Row.to_list in
         let (header, data) = (List.hd_exn c, List.tl_exn c) in
-        let ss = List.map data ~f:(fun s -> List.split_n s 1) in
         let m =
-          List.fold_left ss ~init:m
-            ~f:(fun m' (h, t) ->
+          List.fold_left data ~init:m
+            ~f:(fun m' r ->
+                let (h, t) =  List.split_n r 1 in
                 Map.update m' (List.hd_exn h)
                   ~f:(function | None -> (t, Z.one) | Some (d, n) -> (d, Z.succ n)))
         in
