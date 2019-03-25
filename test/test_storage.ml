@@ -428,6 +428,17 @@ let superoptimize =
         let c = enc_super_opt ea in
         assert_bool "not unsat" (is_unsat [c])
       );
+
+    "sstore value produced by uninterpreted instruction" >:: (fun _ ->
+        let key = Stackarg.Val "3" in
+        let p = [PUSH (Val "1"); PUSH (Val "1"); ADD; BLOCKHASH; PUSH key; SSTORE] in
+        let cis = `User [PUSH Tmpl; SSTORE; BLOCKHASH] in
+        let ea = mk_enc_consts p cis in
+        let c = enc_super_opt ea in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
+          [PUSH (Val "2"); BLOCKHASH; PUSH key; SSTORE] (dec_super_opt ea m)
+      );
   ]
 
 let suite =
