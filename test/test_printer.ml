@@ -52,6 +52,16 @@ let suite =
         assert_equal ~cmp:[%eq: Instruction.t list option] ~printer:[%show: Instruction.t list option]
           None (ebso_snippet (NotEncodable p))
       );
+
+    (* create snippets *)
+
+    "Create snippets from basic blocks" >:: (fun _ ->
+        let bb = Next ([ADD; ADD]) in
+        assert_equal ~cmp:[%eq: string list option] ~printer:[%show: string list option]
+          (Some ["0101"; "ADD ADD"; "2"; "3"; "0"; "0"])
+          (stats_bb bb)
+      );
+
   ]
 
 let () =

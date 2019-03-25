@@ -15,8 +15,32 @@
 
 open Core
 open Program
+open Evmenc
 
 let ebso_snippet = function
   | Terminal (p, _) when List.length p > 1 -> Some p
   | Next p when List.length p > 1 -> Some p
   | _ -> None
+
+let stats_bb bb =
+  let show_snippet s =
+    let ea = mk_enc_consts s `All in
+    [ Program.show_hex s
+    ; Program.show_h s
+    ; [%show: int] (List.length s)
+    ; [%show: int] (List.length ea.xs)
+    ; [%show: int] (List.length (List.concat (Map.data ea.uis)))
+    ; [%show: int] (List.length ea.ss)
+    ]
+  in
+  ebso_snippet bb |> Option.map ~f:(show_snippet)
+
+let create_snippets bbs =
+  [ "byte code"
+  ; "op code"
+  ; "instruction count"
+  ; "stack depth"
+  ; "uninterpreted count"
+  ; "storage access count"
+  ] ::
+  List.filter_map bbs ~f:stats_bb

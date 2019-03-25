@@ -174,29 +174,6 @@ let classic_super_optimize_bb cis tval hist_bbs = function
   | Terminal (p, _) -> classic_super_optimize_encbl p cis tval hist_bbs
   | NotEncodable _ -> hist_bbs
 
-let stats_bb bb =
-  let show_snippet s =
-    let ea = mk_enc_consts s `All in
-    [ Program.show_hex s
-    ; Program.show_h s
-    ; [%show: int] (List.length s)
-    ; [%show: int] (List.length ea.xs)
-    ; [%show: int] (List.length (List.concat (Map.data ea.uis)))
-    ; [%show: int] (List.length ea.ss)
-    ]
-  in
-  Printer.ebso_snippet bb |> Option.map ~f:(show_snippet)
-
-let create_snippets bbs =
-  [ "byte code"
-  ; "op code"
-  ; "instruction count"
-  ; "stack depth"
-  ; "uninterpreted count"
-  ; "storage access count"
-  ] ::
-  List.filter_map bbs ~f:stats_bb
-
 type opt_mode =
   | NO
   | UNBOUNDED
@@ -255,7 +232,7 @@ let () =
         | NO ->
           begin
             match csv with
-            | Some fn -> Csv.save fn (create_snippets bbs)
+            | Some fn -> Csv.save fn (Printer.create_snippets bbs)
             | None -> Program.pp Format.std_formatter (concat_bbs bbs);
           end
         | UNBOUNDED ->
