@@ -32,9 +32,6 @@ let show_ebso_snippet s =
   ; [%show: int] (List.length ea.ss)
   ]
 
-let stats_bb bb =
-  ebso_snippet bb |> Option.map ~f:(show_ebso_snippet)
-
 let create_snippets bbs =
   [ "byte code"
   ; "op code"
@@ -43,4 +40,4 @@ let create_snippets bbs =
   ; "uninterpreted count"
   ; "storage access count"
   ] ::
-  List.filter_map bbs ~f:stats_bb
+  List.filter_map bbs ~f:(fun bb -> ebso_snippet bb |> Option.map ~f:(show_ebso_snippet))
