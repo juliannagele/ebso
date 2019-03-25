@@ -43,3 +43,18 @@ let create_ebso_snippets bbs =
   ; "storage access count"
   ] ::
   List.filter_map bbs ~f:(fun bb -> ebso_snippet bb |> Option.map ~f:(show_ebso_snippet))
+
+let print_step step pi =
+  let g = (total_gas_cost step.input - total_gas_cost step.opt) in
+  if pi || step.optimal then
+    begin
+      Out_channel.printf "Optimized\n%sto\n%sSaved %i gas"
+        (Program.show step.input) (Program.show step.opt) g;
+      Option.iter step.tval ~f:(fun b ->
+          Out_channel.printf ", translation validation %s"
+            (if b then "successful" else "failed"));
+      if step.optimal then
+        Out_channel.print_endline ", this instruction sequence is optimal."
+      else Out_channel.print_endline "."
+    end
+  else ()
