@@ -192,6 +192,16 @@ let stats_bb bb =
   in
   ebso_snippet bb |> Option.map ~f:(show_snippet)
 
+let create_snippets bbs =
+  [ "byte code"
+  ; "op code"
+  ; "instruction count"
+  ; "stack depth"
+  ; "uninterpreted count"
+  ; "storage access count"
+  ] ::
+  List.filter_map bbs ~f:stats_bb
+
 type opt_mode =
   | NO
   | UNBOUNDED
@@ -250,15 +260,7 @@ let () =
         | NO ->
           begin
             match csv with
-            | Some fn -> Csv.save fn
-                           ([ "byte code"
-                            ; "op code"
-                            ; "instruction count"
-                            ; "stack depth"
-                            ; "uninterpreted count"
-                            ; "storage access count"
-                            ] ::
-                            (List.filter_map bbs ~f:stats_bb))
+            | Some fn -> Csv.save fn (create_snippets bbs)
             | None -> Program.pp Format.std_formatter (concat_bbs bbs);
           end
         | UNBOUNDED ->
