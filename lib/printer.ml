@@ -75,3 +75,14 @@ let show_result step =
   @ Option.to_list (Option.map step.tval ~f:Bool.to_string) @
   [ [%show: int] (List.length step.input)
   ; [%show: int] (List.length step.opt)]
+
+let create_result steps =
+  [ "source"
+  ; "target"
+  ; "gas saved"
+  ; "known optimal"
+  ; "translation validation"
+  ; "source instruction count"
+  ; "target instruction count"
+  ] ::
+  List.rev_map ~f:show_result steps
