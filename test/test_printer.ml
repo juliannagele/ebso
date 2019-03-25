@@ -53,13 +53,20 @@ let suite =
           None (ebso_snippet (NotEncodable p))
       );
 
-    (* create snippets *)
+    (* show ebso snippet *)
 
-    "Create snippets from basic blocks" >:: (fun _ ->
-        let bb = Next ([ADD; ADD]) in
-        assert_equal ~cmp:[%eq: string list option] ~printer:[%show: string list option]
-          (Some ["0101"; "ADD ADD"; "2"; "3"; "0"; "0"])
-          (stats_bb bb)
+    "Show a simple ebso snippet" >:: (fun _ ->
+        let s = [ADD; ADD] in
+        assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
+          ["0101"; "ADD ADD"; "2"; "3"; "0"; "0"]
+          (show_ebso_snippet s)
+      );
+
+    "Show a complicated ebso snippet" >:: (fun _ ->
+        let s = [SSTORE; SLOAD; ADD; BLOCKHASH; BLOCKHASH; NUMBER] in
+        assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
+          ["555401404043"; "SSTORE SLOAD ADD BLOCKHASH BLOCKHASH NUMBER"; "6"; "4"; "3"; "2"]
+          (show_ebso_snippet s)
       );
 
   ]
