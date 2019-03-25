@@ -57,7 +57,7 @@ let output_step hist hist_bbs =
                  ; "source instruction count"
                  ; "target instruction count"
                  ] ::
-                 List.rev_map ~f:step_to_csv_string (hist @ List.concat hist_bbs))
+                 List.rev_map ~f:show_result (hist @ List.concat hist_bbs))
 
 let add_step step = function
   | h when !outputcfg.pinter -> step :: h

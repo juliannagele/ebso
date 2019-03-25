@@ -66,7 +66,7 @@ let print_step step pi =
       Out_channel.printf "%s" (show_step step)
   else ()
 
-let step_to_csv_string step =
+let show_result step =
   let g = (total_gas_cost step.input - total_gas_cost step.opt) in
   [ show_hex step.input
   ; show_hex step.opt
