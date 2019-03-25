@@ -17,6 +17,8 @@ open Core
 open Program
 open Evmenc
 
+type step = {input: Program.t; opt: Program.t; optimal: bool; tval: bool option}
+
 let ebso_snippet = function
   | Terminal (p, _) -> Some p
   | Next p -> Some p

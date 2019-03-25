@@ -16,6 +16,7 @@ open Core
 open Z3util
 open Program
 open Evmenc
+open Printer
 
 type output_options =
   { pmodel : bool
@@ -43,8 +44,6 @@ let log e =
                          Z3.SMT.benchmark_to_smtstring !ctxt "" "" "unknown" "" []
                            (Z3.Expr.simplify c None))
   | `Model m -> log !outputcfg.pmodel ("Model found:\n" ^ Z3.Model.to_string m ^ "\n")
-
-type step = {input: Program.t; opt: Program.t; optimal: bool; tval: bool option}
 
 let step_to_csv_string step =
   let g = (total_gas_cost step.input - total_gas_cost step.opt) in
