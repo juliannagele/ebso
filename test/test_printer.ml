@@ -32,7 +32,7 @@ let suite =
     "Generate ebso snippet from Next with singleton program" >:: (fun _ ->
         let p = [ADD] in
         assert_equal ~cmp:[%eq: Instruction.t list option] ~printer:[%show: Instruction.t list option]
-          None (ebso_snippet (Next p))
+          (Some p) (ebso_snippet (Next p))
       );
 
     "Generate ebso snippet from Terminal" >:: (fun _ ->
@@ -44,7 +44,7 @@ let suite =
     "Generate ebso snippet from Terminal with singleton program" >:: (fun _ ->
         let p = [ADD] in
         assert_equal ~cmp:[%eq: Instruction.t list option] ~printer:[%show: Instruction.t list option]
-          None (ebso_snippet (Terminal (p, STOP)))
+          (Some p) (ebso_snippet (Terminal (p, STOP)))
       );
 
     "Generate ebso snippet from not encodable instruction" >:: (fun _ ->

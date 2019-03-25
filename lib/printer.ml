@@ -18,8 +18,8 @@ open Program
 open Evmenc
 
 let ebso_snippet = function
-  | Terminal (p, _) when List.length p > 1 -> Some p
-  | Next p when List.length p > 1 -> Some p
+  | Terminal (p, _) -> Some p
+  | Next p -> Some p
   | _ -> None
 
 let show_ebso_snippet s =
