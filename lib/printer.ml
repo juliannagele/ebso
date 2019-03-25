@@ -54,9 +54,11 @@ let show_step step =
     ; "Saved "
     ; [%show: int] g
     ; " gas"
-    ;  Option.value_map step.tval ~default:"" ~f:(fun b ->
-          ", translation validation " ^ (if b then "successful" else "failed"))
-    ; if step.optimal then  ", this instruction sequence is optimal." else "."
+    ; if Option.is_some step.tval then ", translation validation "
+      ^ (if Option.value_exn step.tval then "successful" else "failed")
+      else ""
+    ; if step.optimal then ", this instruction sequence is optimal" else ""
+    ; "."
     ]
 
 let print_step step pi =
