@@ -45,19 +45,21 @@ let log e =
                            (Z3.Expr.simplify c None))
   | `Model m -> log !outputcfg.pmodel ("Model found:\n" ^ Z3.Model.to_string m ^ "\n")
 
+let create_result steps =
+  [ "source"
+  ; "target"
+  ; "gas saved"
+  ; "known optimal"
+  ; "translation validation"
+  ; "source instruction count"
+  ; "target instruction count"
+  ] ::
+  List.rev_map ~f:show_result steps
+
 let output_step hist hist_bbs =
   match !outputcfg.csv with
   | None -> print_step (List.hd_exn hist) !outputcfg.pinter
-  | Some fn ->
-    Csv.save fn ([ "source"
-                 ; "target"
-                 ; "gas saved"
-                 ; "known optimal"
-                 ; "translation validation"
-                 ; "source instruction count"
-                 ; "target instruction count"
-                 ] ::
-                 List.rev_map ~f:show_result (hist @ List.concat hist_bbs))
+  | Some fn -> Csv.save fn (create_result (hist @ List.concat hist_bbs))
 
 let add_step step = function
   | h when !outputcfg.pinter -> step :: h
