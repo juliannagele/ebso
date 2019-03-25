@@ -45,16 +45,6 @@ let log e =
                            (Z3.Expr.simplify c None))
   | `Model m -> log !outputcfg.pmodel ("Model found:\n" ^ Z3.Model.to_string m ^ "\n")
 
-let step_to_csv_string step =
-  let g = (total_gas_cost step.input - total_gas_cost step.opt) in
-  [ show_hex step.input
-  ; show_hex step.opt
-  ; [%show: int] g
-  ; [%show: bool] step.optimal]
-  @ Option.to_list (Option.map step.tval ~f:Bool.to_string) @
-  [ [%show: int] (List.length step.input)
-  ; [%show: int] (List.length step.opt)]
-
 let output_step hist hist_bbs =
   match !outputcfg.csv with
   | None -> print_step (List.hd_exn hist) !outputcfg.pinter
