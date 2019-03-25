@@ -174,11 +174,6 @@ let classic_super_optimize_bb cis tval hist_bbs = function
   | Terminal (p, _) -> classic_super_optimize_encbl p cis tval hist_bbs
   | NotEncodable _ -> hist_bbs
 
-let ebso_snippet = function
-  | Terminal (p, _) when List.length p > 1 -> Some p
-  | Next p when List.length p > 1 -> Some p
-  | _ -> None
-
 let stats_bb bb =
   let show_snippet s =
     let ea = mk_enc_consts s `All in
@@ -190,7 +185,7 @@ let stats_bb bb =
     ; [%show: int] (List.length ea.ss)
     ]
   in
-  ebso_snippet bb |> Option.map ~f:(show_snippet)
+  Printer.ebso_snippet bb |> Option.map ~f:(show_snippet)
 
 let create_snippets bbs =
   [ "byte code"
