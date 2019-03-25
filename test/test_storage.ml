@@ -489,13 +489,24 @@ let superoptimize =
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
           [PUSH (Val "2"); BLOCKHASH; PUSH key; SSTORE] (dec_super_opt ea m)
       );
+
+    "sload as argument for uninterpreted instruction" >:: (fun _ ->
+        let key = Stackarg.Val "3" in
+        let p = [PUSH key; SLOAD; BLOCKHASH; PUSH key; POP] in
+        let cis = `User [PUSH Tmpl; SLOAD; BLOCKHASH] in
+        let ea = mk_enc_consts p cis in
+        let c = enc_super_opt ea in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
+          [PUSH key; SLOAD; BLOCKHASH;] (dec_super_opt ea m)
+      );
   ]
 
 let suite =
   (* set low for fast testing *)
   set_wsz 2; set_sas 6;
   "suite" >:::
-  effect @ gas_cost @ superoptimize
+  (* effect @ gas_cost @ *) superoptimize
 
 let () =
   run_test_tt_main suite
