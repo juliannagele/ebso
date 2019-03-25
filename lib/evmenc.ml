@@ -120,7 +120,7 @@ let mk_enc_consts p cis_mde =
      quantified variables, source and target program use the same
      roms, hence roms cannot be in state without adapting equvivalence
      *)
-  roms = mk_unint_roms p (List.length (xs @ cs @ List.concat (Map.data uis)));
+  roms = mk_unint_roms p (List.length (xs @ ss @ cs @ List.concat (Map.data uis)));
 }
 
 (* project all forall quantified variables *)
