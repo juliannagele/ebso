@@ -20,6 +20,9 @@ open Instruction
 let suite =
   "suite" >:::
   [
+
+    (* ebso snippets *)
+
     "Generate ebso snippet from Next" >:: (fun _ ->
         let p = [ADD; ADD; BLOCKHASH] in
         assert_equal ~cmp:[%eq: Instruction.t list option] ~printer:[%show: Instruction.t list option]
@@ -30,6 +33,24 @@ let suite =
         let p = [ADD] in
         assert_equal ~cmp:[%eq: Instruction.t list option] ~printer:[%show: Instruction.t list option]
           None (ebso_snippet (Next p))
+      );
+
+    "Generate ebso snippet from Terminal" >:: (fun _ ->
+        let p = [ADD; ADD; BLOCKHASH] in
+        assert_equal ~cmp:[%eq: Instruction.t list option] ~printer:[%show: Instruction.t list option]
+          (Some p) (ebso_snippet (Terminal(p, STOP)))
+      );
+
+    "Generate ebso snippet from Terminal with singleton program" >:: (fun _ ->
+        let p = [ADD] in
+        assert_equal ~cmp:[%eq: Instruction.t list option] ~printer:[%show: Instruction.t list option]
+          None (ebso_snippet (Terminal (p, STOP)))
+      );
+
+    "Generate ebso snippet from not encodable instruction" >:: (fun _ ->
+        let p = [LOG0; LOG0] in
+        assert_equal ~cmp:[%eq: Instruction.t list option] ~printer:[%show: Instruction.t list option]
+          None (ebso_snippet (NotEncodable p))
       );
   ]
 
