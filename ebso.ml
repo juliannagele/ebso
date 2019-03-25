@@ -56,9 +56,9 @@ let step_to_csv_string step =
   [ [%show: int] (List.length step.input)
   ; [%show: int] (List.length step.opt)]
 
-let print_step step =
+let print_step step pi =
   let g = (total_gas_cost step.input - total_gas_cost step.opt) in
-  if !outputcfg.pinter || step.optimal then
+  if pi || step.optimal then
     begin
       Out_channel.printf "Optimized\n%sto\n%sSaved %i gas"
         (Program.show step.input) (Program.show step.opt) g;
@@ -73,7 +73,7 @@ let print_step step =
 
 let output_step hist hist_bbs =
   match !outputcfg.csv with
-  | None -> print_step (List.hd_exn hist)
+  | None -> print_step (List.hd_exn hist) !outputcfg.pinter
   | Some fn ->
     Csv.save fn ([ "source"
                  ; "target"
