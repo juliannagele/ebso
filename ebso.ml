@@ -232,7 +232,7 @@ let () =
         | NO ->
           begin
             match csv with
-            | Some fn -> Csv.save fn (Printer.create_snippets bbs)
+            | Some fn -> Csv.save fn (Printer.create_ebso_snippets bbs)
             | None -> Program.pp Format.std_formatter (concat_bbs bbs);
           end
         | UNBOUNDED ->

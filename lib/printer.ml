@@ -32,7 +32,7 @@ let show_ebso_snippet s =
   ; [%show: int] (List.length ea.ss)
   ]
 
-let create_snippets bbs =
+let create_ebso_snippets bbs =
   [ "byte code"
   ; "op code"
   ; "instruction count"
