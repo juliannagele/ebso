@@ -34,16 +34,28 @@ let set_options wordsize stackas pm psmt pc pinter csv =
   Option.iter stackas ~f:(fun stackas -> set_sas stackas);
   set_wsz wordsize
 
+let show_model m = String.concat [ "Model found:\n"; Z3.Model.to_string m; "\n"]
+
+let show_constraint c =
+  String.concat
+    [ "Constraint generated:\n"
+    ; Z3.Expr.to_string (Z3.Expr.simplify c None)
+    ; "\n"
+    ]
+
+let show_smt_benchmark c =
+  String.concat
+    [ "SMT-LIB Benchmark generated:\n"
+     ; Z3.SMT.benchmark_to_smtstring !ctxt "" "" "unknown" "" [] (Z3.Expr.simplify c None)
+    ]
+
 let log e =
   let log b s = if b then Out_channel.prerr_endline s else () in
   match e with
   | `Constraint c ->
-    log !outputcfg.pcnstrnt
-      ("Constraint generated:\n" ^ Z3.Expr.to_string (Z3.Expr.simplify c None) ^ "\n");
-    log !outputcfg.psmt ("SMT-LIB Benchmark generated:\n" ^
-                         Z3.SMT.benchmark_to_smtstring !ctxt "" "" "unknown" "" []
-                           (Z3.Expr.simplify c None))
-  | `Model m -> log !outputcfg.pmodel ("Model found:\n" ^ Z3.Model.to_string m ^ "\n")
+    log !outputcfg.pcnstrnt (show_constraint c);
+    log !outputcfg.psmt (show_smt_benchmark c)
+  | `Model m -> log !outputcfg.pmodel (show_model m)
 
 let output_step hist hist_bbs =
   match !outputcfg.csv with
