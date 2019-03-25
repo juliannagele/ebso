@@ -46,12 +46,18 @@ let create_ebso_snippets bbs =
 
 let show_step step =
   let g = (total_gas_cost step.input - total_gas_cost step.opt) in
-  "Optimized\n" ^ (Program.show step.input) ^
-  "to\n" ^ (Program.show step.opt) ^
-  "Saved "  ^ [%show: int] g ^ " gas" ^
-  Option.value_map step.tval ~default:"" ~f:(fun b ->
-      ", translation validation " ^ (if b then "successful" else "failed")) ^
-   if step.optimal then  ", this instruction sequence is optimal." else "."
+  String.concat
+    [ "Optimized\n"
+    ;  Program.show step.input
+    ; "to\n"
+    ; Program.show step.opt
+    ; "Saved "
+    ; [%show: int] g
+    ; " gas"
+    ;  Option.value_map step.tval ~default:"" ~f:(fun b ->
+          ", translation validation " ^ (if b then "successful" else "failed"))
+    ; if step.optimal then  ", this instruction sequence is optimal." else "."
+    ]
 
 let print_step step pi =
   if pi || step.optimal then
