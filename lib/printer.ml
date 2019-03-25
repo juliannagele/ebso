@@ -16,6 +16,7 @@
 open Core
 open Program
 open Evmenc
+open Z3util
 
 type step = {input: Program.t; opt: Program.t; optimal: bool; tval: bool option}
 
@@ -86,3 +87,18 @@ let create_result steps =
   ; "target instruction count"
   ] ::
   List.rev_map ~f:show_result steps
+
+let show_model m = String.concat [ "Model found:\n"; Z3.Model.to_string m; "\n"]
+
+let show_constraint c =
+  String.concat
+    [ "Constraint generated:\n"
+    ; Z3.Expr.to_string (Z3.Expr.simplify c None)
+    ; "\n"
+    ]
+
+let show_smt_benchmark c =
+  String.concat
+    [ "SMT-LIB Benchmark generated:\n"
+     ; Z3.SMT.benchmark_to_smtstring !ctxt "" "" "unknown" "" [] (Z3.Expr.simplify c None)
+    ]
