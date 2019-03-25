@@ -335,6 +335,34 @@ let effect =
           [(eval_storage ~xs:[xsstore0; xsstore1] st m (List.length p1) (enc_stackarg ea (num 0) k));
            (eval_storage ~xs:[xsstore0; xsstore1] st m (List.length p) (enc_stackarg ea (num 0) k))]
       );
+
+    "SSTORE input from stack" >:: (fun _ ->
+        let k = Stackarg.Val "1" in
+        let p = [PUSH k; SSTORE] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
+        let m = solve_model_exn [c] in
+        let xsstore0 = senum 2 and x0 = senum 3 in
+        assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
+          [xsstore0; x0]
+          [(eval_storage ~xs:[x0; xsstore0] st m 0 (enc_stackarg ea (num 0) k));
+           (eval_storage ~xs:[x0; xsstore0] st m (List.length p) (enc_stackarg ea (num 0) k))]
+      );
+
+    "SSTORE NUMBER" >:: (fun _ ->
+        let k = Stackarg.Val "1" in
+        let p = [NUMBER; PUSH k; SSTORE] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
+        let m = solve_model_exn [c] in
+        let xsstore0 = senum 2 and number0 = senum 3 in
+        assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
+          [xsstore0; number0]
+          [(eval_storage ~xs:[xsstore0; number0] st m 0 (enc_stackarg ea (num 0) k));
+           (eval_storage ~xs:[xsstore0; number0] st m (List.length p) (enc_stackarg ea (num 0) k))]
+      );
   ]
 
 let superoptimize =
