@@ -104,17 +104,15 @@ let super_optimize_bb cis tval hist_bbs bb = match ebso_snippet bb with
 let bso_step p ea cp tval =
   let js = List.init (List.length cp) ~f:(fun i -> intconst ("j" ^ Int.to_string i)) in
   let c = enc_classic_so_test ea cp js in
-  log (`Constraint c);
   let mo = solve_model [c] in
   match mo with
-  | None -> None
+  | None -> (None, c, mo)
   | Some m ->
-      log (`Model mo);
       let p' = dec_classic_super_opt ea m cp js in
       let tv = Option.map tval ~f:(tvalidate ea.p p') in
       match tv with
-      | Some false -> None
-      | _ -> Some {input = p; opt = p'; optimal = true; tval = tv}
+      | Some false -> (None, c, mo)
+      | _ -> (Some {input = p; opt = p'; optimal = true; tval = tv}, c, mo)
 
 let rec bso p g gm cps cis tval hist_bbs =
   let ea = mk_enc_consts p cis in
@@ -123,7 +121,9 @@ let rec bso p g gm cps cis tval hist_bbs =
     let (cps, m') = Program.enumerate g ea.cis gm in
     bso p (g + 1) m' cps cis tval hist_bbs
   | cp :: cps ->
-    match bso_step p ea cp tval with
+    let (step, c, m) = bso_step p ea cp tval in
+    log (`Constraint c); log (`Model m);
+    match step with
     | None -> bso p g gm cps cis tval hist_bbs
     | Some s -> output_step [s] hist_bbs; [s] :: hist_bbs
 
