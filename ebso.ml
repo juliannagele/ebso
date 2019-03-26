@@ -101,6 +101,19 @@ let super_optimize_bb cis tval hist_bbs bb = match ebso_snippet bb with
   | Some p -> super_optimize_encbl p cis tval hist_bbs
   | None   -> hist_bbs
 
+let bso_step p ea cp tval =
+  let js = List.init (List.length cp) ~f:(fun i -> intconst ("j" ^ Int.to_string i)) in
+  let c = enc_classic_so_test ea cp js in
+  match solve_model [c] with
+  | None -> None
+  | Some m ->
+      log (`Model (Some m));
+      let p' = dec_classic_super_opt ea m cp js in
+      let tv = Option.map tval ~f:(tvalidate ea.p p') in
+      match tv with
+      | Some false -> None
+      | _ -> Some {input = p; opt = p'; optimal = true; tval = tv}
+
 let rec bso p g gm cps cis tval hist_bbs =
   let ea = mk_enc_consts p cis in
   match cps with
@@ -111,18 +124,9 @@ let rec bso p g gm cps cis tval hist_bbs =
     let js = List.init (List.length cp) ~f:(fun i -> intconst ("j" ^ Int.to_string i)) in
     let c = enc_classic_so_test ea cp js in
     log (`Constraint c);
-    match solve_model [c] with
+    match bso_step p ea cp tval with
     | None -> bso p g gm cps cis tval hist_bbs
-    | Some m ->
-      log (`Model (Some m));
-      let p' = dec_classic_super_opt ea m cp js in
-      let tv = Option.map tval ~f:(tvalidate ea.p p') in
-      match tv with
-      | Some false -> bso p g gm cps cis tval hist_bbs
-      | _ ->
-        let s = {input = p; opt = p'; optimal = true; tval = tv} in
-        output_step [s] hist_bbs;
-        [s] :: hist_bbs
+    | Some s -> output_step [s] hist_bbs; [s] :: hist_bbs
 
 let classic_super_optimize_encbl p cis tval hist_bbs =
   bso p 0 (Int.Map.set Int.Map.empty ~key:0 ~data:[[]]) [] cis tval hist_bbs
