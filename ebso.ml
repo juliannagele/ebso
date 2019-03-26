@@ -84,14 +84,12 @@ let sopt_step p cis tval =
 
 let rec sopt p hist cis tval hist_bbs =
   let stp = sopt_step p cis tval in
+  let hist = add_step stp hist in
+  output_step hist hist_bbs;
   if (stp.optimal)
   then
-    let hist = add_step stp hist in
-    output_step hist hist_bbs;
     hist :: hist_bbs
   else
-    let hist = add_step stp hist in
-    output_step hist hist_bbs;
     (* if translation validation failed discard program and increase wordsize by 1 *)
     begin
       match stp.tval with
