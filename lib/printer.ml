@@ -89,16 +89,6 @@ let log_model m lm =
   let s = match m with Some m -> (show_model m) | None -> "" in
   if lm then Out_channel.prerr_endline s else ()
 
-let show_constraint c =
-  String.concat
-    [ "Constraint generated:\n"
-    ; Z3.Expr.to_string (Z3.Expr.simplify c None)
-    ; "\n"
-    ]
-
-let log_constraint c lc =
-  if lc then Out_channel.prerr_endline (show_constraint c) else ()
-
 let show_smt_benchmark c =
   String.concat
     [ "SMT-LIB Benchmark generated:\n"

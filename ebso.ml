@@ -21,21 +21,19 @@ open Printer
 type output_options =
   { pmodel : bool
   ; psmt : bool
-  ; pcnstrnt : bool
   ; pinter : bool
   ; csv: string option
   }
 
 let outputcfg =
-  ref {pmodel = false; psmt = false; pcnstrnt = false; pinter = false; csv = None}
+  ref {pmodel = false; psmt = false; pinter = false; csv = None}
 
-let set_options wordsize stackas pm psmt pc pinter csv =
-  outputcfg := {pmodel = pm; psmt = psmt; pcnstrnt = pc; pinter = pinter; csv = csv};
+let set_options wordsize stackas pm psmt pinter csv =
+  outputcfg := {pmodel = pm; psmt = psmt; pinter = pinter; csv = csv};
   Option.iter stackas ~f:(fun stackas -> set_sas stackas);
   set_wsz wordsize
 
 let log c m =
-  log_constraint c !outputcfg.pcnstrnt;
   log_benchmark c !outputcfg.psmt;
   log_model m !outputcfg.pmodel
 
@@ -156,8 +154,6 @@ let () =
                 directly"
       and p_model = flag "print-model" no_arg
           ~doc:"print model found by solver"
-      and p_constr = flag "print-constraint" no_arg
-          ~doc:"print constraint given to solver"
       and p_smt = flag "print-smt" no_arg
           ~doc:"print constraint given to solver in SMT-LIB format"
       and wordsize = flag "word-size" (optional int)
@@ -186,7 +182,7 @@ let () =
           | Some wsz -> wsz
           | None -> Program.compute_word_size p 256
         in
-        set_options wordsize stackas p_model p_smt p_constr p_inter csv;
+        set_options wordsize stackas p_model p_smt p_inter csv;
         let p = Program.val_to_const !wsz p in
         let bbs = Program.split_into_bbs p in
         match opt_mode with
