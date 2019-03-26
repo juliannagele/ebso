@@ -98,7 +98,7 @@ let rec uso p hist cis tval hist_bbs =
 let super_optimize_encbl p cis tval hist_bbs = uso p [] cis tval hist_bbs
 
 let super_optimize_bb cis tval hist_bbs bb = match ebso_snippet bb with
-  | Some p ->  super_optimize_encbl p cis tval hist_bbs
+  | Some p -> super_optimize_encbl p cis tval hist_bbs
   | None   -> hist_bbs
 
 let classic_super_optimize_encbl p cis tval hist_bbs =
