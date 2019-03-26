@@ -101,31 +101,31 @@ let super_optimize_bb cis tval hist_bbs bb = match ebso_snippet bb with
   | Some p -> super_optimize_encbl p cis tval hist_bbs
   | None   -> hist_bbs
 
+let rec sopt p g gm cps cis tval hist_bbs =
+  let ea = mk_enc_consts p cis in
+  match cps with
+  | [] ->
+    let (cps, m') = Program.enumerate g ea.cis gm in
+    sopt p (g + 1) m' cps cis tval hist_bbs
+  | cp :: cps ->
+    let js = List.init (List.length cp) ~f:(fun i -> intconst ("j" ^ Int.to_string i)) in
+    let c = enc_classic_so_test ea cp js in
+    log (`Constraint c);
+    match solve_model [c] with
+    | None -> sopt p g gm cps cis tval hist_bbs
+    | Some m ->
+      log (`Model (Some m));
+      let p' = dec_classic_super_opt ea m cp js in
+      let tv = Option.map tval ~f:(tvalidate ea.p p') in
+      match tv with
+      | Some false -> sopt p g gm cps cis tval hist_bbs
+      | _ ->
+        let s = {input = p; opt = p'; optimal = true; tval = tv} in
+        output_step [s] hist_bbs;
+        [s] :: hist_bbs
+
 let classic_super_optimize_encbl p cis tval hist_bbs =
-  let rec sopt p g gm cps =
-    let ea = mk_enc_consts p cis in
-    match cps with
-    | [] ->
-      let (cps, m') = Program.enumerate g ea.cis gm in
-      sopt p (g + 1) m' cps
-    | cp :: cps ->
-      let js = List.init (List.length cp) ~f:(fun i -> intconst ("j" ^ Int.to_string i)) in
-      let c = enc_classic_so_test ea cp js in
-      log (`Constraint c);
-      match solve_model [c] with
-      | None -> sopt p g gm cps
-      | Some m ->
-        log (`Model (Some m));
-        let p' = dec_classic_super_opt ea m cp js in
-        let tv = Option.map tval ~f:(tvalidate ea.p p') in
-        match tv with
-        | Some false -> sopt p g gm cps
-        | _ ->
-          let s = {input = p; opt = p'; optimal = true; tval = tv} in
-          output_step [s] hist_bbs;
-          [s] :: hist_bbs
-  in
-  sopt p 0 (Int.Map.set Int.Map.empty ~key:0 ~data:[[]]) []
+  sopt p 0 (Int.Map.set Int.Map.empty ~key:0 ~data:[[]]) [] cis tval hist_bbs
 
 let classic_super_optimize_bb cis tval hist_bbs bb = match ebso_snippet bb with
   | Some p -> classic_super_optimize_encbl p cis tval hist_bbs
