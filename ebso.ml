@@ -83,8 +83,8 @@ let uso_step p cis tval =
 let rec uso p hist cis tval hist_bbs =
   let (stp, c, m) = uso_step p cis tval in
   let hist = add_step stp hist in
-  log (`Constraint c); log (`Model m);
   output_step hist hist_bbs;
+  log (`Constraint c); log (`Model m);
   if (stp.optimal)
   then hist :: hist_bbs
   else
