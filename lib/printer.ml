@@ -85,6 +85,10 @@ let create_result steps =
 
 let show_model m = String.concat [ "Model found:\n"; Z3.Model.to_string m; "\n"]
 
+let log_model m lm =
+  let s = match m with Some m -> (show_model m) | None -> "" in
+  if lm then Out_channel.prerr_endline s else ()
+
 let show_constraint c =
   String.concat
     [ "Constraint generated:\n"
@@ -92,8 +96,14 @@ let show_constraint c =
     ; "\n"
     ]
 
+let log_constraint c lc =
+  if lc then Out_channel.prerr_endline (show_constraint c) else ()
+
 let show_smt_benchmark c =
   String.concat
     [ "SMT-LIB Benchmark generated:\n"
      ; Z3.SMT.benchmark_to_smtstring !ctxt "" "" "unknown" "" [] (Z3.Expr.simplify c None)
     ]
+
+let log_benchmark b lb =
+  if lb then Out_channel.prerr_endline (show_smt_benchmark b) else ()
