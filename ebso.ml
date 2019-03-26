@@ -38,36 +38,14 @@ let log e =
   let log b s = if b then Out_channel.prerr_endline s else () in
   match e with
   | `Constraint c ->
-    log !outputcfg.pcnstrnt
-      ("Constraint generated:\n" ^ Z3.Expr.to_string (Z3.Expr.simplify c None) ^ "\n");
-    log !outputcfg.psmt ("SMT-LIB Benchmark generated:\n" ^
-                         Z3.SMT.benchmark_to_smtstring !ctxt "" "" "unknown" "" []
-                           (Z3.Expr.simplify c None))
-  | `Model m -> log !outputcfg.pmodel ("Model found:\n" ^ Z3.Model.to_string m ^ "\n")
-
-let step_to_csv_string step =
-  let g = (total_gas_cost step.input - total_gas_cost step.opt) in
-  [ show_hex step.input
-  ; show_hex step.opt
-  ; [%show: int] g
-  ; [%show: bool] step.optimal]
-  @ Option.to_list (Option.map step.tval ~f:Bool.to_string) @
-  [ [%show: int] (List.length step.input)
-  ; [%show: int] (List.length step.opt)]
+    log !outputcfg.pcnstrnt (show_constraint c);
+    log !outputcfg.psmt (show_smt_benchmark c)
+  | `Model m -> log !outputcfg.pmodel (show_model m)
 
 let output_step hist hist_bbs =
   match !outputcfg.csv with
   | None -> print_step (List.hd_exn hist) !outputcfg.pinter
-  | Some fn ->
-    Csv.save fn ([ "source"
-                 ; "target"
-                 ; "gas saved"
-                 ; "known optimal"
-                 ; "translation validation"
-                 ; "source instruction count"
-                 ; "target instruction count"
-                 ] ::
-                 List.rev_map ~f:step_to_csv_string (hist @ List.concat hist_bbs))
+  | Some fn -> Csv.save fn (create_result (hist @ List.concat hist_bbs))
 
 let add_step step = function
   | h when !outputcfg.pinter -> step :: h

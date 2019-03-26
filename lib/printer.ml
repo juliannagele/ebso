@@ -16,6 +16,7 @@
 open Core
 open Program
 open Evmenc
+open Z3util
 
 type step = {input: Program.t; opt: Program.t; optimal: bool; tval: bool option}
 
@@ -65,3 +66,39 @@ let print_step step pi =
   if pi || step.optimal then
       Out_channel.printf "%s" (show_step step)
   else ()
+
+let show_result step =
+  let g = (total_gas_cost step.input - total_gas_cost step.opt) in
+  [ show_hex step.input
+  ; show_hex step.opt
+  ; [%show: int] g
+  ; [%show: bool] step.optimal]
+  @ Option.to_list (Option.map step.tval ~f:Bool.to_string) @
+  [ [%show: int] (List.length step.input)
+  ; [%show: int] (List.length step.opt)]
+
+let create_result steps =
+  [ "source"
+  ; "target"
+  ; "gas saved"
+  ; "known optimal"
+  ; "translation validation"
+  ; "source instruction count"
+  ; "target instruction count"
+  ] ::
+  List.rev_map ~f:show_result steps
+
+let show_model m = String.concat [ "Model found:\n"; Z3.Model.to_string m; "\n"]
+
+let show_constraint c =
+  String.concat
+    [ "Constraint generated:\n"
+    ; Z3.Expr.to_string (Z3.Expr.simplify c None)
+    ; "\n"
+    ]
+
+let show_smt_benchmark c =
+  String.concat
+    [ "SMT-LIB Benchmark generated:\n"
+     ; Z3.SMT.benchmark_to_smtstring !ctxt "" "" "unknown" "" [] (Z3.Expr.simplify c None)
+    ]
