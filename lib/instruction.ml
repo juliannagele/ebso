@@ -280,8 +280,8 @@ let gas_cost = function
   | POP -> 2
   | MLOAD -> 2
   | SLOAD -> 200
-  (* fix to 5000 for testing encoding *)
-  | SSTORE -> 5000
+  (* fix to 20000 as upper bound *)
+  | SSTORE -> 20000
   | PC -> 2
   | MSIZE -> 2
   | GAS -> 2
