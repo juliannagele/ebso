@@ -100,10 +100,9 @@ let super_optimize_encbl p cis tval hist_bbs =
   in
   sopt p []
 
-let super_optimize_bb cis tval hist_bbs = function
-  | Next p -> super_optimize_encbl p cis tval hist_bbs
-  | Terminal (p, _) -> super_optimize_encbl p cis tval hist_bbs
-  | NotEncodable _ -> hist_bbs
+let super_optimize_bb cis tval hist_bbs bb = match ebso_snippet bb with
+  | Some p ->  super_optimize_encbl p cis tval hist_bbs
+  | None   -> hist_bbs
 
 let classic_super_optimize_encbl p cis tval hist_bbs =
   let rec sopt p g gm cps =
@@ -131,10 +130,9 @@ let classic_super_optimize_encbl p cis tval hist_bbs =
   in
   sopt p 0 (Int.Map.set Int.Map.empty ~key:0 ~data:[[]]) []
 
-let classic_super_optimize_bb cis tval hist_bbs = function
-  | Next p -> classic_super_optimize_encbl p cis tval hist_bbs
-  | Terminal (p, _) -> classic_super_optimize_encbl p cis tval hist_bbs
-  | NotEncodable _ -> hist_bbs
+let classic_super_optimize_bb cis tval hist_bbs bb = match ebso_snippet bb with
+  | Some p -> classic_super_optimize_encbl p cis tval hist_bbs
+  | None -> hist_bbs
 
 type opt_mode =
   | NO
