@@ -104,10 +104,11 @@ let super_optimize_bb cis tval hist_bbs bb = match ebso_snippet bb with
 let bso_step p ea cp tval =
   let js = List.init (List.length cp) ~f:(fun i -> intconst ("j" ^ Int.to_string i)) in
   let c = enc_classic_so_test ea cp js in
-  match solve_model [c] with
+  let mo = solve_model [c] in
+  match mo with
   | None -> None
   | Some m ->
-      log (`Model (Some m));
+      log (`Model mo);
       let p' = dec_classic_super_opt ea m cp js in
       let tv = Option.map tval ~f:(tvalidate ea.p p') in
       match tv with
