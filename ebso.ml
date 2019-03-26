@@ -98,10 +98,14 @@ let uso_bb cis tval hist_bbs bb = match ebso_snippet bb with
   | Some p -> uso_encbl p cis tval hist_bbs
   | None   -> hist_bbs
 
+let bso_constraint ea cp js = enc_classic_so_test ea cp js
+
+let bso_model c = solve_model [c]
+
 let bso_step p ea cp tval =
   let js = List.init (List.length cp) ~f:(fun i -> intconst ("j" ^ Int.to_string i)) in
-  let c = enc_classic_so_test ea cp js in
-  let mo = solve_model [c] in
+  let c = bso_constraint ea cp js in
+  let mo = bso_model c in
   let step =
     match mo with
     | None -> None
