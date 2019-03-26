@@ -40,7 +40,7 @@ let log e =
   | `Constraint c ->
     log !outputcfg.pcnstrnt (show_constraint c);
     log !outputcfg.psmt (show_smt_benchmark c)
-  | `Model m -> log !outputcfg.pmodel (show_model m)
+  | `Model m -> log !outputcfg.pmodel (match m with Some m -> (show_model m) | None -> "")
 
 let output_step hist hist_bbs =
   match !outputcfg.csv with
@@ -74,9 +74,9 @@ let sopt_step p cis tval =
   let ea = mk_enc_consts p cis in
   let c = enc_super_opt ea in
   let mo = solve_model [c] in
+  log (`Model mo);
   let step = match mo with
     | Some m ->
-      log (`Model m);
       let p' = dec_super_opt ea m in
       let tv = Option.map tval ~f:(tvalidate ea.p p') in
       {input = p; opt = p'; optimal = false; tval = tv}
@@ -123,7 +123,7 @@ let classic_super_optimize_encbl p cis tval hist_bbs =
       match solve_model [c] with
       | None -> sopt p g gm cps
       | Some m ->
-        log (`Model m);
+        log (`Model (Some m));
         let p' = dec_classic_super_opt ea m cp js in
         let tv = Option.map tval ~f:(tvalidate ea.p p') in
         match tv with
