@@ -138,13 +138,13 @@ let bso_bb cis tval hist_bbs bb = match ebso_snippet bb with
 type opt_mode =
   | NO
   | UNBOUNDED
-  | CLASSIC
+  | BASIC
 [@@deriving show { with_path = false }]
 
 let opt_mode_of_string = function
   | "NO" -> NO
   | "UNBOUNDED" -> UNBOUNDED
-  | "BASIC" -> CLASSIC
+  | "BASIC" -> BASIC
   | _ -> failwith "Unknown optimization mode"
 
 let () =
@@ -198,7 +198,7 @@ let () =
           end
         | UNBOUNDED ->
           List.fold_left bbs ~init:[] ~f:(super_optimize_bb `All tval) |> ignore
-        | CLASSIC ->
+        | BASIC ->
           List.fold_left bbs ~init:[] ~f:(bso_bb `All tval) |> ignore
     ]
   |> Command.run ~version:"1.0"
