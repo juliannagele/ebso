@@ -34,13 +34,22 @@ let set_options wordsize stackas pm psmt pc pinter csv =
   Option.iter stackas ~f:(fun stackas -> set_sas stackas);
   set_wsz wordsize
 
+let log_model m lm =
+  let s = match m with Some m -> (show_model m) | None -> "" in
+  if lm then Out_channel.prerr_endline s else ()
+
+let log_constraint c lc =
+  if lc then Out_channel.prerr_endline (show_constraint c) else ()
+
+let log_benchmark b lb =
+  if lb then Out_channel.prerr_endline (show_smt_benchmark b) else ()
+
 let log e =
-  let log b s = if b then Out_channel.prerr_endline s else () in
   match e with
   | `Constraint c ->
-    log !outputcfg.pcnstrnt (show_constraint c);
-    log !outputcfg.psmt (show_smt_benchmark c)
-  | `Model m -> log !outputcfg.pmodel (match m with Some m -> (show_model m) | None -> "")
+    log_constraint c !outputcfg.pcnstrnt;
+    log_benchmark c !outputcfg.psmt
+  | `Model m -> log_model m !outputcfg.pmodel
 
 let output_step hist hist_bbs =
   match !outputcfg.csv with
