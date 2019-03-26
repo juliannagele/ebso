@@ -86,15 +86,11 @@ let rec sopt p hist cis tval hist_bbs =
   log (`Constraint c); log (`Model m);
   output_step hist hist_bbs;
   if (stp.optimal)
-  then
-    hist :: hist_bbs
+  then hist :: hist_bbs
   else
-    (* if translation validation failed discard program and increase wordsize by 1 *)
-    begin
-      match stp.tval with
-      | Some false -> sopt_incr_wsz p hist cis tval hist_bbs
-      | _ -> sopt (stp.opt) hist cis tval hist_bbs
-    end
+    match stp.tval with
+    | Some false -> sopt_incr_wsz p hist cis tval hist_bbs
+    | _ -> sopt (stp.opt) hist cis tval hist_bbs
 and
   sopt_incr_wsz p hist cis tval hist_bbs =
     set_wsz (!wsz + 1);
