@@ -128,11 +128,11 @@ let rec bso p g gm cps cis tval hist_bbs =
     | None -> bso p g gm cps cis tval hist_bbs
     | Some s -> output_step [s] hist_bbs; [s] :: hist_bbs
 
-let classic_super_optimize_encbl p cis tval hist_bbs =
+let bso_encbl p cis tval hist_bbs =
   bso p 0 (Int.Map.set Int.Map.empty ~key:0 ~data:[[]]) [] cis tval hist_bbs
 
-let classic_super_optimize_bb cis tval hist_bbs bb = match ebso_snippet bb with
-  | Some p -> classic_super_optimize_encbl p cis tval hist_bbs
+let bso_bb cis tval hist_bbs bb = match ebso_snippet bb with
+  | Some p -> bso_encbl p cis tval hist_bbs
   | None -> hist_bbs
 
 type opt_mode =
@@ -199,6 +199,6 @@ let () =
         | UNBOUNDED ->
           List.fold_left bbs ~init:[] ~f:(super_optimize_bb `All tval) |> ignore
         | CLASSIC ->
-          List.fold_left bbs ~init:[] ~f:(classic_super_optimize_bb `All tval) |> ignore
+          List.fold_left bbs ~init:[] ~f:(bso_bb `All tval) |> ignore
     ]
   |> Command.run ~version:"1.0"
