@@ -68,7 +68,7 @@ let tvalidate s t sz =
   let tv = is_translation_valid s t in
   set_wsz oldwsz; tv
 
-let sopt_step p cis tval =
+let uso_step p cis tval =
   let ea = mk_enc_consts p cis in
   let c = enc_super_opt ea in
   let m = solve_model [c] in
@@ -81,7 +81,7 @@ let sopt_step p cis tval =
   in (step, c, m)
 
 let rec sopt p hist cis tval hist_bbs =
-  let (stp, c, m) = sopt_step p cis tval in
+  let (stp, c, m) = uso_step p cis tval in
   let hist = add_step stp hist in
   log (`Constraint c); log (`Model m);
   output_step hist hist_bbs;
