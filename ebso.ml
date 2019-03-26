@@ -57,16 +57,17 @@ let add_step step = function
     {step with input = s.input; tval = tv} :: ss
   | [] -> [step]
 
-let tvalidate sp tp sz =
-  let sp = Program.const_to_val sp and tp = Program.const_to_val tp in
-  let oldwsz = !wsz in
-  set_wsz sz;
-  let c = enc_trans_val (mk_enc_consts sp (`User [])) tp in
-  let tv =
-    match solve_model [c] with
+let is_translation_valid s t =
+  let s' = Program.const_to_val s and t' = Program.const_to_val t in
+  let c = enc_trans_val (mk_enc_consts s' (`User [])) t' in
+  match solve_model [c] with
     | None -> true
     | Some _ -> false
-  in
+
+let tvalidate s t sz =
+  let oldwsz = !wsz in
+  set_wsz sz;
+  let tv = is_translation_valid s t in
   set_wsz oldwsz; tv
 
 let super_optimize_encbl p cis tval hist_bbs =
