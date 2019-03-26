@@ -113,24 +113,25 @@ let bso_step p ea cp tval =
       | _ -> Some {input = p; opt = p'; optimal = true; tval = tv}
   in (step, c, mo)
 
-let rec bso p g gm cps cis tval hist_bbs =
-  let ea = mk_enc_consts p cis in
+let rec bso p ea g gm cps cis tval hist_bbs =
   match cps with
   | [] ->
     let (cps, m') = Program.enumerate g ea.cis gm in
-    bso p (g + 1) m' cps cis tval hist_bbs
+    bso p ea (g + 1) m' cps cis tval hist_bbs
   | cp :: cps ->
     let (step, c, m) = bso_step p ea cp tval in
     log c m;
     match step with
-    | None -> bso p g gm cps cis tval hist_bbs
+    | None -> bso p ea g gm cps cis tval hist_bbs
     | Some s -> output_step [s] hist_bbs; [s] :: hist_bbs
 
-let bso_encbl p cis tval hist_bbs =
-  bso p 0 (Int.Map.set Int.Map.empty ~key:0 ~data:[[]]) [] cis tval hist_bbs
+let bso_encbl p ea tval hist_bbs =
+  bso p ea 0 (Int.Map.set Int.Map.empty ~key:0 ~data:[[]]) [] ea.cis tval hist_bbs
 
 let bso_bb cis tval hist_bbs bb = match ebso_snippet bb with
-  | Some p -> bso_encbl p cis tval hist_bbs
+  | Some p ->
+    let ea = mk_enc_consts p cis in
+    bso_encbl p ea tval hist_bbs
   | None -> hist_bbs
 
 type opt_mode =
