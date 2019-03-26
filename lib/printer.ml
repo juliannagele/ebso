@@ -20,11 +20,6 @@ open Z3util
 
 type step = {input: Program.t; opt: Program.t; optimal: bool; tval: bool option}
 
-let ebso_snippet = function
-  | Terminal (p, _) -> Some p
-  | Next p -> Some p
-  | _ -> None
-
 let show_ebso_snippet s =
   let ea = mk_enc_consts s `All in
   [ Program.show_hex s

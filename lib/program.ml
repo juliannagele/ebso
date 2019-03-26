@@ -95,6 +95,11 @@ let compute_word_size p max_ws =
 type bb = Terminal of t * Instruction.t | Next of t | NotEncodable of t
 [@@deriving show {with_path = false}, eq]
 
+let ebso_snippet = function
+  | Terminal (p, _) -> Some p
+  | Next p -> Some p
+  | _ -> None
+
 (* instructions that terminate a basic block *)
 let terminal =
   [ STOP
