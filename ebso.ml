@@ -85,11 +85,7 @@ let rec sopt p hist cis tval hist_bbs =
     (* if translation validation failed discard program and increase wordsize by 1 *)
     begin
       match tv with
-      | Some false ->
-        begin
-          set_wsz (!wsz + 1);
-          sopt (Program.val_to_const !wsz (Program.const_to_val p)) hist cis tval hist_bbs
-        end
+      | Some false -> sopt_incr_wsz p hist cis tval hist_bbs
       | _ -> sopt p' hist cis tval hist_bbs
     end
   | None ->
@@ -97,6 +93,10 @@ let rec sopt p hist cis tval hist_bbs =
     let hist = add_step stp hist in
     output_step hist hist_bbs;
     hist :: hist_bbs
+and
+  sopt_incr_wsz p hist cis tval hist_bbs =
+    set_wsz (!wsz + 1);
+    sopt (Program.val_to_const !wsz (Program.const_to_val p)) hist cis tval hist_bbs
 
 let super_optimize_encbl p cis tval hist_bbs = sopt p [] cis tval hist_bbs
 
