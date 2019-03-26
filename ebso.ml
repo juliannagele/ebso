@@ -80,7 +80,7 @@ let uso_step p cis tval =
     | None -> {input = p; opt = p; optimal = true; tval = None}
   in (step, c, m)
 
-let rec sopt p hist cis tval hist_bbs =
+let rec uso p hist cis tval hist_bbs =
   let (stp, c, m) = uso_step p cis tval in
   let hist = add_step stp hist in
   log (`Constraint c); log (`Model m);
@@ -89,14 +89,14 @@ let rec sopt p hist cis tval hist_bbs =
   then hist :: hist_bbs
   else
     match stp.tval with
-    | Some false -> sopt_incr_wsz p hist cis tval hist_bbs
-    | _ -> sopt (stp.opt) hist cis tval hist_bbs
+    | Some false -> uso_incr_wsz p hist cis tval hist_bbs
+    | _ -> uso (stp.opt) hist cis tval hist_bbs
 and
-  sopt_incr_wsz p hist cis tval hist_bbs =
+  uso_incr_wsz p hist cis tval hist_bbs =
     set_wsz (!wsz + 1);
-    sopt (Program.val_to_const !wsz (Program.const_to_val p)) hist cis tval hist_bbs
+    uso (Program.val_to_const !wsz (Program.const_to_val p)) hist cis tval hist_bbs
 
-let super_optimize_encbl p cis tval hist_bbs = sopt p [] cis tval hist_bbs
+let super_optimize_encbl p cis tval hist_bbs = uso p [] cis tval hist_bbs
 
 let super_optimize_bb cis tval hist_bbs bb = match ebso_snippet bb with
   | Some p ->  super_optimize_encbl p cis tval hist_bbs
