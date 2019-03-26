@@ -70,29 +70,35 @@ let tvalidate s t sz =
   let tv = is_translation_valid s t in
   set_wsz oldwsz; tv
 
-let rec sopt p hist cis tval hist_bbs =
+let sopt_step p cis tval =
   let ea = mk_enc_consts p cis in
   let c = enc_super_opt ea in
   log (`Constraint c);
   match solve_model [c] with
   | Some m ->
-    log (`Model m);
-    let p' = dec_super_opt ea m in
-    let tv = Option.map tval ~f:(tvalidate ea.p p') in
-    let stp = {input = p; opt = p'; optimal = false; tval = tv} in
+      log (`Model m);
+      let p' = dec_super_opt ea m in
+      let tv = Option.map tval ~f:(tvalidate ea.p p') in
+      {input = p; opt = p'; optimal = false; tval = tv}
+  | None -> {input = p; opt = p; optimal = true; tval = None}
+
+let rec sopt p hist cis tval hist_bbs =
+  let stp = sopt_step p cis tval in
+  if (stp.optimal)
+  then
+    let hist = add_step stp hist in
+    output_step hist hist_bbs;
+    hist :: hist_bbs
+  else
+    let tv = stp.tval in
     let hist = add_step stp hist in
     output_step hist hist_bbs;
     (* if translation validation failed discard program and increase wordsize by 1 *)
     begin
       match tv with
       | Some false -> sopt_incr_wsz p hist cis tval hist_bbs
-      | _ -> sopt p' hist cis tval hist_bbs
+      | _ -> sopt (stp.opt) hist cis tval hist_bbs
     end
-  | None ->
-    let stp = {input = p; opt = p; optimal = true; tval = None} in
-    let hist = add_step stp hist in
-    output_step hist hist_bbs;
-    hist :: hist_bbs
 and
   sopt_incr_wsz p hist cis tval hist_bbs =
     set_wsz (!wsz + 1);
