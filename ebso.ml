@@ -94,10 +94,10 @@ let rec uso p hist cis tval hist_bbs =
       | _ -> stp.opt
     in uso p' hist cis tval hist_bbs
 
-let super_optimize_encbl p cis tval hist_bbs = uso p [] cis tval hist_bbs
+let uso_encbl p cis tval hist_bbs = uso p [] cis tval hist_bbs
 
-let super_optimize_bb cis tval hist_bbs bb = match ebso_snippet bb with
-  | Some p -> super_optimize_encbl p cis tval hist_bbs
+let uso_bb cis tval hist_bbs bb = match ebso_snippet bb with
+  | Some p -> uso_encbl p cis tval hist_bbs
   | None   -> hist_bbs
 
 let bso_step p ea cp tval =
@@ -197,7 +197,7 @@ let () =
             | None -> Program.pp Format.std_formatter (concat_bbs bbs);
           end
         | UNBOUNDED ->
-          List.fold_left bbs ~init:[] ~f:(super_optimize_bb `All tval) |> ignore
+          List.fold_left bbs ~init:[] ~f:(uso_bb `All tval) |> ignore
         | BASIC ->
           List.fold_left bbs ~init:[] ~f:(bso_bb `All tval) |> ignore
     ]
