@@ -34,8 +34,7 @@ let set_options wordsize stackas pm psmt pc pinter csv =
   Option.iter stackas ~f:(fun stackas -> set_sas stackas);
   set_wsz wordsize
 
-let log e =
-  match e with
+let log = function
   | `Constraint c ->
     log_constraint c !outputcfg.pcnstrnt;
     log_benchmark c !outputcfg.psmt
@@ -82,9 +81,9 @@ let sopt_step p cis tval =
   in (step, c, m)
 
 let rec sopt p hist cis tval hist_bbs =
-  let (stp, c, mo) = sopt_step p cis tval in
+  let (stp, c, m) = sopt_step p cis tval in
   let hist = add_step stp hist in
-  log (`Constraint c); log (`Model mo);
+  log (`Constraint c); log (`Model m);
   output_step hist hist_bbs;
   if (stp.optimal)
   then
