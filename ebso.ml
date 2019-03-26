@@ -73,14 +73,14 @@ let tvalidate s t sz =
 let sopt_step p cis tval =
   let ea = mk_enc_consts p cis in
   let c = enc_super_opt ea in
-  let mo = solve_model [c] in
-  let step = match mo with
+  let m = solve_model [c] in
+  let step = match m with
     | Some m ->
       let p' = dec_super_opt ea m in
       let tv = Option.map tval ~f:(tvalidate ea.p p') in
       {input = p; opt = p'; optimal = false; tval = tv}
     | None -> {input = p; opt = p; optimal = true; tval = None}
-  in (step, c, mo)
+  in (step, c, m)
 
 let rec sopt p hist cis tval hist_bbs =
   let (stp, c, mo) = sopt_step p cis tval in
