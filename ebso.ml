@@ -88,11 +88,12 @@ let rec uso p hist cis tval hist_bbs =
   if (stp.optimal)
   then hist :: hist_bbs
   else
-    match stp.tval with
-    | Some false ->
-      set_wsz (!wsz + 1);
-      uso (Program.val_to_const !wsz (Program.const_to_val p)) hist cis tval hist_bbs
-    | _ -> uso (stp.opt) hist cis tval hist_bbs
+    let p' =
+      match stp.tval with
+      | Some false ->
+        set_wsz (!wsz + 1); Program.val_to_const !wsz (Program.const_to_val p)
+      | _ -> stp.opt
+    in uso p' hist cis tval hist_bbs
 
 let super_optimize_encbl p cis tval hist_bbs = uso p [] cis tval hist_bbs
 
