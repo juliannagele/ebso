@@ -70,36 +70,35 @@ let tvalidate s t sz =
   let tv = is_translation_valid s t in
   set_wsz oldwsz; tv
 
-let super_optimize_encbl p cis tval hist_bbs =
-  let rec sopt p hist =
-    let ea = mk_enc_consts p cis in
-    let c = enc_super_opt ea in
-    log (`Constraint c);
-    match solve_model [c] with
-    | Some m ->
-      log (`Model m);
-      let p' = dec_super_opt ea m in
-      let tv = Option.map tval ~f:(tvalidate ea.p p') in
-      let stp = {input = p; opt = p'; optimal = false; tval = tv} in
-      let hist = add_step stp hist in
-      output_step hist hist_bbs;
-      (* if translation validation failed discard program and increase wordsize by 1 *)
-      begin
-        match tv with
-        | Some false ->
-          begin
-            set_wsz (!wsz + 1);
-            sopt (Program.val_to_const !wsz (Program.const_to_val p)) hist
-          end
-        | _ -> sopt p' hist
-      end
-    | None ->
-      let stp = {input = p; opt = p; optimal = true; tval = None} in
-      let hist = add_step stp hist in
-      output_step hist hist_bbs;
-      hist :: hist_bbs
-  in
-  sopt p []
+let rec sopt p hist cis tval hist_bbs =
+  let ea = mk_enc_consts p cis in
+  let c = enc_super_opt ea in
+  log (`Constraint c);
+  match solve_model [c] with
+  | Some m ->
+    log (`Model m);
+    let p' = dec_super_opt ea m in
+    let tv = Option.map tval ~f:(tvalidate ea.p p') in
+    let stp = {input = p; opt = p'; optimal = false; tval = tv} in
+    let hist = add_step stp hist in
+    output_step hist hist_bbs;
+    (* if translation validation failed discard program and increase wordsize by 1 *)
+    begin
+      match tv with
+      | Some false ->
+        begin
+          set_wsz (!wsz + 1);
+          sopt (Program.val_to_const !wsz (Program.const_to_val p)) hist cis tval hist_bbs
+        end
+      | _ -> sopt p' hist cis tval hist_bbs
+    end
+  | None ->
+    let stp = {input = p; opt = p; optimal = true; tval = None} in
+    let hist = add_step stp hist in
+    output_step hist hist_bbs;
+    hist :: hist_bbs
+
+let super_optimize_encbl p cis tval hist_bbs = sopt p [] cis tval hist_bbs
 
 let super_optimize_bb cis tval hist_bbs bb = match ebso_snippet bb with
   | Some p ->  super_optimize_encbl p cis tval hist_bbs
@@ -199,6 +198,6 @@ let () =
         | UNBOUNDED ->
           List.fold_left bbs ~init:[] ~f:(super_optimize_bb `All tval) |> ignore
         | CLASSIC ->
-          List.fold_left bbs ~init:[] ~f:(classic_super_optimize_bb `All  tval) |> ignore
+          List.fold_left bbs ~init:[] ~f:(classic_super_optimize_bb `All tval) |> ignore
     ]
   |> Command.run ~version:"1.0"
