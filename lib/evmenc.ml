@@ -516,7 +516,7 @@ let enc_super_opt ea =
      stt.used_gas @@ (forall_vars ea @ [ea.kt]) &&
      (* bound the number of instructions in the target; aids solver in showing
         unsat, i.e., that program is optimal *)
-     ea.kt <= sts.used_gas @@ (forall_vars ea @ [num ks]))
+     ea.kt <= num (total_gas_cost ea.p))
 
 let enc_trans_val ea tp =
   let open Z3Ops in
