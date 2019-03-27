@@ -31,8 +31,8 @@ let show_ebso_snippet s =
   ]
 
 let create_ebso_snippets bbs =
-  [ "byte code"
-  ; "op code"
+  [ "bytecode"
+  ; "opcode"
   ; "instruction count"
   ; "stack depth"
   ; "uninterpreted count"
