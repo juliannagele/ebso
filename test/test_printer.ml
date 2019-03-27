@@ -80,6 +80,23 @@ let suite =
           (show_result step)
       );
 
+    "Show a result with failed translation validation" >:: (fun _ ->
+        let s = [NOT; ADD] in
+        let t = [EQ] in
+        let step = {input = s; opt = t; optimal = true; tval = Some false} in
+        assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
+          ["1901"; "NOT ADD"; "2"; "14"; "EQ"; "1"; "3"; "true"; "false"]
+          (show_result step)
+      );
+
+    "Show a result with a successful translation validation" >:: (fun _ ->
+        let s = [PUSH (Val "0"); ADD; POP] in
+        let t = [POP] in
+        let step = {input = s; opt = t; optimal = true; tval = Some true} in
+        assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
+          ["60000150"; "PUSH 0 ADD POP"; "3"; "50"; "POP"; "1"; "6"; "true"; "true"]
+          (show_result step)
+      );
   ]
 
 let () =
