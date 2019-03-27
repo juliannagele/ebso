@@ -76,7 +76,7 @@ let suite =
         let t = [] in
         let step = {input = s; opt = t; optimal = true; tval = None} in
         assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
-          ["600150"; "PUSH 1 POP"; ""; ""; "5"; "true"; "2"; "0"]
+          ["600150"; "PUSH 1 POP"; "2"; ""; ""; "0"; "5"; "true";]
           (show_result step)
       );
 

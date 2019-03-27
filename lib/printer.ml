@@ -66,24 +66,25 @@ let show_result step =
   let g = (total_gas_cost step.input - total_gas_cost step.opt) in
   [ show_hex step.input
   ; show_h step.input
+  ; [%show: int] (List.length step.input)
   ; show_hex step.opt
   ; show_h step.opt
+  ; [%show: int] (List.length step.opt)
   ; [%show: int] g
   ; [%show: bool] step.optimal]
-  @ Option.to_list (Option.map step.tval ~f:Bool.to_string) @
-  [ [%show: int] (List.length step.input)
-  ; [%show: int] (List.length step.opt)]
+  @ Option.to_list (Option.map step.tval ~f:Bool.to_string)
+
 
 let create_result steps =
   [ "source bytecode"
   ; "source opcode"
+  ; "source instruction count"
   ; "target bytecode"
   ; "target opcode"
+  ; "target instruction count"
   ; "gas saved"
   ; "known optimal"
   ; "translation validation"
-  ; "source instruction count"
-  ; "target instruction count"
   ] ::
   List.rev_map ~f:show_result steps
 
