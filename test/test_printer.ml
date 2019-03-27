@@ -69,6 +69,17 @@ let suite =
           (show_ebso_snippet s)
       );
 
+    (* show result *)
+
+    "Show a result" >:: (fun _ ->
+        let s = [PUSH (Val "1"); POP] in
+        let t = [] in
+        let step = {input = s; opt = t; optimal = true; tval = None} in
+        assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
+          ["600150"; "PUSH 1 POP"; ""; ""; "5"; "true"; "2"; "0"]
+          (show_result step)
+      );
+
   ]
 
 let () =
