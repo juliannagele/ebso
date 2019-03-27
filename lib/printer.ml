@@ -54,7 +54,7 @@ let show_step step =
       ^ (if Option.value_exn step.tval then "successful" else "failed")
       else ""
     ; if step.optimal then ", this instruction sequence is optimal" else ""
-    ; "."
+    ; ".\n"
     ]
 
 let print_step step pi =
