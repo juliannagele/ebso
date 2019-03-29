@@ -506,7 +506,7 @@ let suite =
   (* set low for fast testing *)
   set_wsz 2; set_sas 6;
   "suite" >:::
-  (* effect @ gas_cost @ *) superoptimize
+  effect @ gas_cost @ superoptimize
 
 let () =
   run_test_tt_main suite
