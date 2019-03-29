@@ -63,25 +63,26 @@ let print_step step pi =
   else ()
 
 let show_result step =
-  let g = (total_gas_cost step.input - total_gas_cost step.opt) in
+  let gas_source = total_gas_cost step.input and
+      gas_target = total_gas_cost step.opt in
   [ show_hex step.input
-  ; show_h step.input
-  ; [%show: int] (List.length step.input)
   ; show_hex step.opt
   ; show_h step.opt
   ; [%show: int] (List.length step.opt)
-  ; [%show: int] g
+  ; [%show: int] gas_source
+  ; [%show: int] gas_target
+  ; [%show: int] (gas_source - gas_target)
   ; [%show: bool] step.optimal]
   @ Option.to_list (Option.map step.tval ~f:Bool.to_string)
 
 
 let create_result steps =
   [ "source bytecode"
-  ; "source opcode"
-  ; "source instruction count"
   ; "target bytecode"
   ; "target opcode"
   ; "target instruction count"
+  ; "source gas"
+  ; "target gas"
   ; "gas saved"
   ; "known optimal"
   ; "translation validation"

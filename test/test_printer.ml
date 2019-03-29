@@ -76,7 +76,7 @@ let suite =
         let t = [] in
         let step = {input = s; opt = t; optimal = true; tval = None} in
         assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
-          ["600150"; "PUSH 1 POP"; "2"; ""; ""; "0"; "5"; "true";]
+          ["600150"; ""; ""; "0"; "5"; "0"; "5"; "true";]
           (show_result step)
       );
 
@@ -85,7 +85,7 @@ let suite =
         let t = [EQ] in
         let step = {input = s; opt = t; optimal = true; tval = Some false} in
         assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
-          ["1901"; "NOT ADD"; "2"; "14"; "EQ"; "1"; "3"; "true"; "false"]
+          ["1901"; "14"; "EQ"; "1"; "6"; "3"; "3"; "true"; "false"]
           (show_result step)
       );
 
@@ -94,7 +94,7 @@ let suite =
         let t = [POP] in
         let step = {input = s; opt = t; optimal = true; tval = Some true} in
         assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
-          ["60000150"; "PUSH 0 ADD POP"; "3"; "50"; "POP"; "1"; "6"; "true"; "true"]
+          ["60000150"; "50"; "POP"; "1"; "8"; "2"; "6"; "true"; "true"]
           (show_result step)
       );
   ]
