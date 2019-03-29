@@ -97,6 +97,15 @@ let suite =
           ["60000150"; "50"; "POP"; "1"; "8"; "2"; "6"; "true"; "true"]
           (show_result step)
       );
+
+    "Show a result with SSTORE" >:: (fun _ ->
+        let s = [PUSH (Val "1"); DUP II; SWAP I; SSTORE; PUSH (Val "1"); DUP II; SWAP I; SSTORE; POP; POP] in
+        let t = [PUSH (Val "1"); SSTORE; POP] in
+        let step = {input = s; opt = t; optimal = false; tval = Some true} in
+        assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
+          ["600181905560018190555050"; "60015550"; "PUSH 1 SSTORE POP"; "3"; "tbc"; "tbc"; "tbc"; "false"; "true"]
+          (show_result step)
+      );
   ]
 
 let () =
