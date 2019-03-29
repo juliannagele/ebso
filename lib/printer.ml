@@ -62,20 +62,23 @@ let print_step step pi =
       Out_channel.printf "%s" (show_step step)
   else ()
 
-let show_result step =
-  let gas_source = total_gas_cost step.input
-  and gas_target = total_gas_cost step.opt in
-  let gas_info =
+let show_gas step =
+  if List.mem (step.input @ step.opt) SSTORE ~equal:Instruction.equal then
+    ["tbc" ; "tbc"; "tbc"]
+  else
+    let gas_source = total_gas_cost step.input
+    and gas_target = total_gas_cost step.opt in
     [ [%show: int] gas_source
     ; [%show: int] gas_target
     ; [%show: int] (gas_source - gas_target) ]
-  in
+
+let show_result step =
   [ show_hex step.input
   ; show_hex step.opt
   ; show_h step.opt
   ; [%show: int] (List.length step.opt)
   ]
-  @ gas_info @
+  @ show_gas step @
   [ [%show: bool] step.optimal]
   @ Option.to_list (Option.map step.tval ~f:Bool.to_string)
 
