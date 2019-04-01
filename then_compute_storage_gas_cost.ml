@@ -21,7 +21,7 @@ let rec all_zero_nonzero_instantiations = function
   | [] -> [[]]
   | _ :: vs ->
     List.concat_map (all_zero_nonzero_instantiations vs)
-      ~f:(fun vs -> [senum 3 :: vs; senum 0 :: vs])
+      ~f:(fun vs -> [senum 1 :: vs; senum 0 :: vs])
 
 let find_min_gas ea sp tp sts stt m =
   let all_vs = all_zero_nonzero_instantiations (forall_vars ea) in
@@ -94,6 +94,7 @@ let () =
         ; "translation validation"
         ]
         in
+        set_wsz 1;
         let csv = Csv.Rows.load ~header:header f in
         let computed = List.map csv ~f:compute_gas_row in
         let out_channel = Csv.to_channel (Out_channel.create outfile) in
