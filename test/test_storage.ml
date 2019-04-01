@@ -175,6 +175,31 @@ let gas_cost =
           10012
           (eval_gas ~xs:[xsstore0; xsstore0] st m (List.length p))
       );
+
+    "cost of SSTOREing an input value" >:: (fun _ ->
+        let p = [PUSH (Val "9"); SSTORE] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
+        let m = solve_model_exn [c] in
+        let xs0 = senum 1 and xsstore0 = senum 1 in
+        assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
+          5003
+          (eval_gas ~xs:[xs0; xsstore0] st m (List.length p))
+      );
+
+    "cost of SSTOREing an input value with stack operations between" >:: (fun _ ->
+        let p = [PUSH (Val "9"); DUP II; SWAP I; SSTORE; POP] in
+        let ea = mk_enc_consts p (`User []) in
+        let st = mk_state ea "" in
+        let c = foralls (forall_vars ea) (enc_program ea st) in
+        let m = solve_model_exn [c] in
+        let xs0 = senum 1 and xsstore0 = senum 1 in
+        assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
+          5011
+          (eval_gas ~xs:[xs0; xsstore0] st m (List.length p))
+      );
+
   ]
 
 let effect =
