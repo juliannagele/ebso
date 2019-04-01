@@ -44,6 +44,7 @@ let compute_gas sp tp =
   let c = foralls (forall_vars ea)
       ((List.foldi tp ~init:(enc_program ea sts)
           ~f:(fun j enc oc -> enc <&> enc_instruction ea stt (num j) oc)) &&
+       (enc_equivalence_at ea sts stt (num 0) (num 0)) &&
        sts.used_gas @@ (forall_vars ea @ [num 0]) ==
        stt.used_gas @@ (forall_vars ea @ [num 0]))
   in
