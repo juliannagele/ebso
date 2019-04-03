@@ -16,3 +16,9 @@
  (libraries core sedlex ebso zarith csv)
  (preprocess (pps ppx_jane ppx_deriving.std))
 )
+
+(executable (name then_compute_storage_gas_cost)
+ (modules then_compute_storage_gas_cost)
+ (libraries core sedlex ebso zarith csv z3)
+ (preprocess (pps ppx_jane ppx_deriving.std))
+)
