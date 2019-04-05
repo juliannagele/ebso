@@ -202,4 +202,4 @@ let () =
         | BASIC ->
           List.fold_left bbs ~init:[] ~f:(bso_bb `All tval) |> ignore
     ]
-  |> Command.run ~version:"1.0"
+  |> Command.run ~version:"2.0"
