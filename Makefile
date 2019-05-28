@@ -1,11 +1,11 @@
 Z3DIR := $(shell ocamlfind query z3)
 
 build :
-	dune build ebso.exe
+	dune build main.exe
 
 run : build
 	LD_LIBRARY_PATH=$(Z3DIR) \
-	dune exec ./ebso.exe
+	dune exec ./main.exe
 
 test : build
 	LD_LIBRARY_PATH=$(Z3DIR) \
