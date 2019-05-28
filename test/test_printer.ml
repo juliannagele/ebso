@@ -13,6 +13,7 @@
    limitations under the License.
 *)
 open OUnit2
+open Ebso
 open Printer
 open Program
 open Instruction

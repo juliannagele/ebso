@@ -13,6 +13,7 @@
    limitations under the License.
 *)
 open Core
+open Ebso
 open Instruction
 
 module Snippet_mod = struct

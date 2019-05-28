@@ -1,7 +1,7 @@
 Z3DIR := $(shell ocamlfind query z3)
 
 build :
-	dune build main.exe
+	dune build @install
 
 run : build
 	LD_LIBRARY_PATH=$(Z3DIR) \

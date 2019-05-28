@@ -13,6 +13,7 @@
    limitations under the License.
 *)
 open Core
+open Ebso
 open Z3util
 open Program
 open Evmenc

@@ -14,6 +14,7 @@
 *)
 open Core
 open OUnit2
+open Ebso
 open Z3util
 open Instruction
 open Evmenc
