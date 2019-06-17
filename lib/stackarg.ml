@@ -19,7 +19,7 @@ open Core
 type valarg = string [@@deriving show { with_path = false }, sexp, compare]
 let valarg_to_dec x = Z.of_string x |> Z.to_string
 let valarg_to_hex x = Z.of_string x |> Z.format "x"
-let valarg_eq x y = Z.equal (Z.of_string x) (Z.of_string y)
+let equal_valarg x y = Z.equal (Z.of_string x) (Z.of_string y)
 let show_valarg_hex x =
   let hx = valarg_to_hex x in
   if Int.rem (String.length hx) 2 = 1 then "0" ^ hx else hx
@@ -27,7 +27,7 @@ let show_valarg_hex x =
 type constarg = string [@@deriving show { with_path = false }, sexp, compare]
 let constarg_to_valarg c = String.chop_prefix_exn c ~prefix:"c"
 let valarg_to_constarg v = "c" ^ (valarg_to_dec v)
-let constarg_eq = String.equal
+let equal_constarg = String.equal
 let constarg_to_dec = constarg_to_valarg (* convention is that constarg is in dec *)
 let show_constarg_hex c = show_valarg_hex (constarg_to_valarg c)
 
@@ -38,9 +38,9 @@ type t =
 [@@deriving show { with_path = false }, sexp, compare]
 
 let equal x y = match (x, y) with
-  | Val x, Val y -> valarg_eq x y
+  | Val x, Val y -> equal_valarg x y
   | Tmpl, Tmpl -> true
-  | Const c, Const d -> constarg_eq c d
+  | Const c, Const d -> equal_constarg c d
   | _, _ -> false
 
 let of_sexp s = match s with
