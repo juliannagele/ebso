@@ -36,7 +36,7 @@ let show_constarg_hex c = show_valarg_hex (constarg_to_valarg c)
 type t =
   | Val of valarg [@printer fun fmt x -> fprintf fmt "%s" (valarg_to_dec x)]
   | Tmpl
-  | Const of constarg [@printer fun fmt x -> fprintf fmt "%s" (constarg_to_dec x)]
+  | Const of constarg [@printer fun fmt x -> fprintf fmt "%s" x]
 [@@deriving show { with_path = false }, sexp, compare]
 
 let equal x y = match (x, y) with
