@@ -25,7 +25,9 @@ let show_valarg_hex x =
   if Int.rem (String.length hx) 2 = 1 then "0" ^ hx else hx
 
 type constarg = string [@@deriving show { with_path = false }, sexp, compare]
-let constarg_to_valarg c = String.chop_prefix_exn c ~prefix:"c"
+let constarg_to_valarg c =
+  try String.chop_prefix_exn c ~prefix:"c" |> valarg_to_dec
+  with _ -> failwith "Cannot convert " ^ c ^ " into value"
 let valarg_to_constarg v = "c" ^ (valarg_to_dec v)
 let equal_constarg = String.equal
 let constarg_to_dec = constarg_to_valarg (* convention is that constarg is in dec *)
