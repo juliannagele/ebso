@@ -30,6 +30,7 @@ let set_wsz n = wsz := n; wsort := bv_sort !wsz
 let set_sas s = sas := s; sasort := bv_sort !sas
 
 let senum n = Z3.Expr.mk_numeral_int !ctxt n !wsort
+let senum_string n = Z3.Expr.mk_numeral_string !ctxt n !wsort
 let sanum n = Z3.Expr.mk_numeral_int !ctxt n !sasort
 let seconst s = Z3.Expr.mk_const_s !ctxt s !wsort
 let saconst s = Z3.Expr.mk_const_s !ctxt s !sasort
