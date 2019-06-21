@@ -58,7 +58,7 @@ let show_stackarg_hex a =
 let val_to_const wsz a =
   let max_repr = Z.pow (Z.of_int 2) wsz in
   match a with
-  | Val x -> if Z.of_string x >= max_repr then Const (valarg_to_constarg x) else a
+  | Val x when Z.of_string x >= max_repr -> Const (valarg_to_constarg x)
   | a -> a
 
 let const_to_val = function
