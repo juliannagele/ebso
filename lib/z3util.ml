@@ -15,6 +15,8 @@
 open Core
 open Z3
 
+exception Z3_Timeout
+
 (* make context global for now -- if turns out badly wrap in a state monad *)
 let ctxt = ref (mk_context [])
 
@@ -126,15 +128,20 @@ let exists ?(weight = None) ?(patterns = []) ?(nopatterns = [])
 
 let select a i = Z3Array.mk_select !ctxt a i
 
-let solve_model cs =
+let solve_model_timeout cs timeout =
   let slvr = Solver.mk_solver !ctxt None in
-  let () = Solver.add slvr cs in
+  let ps = Z3.Params.mk_params !ctxt in
+  Z3.Params.add_int ps (Z3.Symbol.mk_string !ctxt "timeout") timeout;
+  Solver.set_parameters slvr ps;
+  Solver.add slvr cs;
   match Solver.check slvr [] with
   | Solver.SATISFIABLE ->
     (* make sure there is a model *)
     Some (Option.value_exn (Solver.get_model slvr) ~message:"SAT but no model")
   | Solver.UNSATISFIABLE -> None
-  | Solver.UNKNOWN -> failwith (Solver.get_reason_unknown slvr)
+  | Solver.UNKNOWN -> raise Z3_Timeout
+
+let solve_model cs = solve_model_timeout cs 0
 
 let solve_model_exn cs = Option.value_exn (solve_model cs) ~message:"UNSAT"
 
