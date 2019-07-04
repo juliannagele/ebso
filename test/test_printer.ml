@@ -75,7 +75,7 @@ let suite =
     "Show a result" >:: (fun _ ->
         let s = [PUSH (Val "1"); POP] in
         let t = [] in
-        let step = {input = s; opt = t; optimal = true; tval = None} in
+        let step = mk_step s t true None in
         assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
           ["600150"; ""; ""; "0"; "5"; "0"; "5"; "true";]
           (show_result step)
@@ -84,7 +84,7 @@ let suite =
     "Show a result with failed translation validation" >:: (fun _ ->
         let s = [NOT; ADD] in
         let t = [EQ] in
-        let step = {input = s; opt = t; optimal = true; tval = Some false} in
+        let step = mk_step s t true (Some false) in
         assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
           ["1901"; "14"; "EQ"; "1"; "6"; "3"; "3"; "true"; "false"]
           (show_result step)
@@ -93,16 +93,25 @@ let suite =
     "Show a result with a successful translation validation" >:: (fun _ ->
         let s = [PUSH (Val "0"); ADD; POP] in
         let t = [POP] in
-        let step = {input = s; opt = t; optimal = true; tval = Some true} in
+        let step = mk_step s t true (Some true) in
         assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
           ["60000150"; "50"; "POP"; "1"; "8"; "2"; "6"; "true"; "true"]
+          (show_result step)
+      );
+
+    "Show a result with abstracted PUSH argument" >:: (fun _ ->
+        let s = [PUSH (Const "c5"); PUSH (Val "0"); ADD] in
+        let t = [PUSH (Const "c5")] in
+        let step = mk_step s t true (Some true) in
+        assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
+          ["6005600001"; "6005"; "PUSH 5"; "1"; "9"; "3"; "6"; "true"; "true"]
           (show_result step)
       );
 
     "Show a result with SSTORE" >:: (fun _ ->
         let s = [PUSH (Val "1"); DUP II; SWAP I; SSTORE; PUSH (Val "1"); DUP II; SWAP I; SSTORE; POP; POP] in
         let t = [PUSH (Val "1"); SSTORE; POP] in
-        let step = {input = s; opt = t; optimal = false; tval = Some true} in
+        let step = mk_step s t false (Some true) in
         assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
           ["600181905560018190555050"; "60015550"; "PUSH 1 SSTORE POP"; "3"; "tbc"; "tbc"; "tbc"; "false"; "true"]
           (show_result step)

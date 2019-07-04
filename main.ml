@@ -74,8 +74,8 @@ let uso_step p cis tval =
     | Some m ->
       let p' = dec_super_opt ea m in
       let tv = Option.map tval ~f:(tvalidate ea.p p') in
-      {input = p; opt = p'; optimal = false; tval = tv}
-    | None -> {input = p; opt = p; optimal = true; tval = None}
+      mk_step p p' false tv
+    | None -> mk_step p p true None
   in (step, c, m)
 
 let rec uso p hist cis tval hist_bbs =
@@ -115,7 +115,7 @@ let bso_step p ea cp tval =
       let tv = Option.map tval ~f:(tvalidate ea.p p') in
       match tv with
       | Some false -> None
-      | _ -> Some {input = p; opt = p'; optimal = true; tval = tv}
+      | _ -> Some (mk_step p p' true tv)
   in (step, c, mo)
 
 let rec bso p ea g gm cps cis tval hist_bbs =

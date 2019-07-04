@@ -20,6 +20,13 @@ open Z3util
 
 type step = {input: Program.t; opt: Program.t; optimal: bool; tval: bool option}
 
+let mk_step input opt optimal tval =
+  { input = Program.const_to_val input
+  ; opt = Program.const_to_val opt
+  ; optimal = optimal
+  ; tval = tval
+  }
+
 let show_ebso_snippet s =
   let ea = mk_enc_consts s `All in
   [ Program.show_hex s
