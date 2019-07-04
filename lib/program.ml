@@ -61,12 +61,29 @@ let const_to_val p =
 let consts p = List.stable_dedup
     (List.filter_map p ~f:(function | PUSH (Const c) -> Some c | _ -> None))
 
-let unints p =
-  List.stable_dedup @@
-  List.filter_mapi p ~f:(fun j i ->
-      if List.mem Instruction.uninterpreted i ~equal:Instruction.equal then
-        Some (i, Instruction.unint_names j i)
-      else None)
+let compute_word_size p max_ws =
+  let uc =
+    List.filter p ~f:is_uninterpreted
+    |> List.partition_tf ~f:is_const
+    |> Tuple.T2.map_fst ~f:List.stable_dedup
+    |> fun (c, nc) -> List.length c + List.length nc
+  in
+  let d = stack_depth p in
+  let abstr_vals ws =
+    List.count p
+      ~f:(function PUSH (Val x) -> Z.numbits (Z.of_string x) > ws | _ -> false)
+  in
+  let rec get_min_ws n m =
+    if n <= 0 then m else
+      let an = abstr_vals n and am = abstr_vals m in
+      let nb = (an + d + uc) * n and mb = (am + d + uc) * m in
+      let m = match Int.compare nb mb with
+        | -1 -> n
+        | 0 when an <= am -> n
+        | _ -> m
+      in
+      get_min_ws (n - 1) m
+  in get_min_ws (max_ws - 1) max_ws
 
 (* basic blocks -- we classify basic blocks into 3 kinds:
 - NotEncodable for instructions that are not yet supported
@@ -77,6 +94,11 @@ let unints p =
 *)
 type bb = Terminal of t * Instruction.t | Next of t | NotEncodable of t
 [@@deriving show {with_path = false}, eq]
+
+let ebso_snippet = function
+  | Terminal (p, _) -> Some p
+  | Next p -> Some p
+  | _ -> None
 
 (* instructions that terminate a basic block *)
 let terminal =
@@ -105,7 +127,7 @@ let split_into_bbs ?(split_non_encodable=true) p =
   let is_encodable i =
     match i with
     | PUSH _ -> true
-    | _ -> List.mem (encodable @ constant_uninterpreted) i ~equal:Instruction.equal
+    | _ -> List.mem (encodable @ uninterpreted) i ~equal:Instruction.equal
   in
   let rec split bb bbs = function
     | [] -> (if not (List.is_empty bb) then Next bb :: bbs else bbs) |> List.rev
@@ -145,3 +167,6 @@ let rec enumerate g cis m = match Int.Map.find m g with
     in
     let ps = List.stable_dedup ps in
     (ps, Int.Map.add_exn m' ~key:g ~data:ps)
+
+let poss_of_instr p i =
+  List.filter_mapi p ~f:(fun pos i' -> if i = i' then Some pos else None)

@@ -14,6 +14,7 @@
 *)
 open Core
 open OUnit2
+open Ebso
 open Z3util
 open Instruction
 open Evmenc
@@ -92,11 +93,7 @@ let suite =
           enc_search_space ea st <&>
           (ea.kt <==> (num (List.length p)))
         in
-        let slvr = Z3.Solver.mk_simple_solver !ctxt in
-        let () = Z3.Solver.add slvr [c] in
-        assert_equal
-          Z3.Solver.UNSATISFIABLE
-          (Z3.Solver.check slvr [])
+        assert_bool "not unsat" (is_unsat [c])
       );
 
     (* enc_equivalence *)
@@ -351,6 +348,73 @@ let suite =
           [NUMBER; NUMBER] (dec_super_opt ea m)
       );
 
+    (* superoptimize uninterpreted instructions with argument *)
+
+    "basic, already optimal test" >: test_case ~length:Long (fun _ ->
+        let p = [PUSH (Val "1"); BALANCE] in
+        let cis = `Progr in
+        let ea = mk_enc_consts p cis in
+        let c = enc_super_opt ea in
+        assert_bool "not unsat" (is_unsat [c])
+      );
+
+    "twice BALANCE for same address optimizes to DUP" >: test_case ~length:Long (fun _ ->
+        let p = [PUSH (Val "1"); BALANCE; PUSH (Val "1"); BALANCE] in
+        let cis = `User [PUSH Tmpl; BALANCE; DUP I] in
+        let ea = mk_enc_consts p cis in
+        let c = enc_super_opt ea in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
+          [PUSH (Val "1"); BALANCE; DUP I]  (dec_super_opt ea m)
+      );
+
+    "twice BALANCE for different address does not optimize" >:: (fun _ ->
+        let p = [PUSH (Val "1"); BALANCE; PUSH (Val "2"); BALANCE] in
+        let cis = `Progr in
+        let ea = mk_enc_consts p cis in
+        let c = enc_super_opt ea in
+        assert_bool "not unsat" (is_unsat [c])
+      );
+
+    "twice BALANCE for same address to be computed optimizes to DUP" >:: (fun _ ->
+        let p = [PUSH (Val "2"); BALANCE; PUSH (Val "1"); PUSH (Val "1"); ADD; BALANCE] in
+        let cis = `User [PUSH Tmpl; BALANCE; DUP I] in
+        let ea = mk_enc_consts p cis in
+        let c = enc_super_opt ea in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
+          [PUSH (Val "2"); BALANCE; DUP I]  (dec_super_opt ea m)
+      );
+
+   "POPing BALANCE optimizes to POP to pop argument of BALANCE" >:: (fun _ ->
+        let p = [BALANCE; POP] in
+        let cis = `Progr in
+        let ea = mk_enc_consts p cis in
+        let c = enc_super_opt ea in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
+          [POP] (dec_super_opt ea m)
+      );
+
+    "twice BALANCE for same address given as initial stack arg">: test_case ~length:Long (fun _ ->
+        let p = [DUP I; BALANCE; SWAP I; BALANCE] in
+        let cis = `Progr in
+        let ea = mk_enc_consts p cis in
+        let c = enc_super_opt ea in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
+          [BALANCE; DUP I] (dec_super_opt ea m)
+      );
+
+    "twice EXP for same arguments optimizes to DUP" >: test_case ~length:Long (fun _ ->
+        let p = [PUSH (Val "1"); PUSH (Val "2"); EXP; PUSH (Val "1"); PUSH (Val "2"); EXP] in
+        let cis = `User [PUSH Tmpl; EXP; DUP I] in
+        let ea = mk_enc_consts p cis in
+        let c = enc_super_opt ea in
+        let m = solve_model_exn [c] in
+        assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
+          [PUSH (Val "1"); PUSH (Val "2"); EXP; DUP I]  (dec_super_opt ea m)
+      );
   ]
 
 let () =

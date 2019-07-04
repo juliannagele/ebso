@@ -66,6 +66,7 @@ let compare i i2 = match (i, i2) with
   | _ -> [%compare: t] i i2
 
 let delta_alpha = function
+  | STOP -> (0, 0)
   | ADD -> (2, 1)
   | MUL -> (2, 1)
   | SUB -> (2, 1)
@@ -96,10 +97,12 @@ let delta_alpha = function
   | CALLVALUE -> (0, 1)
   | CALLDATALOAD -> (1, 1)
   | CALLDATASIZE -> (0, 1)
+  | CALLDATACOPY -> (3, 0)
   | CODESIZE -> (0, 1)
   | GASPRICE -> (0, 1)
   | EXTCODESIZE -> (1, 1)
   | RETURNDATASIZE -> (0, 1)
+  | RETURNDATACOPY -> (3, 0)
   | BLOCKHASH -> (1, 1)
   | COINBASE -> (0, 1)
   | TIMESTAMP -> (0, 1)
@@ -134,15 +137,22 @@ let delta_alpha = function
   | STATICCALL -> (6, 1)
   | REVERT -> (2, 0)
   | SELFDESTRUCT -> (1, 0)
-  | _ -> failwith "not implemented"
+  | i -> failwith ("delta_alpha not implemented for " ^ show i)
 
-(* names of variables for representing an uninterpreted instruction *)
-let unint_names j i =
-  let (d, _) = delta_alpha i in
-  let j =
-    if d > 0 then Int.to_string j ^ "-" else ""
-  in
-  List.init (d + 1) ~f:(fun io -> show i ^ "-" ^ j ^  Int.to_string io)
+let arity i = delta_alpha i |> Tuple.T2.get1
+
+let is_const i = arity i = 0
+
+(* names of variables for representing an uninterpreted instruction
+   constant uninterpreted instructions have only one variable,
+   uninterpreted instructions with arguments need one variable per use
+*)
+let unint_name j i =
+  let suff = if is_const i then "" else "_" ^ Int.to_string j in
+  "x_" ^ show i ^ suff
+
+let unint_rom_name i =
+  "f_" ^ show i
 
 (* list of instructions that remain uninterpreted *)
 let uninterpreted = [
@@ -168,18 +178,18 @@ let uninterpreted = [
   ; DIFFICULTY
   ; GASLIMIT
   ; MLOAD
-  ; SLOAD
   ; PC
   ; MSIZE
   ; GAS
   ]
 
+let is_uninterpreted i = List.mem uninterpreted i ~equal:[%eq: t]
+
 (* uninterpreted instructions that do not consume words from the stack *)
-let constant_uninterpreted =
-  List.filter uninterpreted ~f:(fun i -> Tuple.T2.get1 (delta_alpha i) = 0)
+let constant_uninterpreted = List.filter uninterpreted ~f:is_const
 
 (* list of instructions that have an effect on the outside world that is
-   not encodable, i.e., effects on memory, storage, and logs *)
+   not encodable, i.e., effects on memory and logs *)
 let outsideeffect = [
     CALLDATACOPY
   ; CODECOPY
@@ -187,7 +197,6 @@ let outsideeffect = [
   ; RETURNDATACOPY
   ; MSTORE
   ; MSTORE8
-  ; SSTORE
   ; LOG0
   ; LOG1
   ; LOG2
@@ -217,6 +226,8 @@ let encodable = [
   ; XOR
   ; NOT
   ; POP
+  ; SLOAD
+  ; SSTORE
 ] @ List.map Stackarg.all ~f:(fun a -> PUSH a)
   @ List.map all_of_idx ~f:(fun i -> SWAP i)
   @ List.map all_of_idx ~f:(fun i -> DUP i)
@@ -269,13 +280,15 @@ let gas_cost = function
   | POP -> 2
   | MLOAD -> 2
   | SLOAD -> 200
+  (* fix to 20000 as upper bound *)
+  | SSTORE -> 20000
   | PC -> 2
   | MSIZE -> 2
   | GAS -> 2
   | PUSH _ -> 3
   | SWAP _ -> 3
   | DUP _ -> 3
-  | _ -> failwith "not implemented"
+  | i -> failwith ("gas_cost not implemented for instruction " ^ [%show: t] i)
 
 let show_hex = function
   | STOP -> "00"
