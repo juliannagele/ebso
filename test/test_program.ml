@@ -399,52 +399,6 @@ let suite =
         assert_equal ~cmp:[%eq: int list]  ~printer:[%show: int list]
           [] (poss_of_instr [POP; POP] BALANCE);
       );
-
-    (* check whether instruction is uninterpreted *)
-
-    "BALANCE is an uninterpreted unary instruction" >:: (fun _ ->
-        assert_bool "BALANCE is an uinterpreted instruction" (Instruction.is_uninterpreted BALANCE)
-      );
-
-    "NUMBER is an uninterpreted constant instruction" >:: (fun _ ->
-        assert_bool "NUMBER is an uinterpreted instruction" (Instruction.is_uninterpreted NUMBER)
-      );
-
-    "ADD is not an uninterpreted instruction" >:: (fun _ ->
-        assert_bool "ADD is not an uinterpreted instruction" (not (Instruction.is_uninterpreted ADD))
-      );
-
-    (* check whether instruction is constant *)
-
-    "NUMBER is a constant instruction" >:: (fun _ ->
-        assert_bool "NUMBER is a constant instruction" (Instruction.is_const NUMBER)
-      );
-
-    "BLOCKHASH is not a constant instruction" >:: (fun _ ->
-        assert_bool "BLOCKHASH is a not constant instruction" (not (Instruction.is_const BLOCKHASH))
-      );
-
-    "BALANCE is not a constant instruction" >:: (fun _ ->
-        assert_bool "BALANCE is a constant instruction" (not (Instruction.is_const BALANCE))
-      );
-
-    "SUB is not a constant instruction" >:: (fun _ ->
-        assert_bool "SUB is a constant instruction" (not (Instruction.is_const SUB))
-      );
-
-    (* check arity *)
-
-    "NUMBER has arity 0" >:: (fun _ ->
-        assert_equal 0 (Instruction.arity NUMBER)
-      );
-
-    "BLOCKHASH has arity 1" >:: (fun _ ->
-        assert_equal 1 (Instruction.arity BLOCKHASH)
-      );
-
-    "ADD has arity 2" >:: (fun _ ->
-        assert_equal 2 (Instruction.arity ADD)
-      );
   ]
 
 let () =

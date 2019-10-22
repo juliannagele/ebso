@@ -1,7 +1,7 @@
 (executables
  (names test_evmenc test_superoptimize test_parser test_program
         test_transval test_classic_superoptimize test_nonconstunint
-        test_storage test_printer)
+        test_storage test_printer test_instruction)
  (libraries core ebso oUnit z3)
  (preprocess (pps ppx_deriving.std))
 )
@@ -51,5 +51,11 @@
 (alias
  (name runtest)
  (deps (:x test_printer.exe))
+ (action (run %{x}))
+)
+
+(alias
+ (name runtest)
+ (deps (:x test_instruction.exe))
  (action (run %{x}))
 )
