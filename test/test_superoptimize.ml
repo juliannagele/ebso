@@ -38,8 +38,8 @@ let suite =
         in
         let m = solve_model_exn [c] in
         assert_equal
-          ~cmp:[%eq: int]
-          ~printer:[%show: int]
+          ~cmp:[%eq: Opcode.t]
+          ~printer:[%show: Opcode.t]
           (Opcode.from_instr ea.opcodes (PUSH (Val "1")))
           (eval_fis ea m 0)
       );
@@ -56,8 +56,8 @@ let suite =
         in
         let m = solve_model_exn [c] in
         assert_equal
-          ~cmp:[%eq: int list]
-          ~printer:[%show: int list]
+          ~cmp:[%eq: Opcode.t list]
+          ~printer:[%show: Opcode.t list]
           [ Opcode.from_instr ea.opcodes (PUSH (Val "1"))
           ; Opcode.from_instr ea.opcodes (PUSH (Val "1"))
           ; Opcode.from_instr ea.opcodes ADD
@@ -77,8 +77,8 @@ let suite =
         in
         let m = solve_model_exn [c] in
         assert_equal
-          ~cmp:[%eq: int]
-          ~printer:[%show: int]
+          ~cmp:[%eq: Opcode.t]
+          ~printer:[%show: Opcode.t]
           (Opcode.from_instr ea.opcodes (PUSH (Val "1")))
           (eval_fis ea m 0)
       );
@@ -110,8 +110,8 @@ let suite =
         in
         let m = solve_model_exn [c] in
         assert_equal
-          ~cmp:[%eq: int]
-          ~printer:[%show: int]
+          ~cmp:[%eq: Opcode.t]
+          ~printer:[%show: Opcode.t]
           (Opcode.from_instr ea.opcodes (PUSH (Val "1")))
           (eval_fis ea m 0)
       );
@@ -128,8 +128,8 @@ let suite =
         in
         let m = solve_model_exn [c] in
         assert_equal
-          ~cmp:[%eq: int list]
-          ~printer:[%show: int list]
+          ~cmp:[%eq: Opcode.t list]
+          ~printer:[%show: Opcode.t list]
           [ Opcode.from_instr ea.opcodes (PUSH (Val "1"))
           ; Opcode.from_instr ea.opcodes (PUSH (Val "1"))
           ; Opcode.from_instr ea.opcodes ADD
@@ -165,8 +165,8 @@ let suite =
         in
         let m = solve_model_exn [c] in
         assert_equal
-          ~cmp:[%eq: int]
-          ~printer:[%show: int]
+          ~cmp:[%eq: Opcode.t]
+          ~printer:[%show: Opcode.t]
           (Opcode.from_instr ea.opcodes (PUSH Tmpl))
           (eval_fis ea m 0)
       );
@@ -198,8 +198,8 @@ let suite =
         in
         let m = solve_model_exn [c] in
         assert_equal
-          ~cmp:[%eq: int list]
-          ~printer:[%show: int list]
+          ~cmp:[%eq: Opcode.t list]
+          ~printer:[%show: Opcode.t list]
           [ Opcode.from_instr ea.opcodes (PUSH Tmpl)
           ; Opcode.from_instr ea.opcodes (PUSH Tmpl)
           ; Opcode.from_instr ea.opcodes ADD
