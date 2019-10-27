@@ -17,6 +17,8 @@ open Z3util
 open Instruction
 open Program
 
+module PC = Program_counter
+
 (* stack address size; design decision/quick fix: the slot 2^sas - 1 is reserved
    for exception handling, otherwise the stack counter wraps around
    --> max stack size 2^sas - 1 *)
@@ -103,11 +105,11 @@ let mk_enc_consts p cis_mde =
   (* candidate instruction set: instructions to choose from in target program *)
   cis = cis;
   (* number of instructions in target program *)
-  kt = intconst "k";
+  kt = PC.const "k";
   (* target program *)
-  fis = func_decl "instr" [int_sort] Opcode.sort;
+  fis = func_decl "instr" [PC.sort] Opcode.sort;
   (* arguments for PUSH instrucions in target program *)
-  a = func_decl "a" [int_sort] !wsort;
+  a = func_decl "a" [PC.sort] !wsort;
   cs = cs;
   uis = uis;
   opcodes = Opcode.mk_instr_map cis;
@@ -138,17 +140,17 @@ let mk_state ea idx =
   { (* stack(x0 ... x(sd-1), j, n) = nth word on stack after j instructions
        starting from a stack that contained words x0 ... x(sd-1) *)
     stack = func_decl ("stack" ^ idx)
-        (mk_vars_sorts (forall_vars ea) @ [int_sort; !sasort]) !wsort;
+        (mk_vars_sorts (forall_vars ea) @ [PC.sort; !sasort]) !wsort;
     (* sc(j) = index of the next free slot on the stack after j instructions *)
-    stack_ctr = func_decl ("sc" ^ idx) [int_sort] !sasort;
+    stack_ctr = func_decl ("sc" ^ idx) [PC.sort] !sasort;
     (* storage(_, j, k) = v if storage after j instructions contains word v for key k *)
     storage = func_decl ("storage" ^ idx)
-        (mk_vars_sorts (forall_vars ea) @ [int_sort; !wsort]) !wsort;
+        (mk_vars_sorts (forall_vars ea) @ [PC.sort; !wsort]) !wsort;
     (* exc_halt(j) is true if exceptional halting occurs after j instructions *)
-    exc_halt = func_decl ("exc_halt" ^ idx) [int_sort] bool_sort;
+    exc_halt = func_decl ("exc_halt" ^ idx) [PC.sort] bool_sort;
     (* gas(j) = amount of gas used to execute the first j instructions *)
     used_gas = func_decl ("used_gas" ^ idx)
-        (mk_vars_sorts (forall_vars ea) @ [int_sort]) int_sort;
+        (mk_vars_sorts (forall_vars ea) @ [PC.sort]) int_sort;
   }
 
 (* get the top d elements of the stack *)
@@ -162,7 +164,7 @@ let init_rom ea st i rom =
   let d = arity i in
   let js = poss_of_instr ea.p i in
   let us = Map.find_exn ea.uis i in
-  let ajs = List.map js ~f:(fun j -> enc_top_d_of_st ea st (num j) d) in
+  let ajs = List.map js ~f:(fun j -> enc_top_d_of_st ea st (PC.enc j) d) in
   let w_dflt = senum 0 in
   let ws = List.init d ~f:(fun l -> seconst ("w" ^ [%show: int] l)) in
   foralls ws (
@@ -174,11 +176,11 @@ let init_rom ea st i rom =
 let init_storage ea st =
   let open Z3Ops in
   let js = poss_of_instr ea.p SLOAD @ poss_of_instr ea.p SSTORE in
-  let ks = List.concat_map js ~f:(fun j -> enc_top_d_of_st ea st (num j) 1) in
+  let ks = List.concat_map js ~f:(fun j -> enc_top_d_of_st ea st (PC.enc j) 1) in
   let w_dflt = senum 0 in
   let w = seconst "w" in
   forall w (
-    (st.storage @@ (forall_vars ea @ [num 0; w]) ==
+    (st.storage @@ (forall_vars ea @ [PC.init; w]) ==
      List.fold_right (List.zip_exn ks ea.ss) ~init:w_dflt
        ~f:(fun (k, s) enc -> ite (w == k) s enc)))
 
@@ -187,12 +189,12 @@ let init ea st =
   (* careful: if stack_depth is larger than 2^sas, no checks *)
   let skd = stack_depth (ea.p) in
   (* set stack counter to skd *)
-  (st.stack_ctr @@ [num 0] == sanum skd)
+  (st.stack_ctr @@ [PC.init] == sanum skd)
   (* set inital words on stack *)
   && conj (List.mapi ea.xs ~f:(fun i x ->
-      st.stack @@ (forall_vars ea @ [num 0; sanum i]) == x))
-  && (st.exc_halt @@ [num 0] == btm)
-  && (st.used_gas @@ (forall_vars ea @ [num 0]) == num 0)
+      st.stack @@ (forall_vars ea @ [PC.init; sanum i]) == x))
+  && (st.exc_halt @@ [PC.init] == btm)
+  && (st.used_gas @@ (forall_vars ea @ [PC.init]) == num 0)
   && init_storage ea st
   && Map.fold ea.roms ~init:top ~f:(fun ~key:i ~data:f e -> e && init_rom ea st i f)
 
@@ -452,7 +454,7 @@ let enc_instruction ea st j is =
 
 let enc_search_space ea st =
   let open Z3Ops in
-  let j = intconst "j" in
+  let j = PC.const "j" in
   let enc_cis =
     List.map ea.cis ~f:(fun is ->
         (ea.fis @@ [j] == Opcode.enc (Opcode.from_instr ea.opcodes is)) ==> (enc_instruction ea st j is))
@@ -462,8 +464,8 @@ let enc_search_space ea st =
   let in_cis =
     List.map ea.cis ~f:(fun is -> ea.fis @@ [j] == Opcode.enc (Opcode.from_instr ea.opcodes is))
   in
-  forall j (((j < ea.kt) && (j >= (num 0))) ==> conj enc_cis && disj in_cis) &&
-  ea.kt >= (num 0)
+  forall j (((j < ea.kt) && (j >= PC.init)) ==> conj enc_cis && disj in_cis) &&
+  ea.kt >= PC.init
 
 let enc_equivalence_at ea sts stt js jt =
   let open Z3Ops in
@@ -484,49 +486,49 @@ let enc_equivalence_at ea sts stt js jt =
 
 (* we only demand equivalence at kt *)
 let enc_equivalence ea sts stt =
-  let ks = num (List.length ea.p) and kt = ea.kt in
+  let ks = PC.enc (List.length ea.p) and kt = ea.kt in
   let open Z3Ops in
   (* intially source and target states equal *)
-  enc_equivalence_at ea sts stt (num 0) (num 0) &&
+  enc_equivalence_at ea sts stt PC.init PC.init &&
   (* initally source and target gas are equal *)
-  sts.used_gas @@ (forall_vars ea @ [num 0]) ==
-  stt.used_gas @@ (forall_vars ea @ [num 0]) &&
+  sts.used_gas @@ (forall_vars ea @ [PC.init]) ==
+  stt.used_gas @@ (forall_vars ea @ [PC.init]) &&
   (* after the programs have run source and target states equal *)
   enc_equivalence_at ea sts stt ks kt
 
 let enc_program ea st =
   List.foldi ~init:(init ea st)
-    ~f:(fun j enc oc -> enc <&> enc_instruction ea st (num j) oc) ea.p
+    ~f:(fun j enc oc -> enc <&> enc_instruction ea st (PC.enc j) oc) ea.p
 
 let enc_super_opt ea =
   let open Z3Ops in
   let sts = mk_state ea "_s" in
   let stt = mk_state ea "_t" in
-  let ks = List.length ea.p in
+  let ks = PC.enc (List.length ea.p) in
   foralls (forall_vars ea)
     (enc_program ea sts &&
      enc_search_space ea stt &&
      enc_equivalence ea sts stt &&
-     sts.used_gas @@ (forall_vars ea @ [num ks]) >
+     sts.used_gas @@ (forall_vars ea @ [ks]) >
      stt.used_gas @@ (forall_vars ea @ [ea.kt]) &&
      (* bound the number of instructions in the target; aids solver in showing
         unsat, i.e., that program is optimal *)
-     ea.kt <= num (total_gas_cost ea.p))
+     ea.kt <= PC.enc (total_gas_cost ea.p))
 
 let enc_trans_val ea tp =
   let open Z3Ops in
   let sts = mk_state ea "_s" in
   let stt = mk_state ea "_t" in
-  let kt = num (List.length tp) and ks = num (List.length ea.p) in
+  let kt = PC.enc (List.length tp) and ks = PC.enc (List.length ea.p) in
   (* we're asking for inputs that distinguish the programs *)
   existss (ea.xs @ List.concat (Map.data ea.uis))
     (* encode source and target program *)
     ((List.foldi tp ~init:(enc_program ea sts)
-        ~f:(fun j enc oc -> enc <&> enc_instruction ea stt (num j) oc)) &&
+        ~f:(fun j enc oc -> enc <&> enc_instruction ea stt (PC.enc j) oc)) &&
      (* they start in the same state *)
-     (enc_equivalence_at ea sts stt (num 0) (num 0)) &&
-     sts.used_gas @@ (forall_vars ea @ [num 0]) ==
-     stt.used_gas @@ (forall_vars ea @ [num 0]) &&
+     (enc_equivalence_at ea sts stt PC.init PC.init) &&
+     sts.used_gas @@ (forall_vars ea @ [PC.init]) ==
+     stt.used_gas @@ (forall_vars ea @ [PC.init]) &&
      (* but their final state is different *)
      ~! (enc_equivalence_at ea sts stt ks kt))
 
@@ -535,24 +537,24 @@ let enc_classic_so_test ea cp js =
   let open Z3Ops in
   let sts = mk_state ea "_s" in
   let stc = mk_state ea "_c" in
-  let kt = num (List.length cp) and ks = num (List.length ea.p) in
+  let kt = PC.enc (List.length cp) and ks = PC.enc (List.length ea.p) in
   foralls (forall_vars ea)
     (* encode source program*)
     ((enc_program ea sts) &&
      (* all instructions from candidate program are used in some order *)
      distinct js &&
-     (conj (List.map js ~f:(fun j -> (j < kt) && (j >= num 0)))) &&
+     (conj (List.map js ~f:(fun j -> (j < kt) && (j >= PC.init)))) &&
      (* encode instructions from candidate program *)
      conj (List.map2_exn cp js ~f:(fun i j -> enc_instruction ea stc j i)) &&
      (* they start in the same state *)
-     (enc_equivalence_at ea sts stc (num 0) (num 0)) &&
-     sts.used_gas @@ (forall_vars ea @ [num 0]) ==
-     stc.used_gas @@ (forall_vars ea @ [num 0]) &&
+     (enc_equivalence_at ea sts stc PC.init PC.init) &&
+     sts.used_gas @@ (forall_vars ea @ [PC.init]) ==
+     stc.used_gas @@ (forall_vars ea @ [PC.init]) &&
      (* and their final state is the same *)
      (enc_equivalence_at ea sts stc ks kt))
 
 let eval_state_func_decl  m j ?(n = []) ?(xs = []) f =
-  eval_func_decl m f (xs @ [num j] @ n)
+  eval_func_decl m f (xs @ [PC.enc j] @ n)
 
 let eval_stack ?(xs = []) st m i n =
   eval_state_func_decl m i ~n:[sanum n] ~xs:xs st.stack
@@ -579,10 +581,10 @@ let dec_instr ea m j =
   eval_fis ea m j |> Opcode.to_instr ea.opcodes |> dec_push ea m j
 
 let dec_super_opt ea m =
-  let k = Z3.Arithmetic.Integer.get_int @@ eval_const m ea.kt in
+  let k = PC.dec @@ eval_const m ea.kt in
   List.init k ~f:(dec_instr ea m)
 
 let dec_classic_super_opt ea m cp js =
-  let js = List.map js ~f:(fun j -> eval_const m j |> Z3.Arithmetic.Integer.get_int) in
-  List.sort ~compare:(fun (_, j1) (_, j2) -> Int.compare j1 j2) (List.zip_exn cp js)
+  let js = List.map js ~f:(fun j -> eval_const m j |> PC.dec) in
+  List.sort ~compare:(fun (_, j1) (_, j2) -> PC.compare j1 j2) (List.zip_exn cp js)
   |> List.mapi ~f:(fun j (i, _) -> dec_push ea m j i)
