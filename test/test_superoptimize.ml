@@ -41,7 +41,7 @@ let suite =
           ~cmp:[%eq: Opcode.t]
           ~printer:[%show: Opcode.t]
           (Opcode.from_instr ea.opcodes (PUSH (Val "1")))
-          (eval_fis ea m 0)
+          (eval_fis ea m (PC.of_int 0))
       );
 
     "search for 3 instruction program">::(fun _ ->
@@ -62,7 +62,7 @@ let suite =
           ; Opcode.from_instr ea.opcodes (PUSH (Val "1"))
           ; Opcode.from_instr ea.opcodes ADD
           ]
-          [eval_fis ea m 0; eval_fis ea m 1; eval_fis ea m 2]
+          [eval_fis ea m (PC.of_int 0); eval_fis ea m (PC.of_int 1); eval_fis ea m (PC.of_int 2)]
       );
 
     "cis contains unused instructions ">::(fun _ ->
@@ -80,7 +80,7 @@ let suite =
           ~cmp:[%eq: Opcode.t]
           ~printer:[%show: Opcode.t]
           (Opcode.from_instr ea.opcodes (PUSH (Val "1")))
-          (eval_fis ea m 0)
+          (eval_fis ea m (PC.of_int 0))
       );
 
     "cis does not contain required instruction">::(fun _ ->
@@ -113,7 +113,7 @@ let suite =
           ~cmp:[%eq: Opcode.t]
           ~printer:[%show: Opcode.t]
           (Opcode.from_instr ea.opcodes (PUSH (Val "1")))
-          (eval_fis ea m 0)
+          (eval_fis ea m (PC.of_int 0))
       );
 
     "search for 3 instruction program with equivalence constraint">::(fun _ ->
@@ -134,7 +134,9 @@ let suite =
           ; Opcode.from_instr ea.opcodes (PUSH (Val "1"))
           ; Opcode.from_instr ea.opcodes ADD
           ]
-          [eval_fis ea m 0; eval_fis ea m 1; eval_fis ea m 2]
+          [eval_fis ea m (PC.of_int 0);
+           eval_fis ea m (PC.of_int 1);
+           eval_fis ea m (PC.of_int 2)]
       );
 
     "equivalence constraint forces inital stack for target program">:: (fun _ ->
@@ -148,7 +150,7 @@ let suite =
           ~cmp:[%eq: Z3.Expr.t list]
           ~printer:(List.to_string ~f:Z3.Expr.to_string)
           (List.init sk_size ~f:(fun _ -> senum 0))
-          (List.init sk_size ~f:(eval_stack stt m 0))
+          (List.init sk_size ~f:(eval_stack stt m (PC.of_int 0)))
       );
 
     (* template argument for PUSH *)
@@ -168,7 +170,7 @@ let suite =
           ~cmp:[%eq: Opcode.t]
           ~printer:[%show: Opcode.t]
           (Opcode.from_instr ea.opcodes (PUSH Tmpl))
-          (eval_fis ea m 0)
+          (eval_fis ea m (PC.of_int 0))
       );
 
     "search for 1 instruction program with template (a)">::(fun _ ->
@@ -183,7 +185,7 @@ let suite =
         in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: string] ~printer:[%show: string]
-          "1" (eval_a ea m 0)
+          "1" (eval_a ea m (PC.of_int 0))
       );
 
     "search for 3 instruction program with template (fis)">::(fun _ ->
@@ -204,7 +206,9 @@ let suite =
           ; Opcode.from_instr ea.opcodes (PUSH Tmpl)
           ; Opcode.from_instr ea.opcodes ADD
           ]
-          [eval_fis ea m 0; eval_fis ea m 1; eval_fis ea m 2]
+          [eval_fis ea m (PC.of_int 0);
+           eval_fis ea m (PC.of_int 1);
+           eval_fis ea m (PC.of_int 2)]
       );
 
     "search for 3 instruction program with template (a)">::(fun _ ->
@@ -219,7 +223,8 @@ let suite =
         in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
-          ["1"; "1"] [eval_a ea m 0; eval_a ea m 1]
+          ["1"; "1"] [eval_a ea m (PC.of_int 0);
+                      eval_a ea m (PC.of_int 1)]
       );
 
     (* super optimize *)

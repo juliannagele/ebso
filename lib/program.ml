@@ -169,4 +169,12 @@ let rec enumerate g cis m = match Int.Map.find m g with
     (ps, Int.Map.add_exn m' ~key:g ~data:ps)
 
 let poss_of_instr p i =
-  List.filter_mapi p ~f:(fun pos i' -> if i = i' then Some pos else None)
+  List.filter_mapi p ~f:(fun pos i' ->
+      if i = i'
+      then Some (Program_counter.of_int pos)
+      else None)
+
+let length p = Program_counter.of_int (List.length p)
+
+let init l ~f:f =
+  List.init (Program_counter.to_int l) ~f:(fun i -> f (Program_counter.of_int i))

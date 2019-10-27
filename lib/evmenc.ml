@@ -486,7 +486,7 @@ let enc_equivalence_at ea sts stt js jt =
 
 (* we only demand equivalence at kt *)
 let enc_equivalence ea sts stt =
-  let ks = PC.enc (List.length ea.p) and kt = ea.kt in
+  let ks = PC.enc (Program.length ea.p) and kt = ea.kt in
   let open Z3Ops in
   (* intially source and target states equal *)
   enc_equivalence_at ea sts stt PC.init PC.init &&
@@ -498,13 +498,13 @@ let enc_equivalence ea sts stt =
 
 let enc_program ea st =
   List.foldi ~init:(init ea st)
-    ~f:(fun j enc oc -> enc <&> enc_instruction ea st (PC.enc j) oc) ea.p
+    ~f:(fun j enc oc -> enc <&> enc_instruction ea st (PC.enc (PC.of_int j)) oc) ea.p
 
 let enc_super_opt ea =
   let open Z3Ops in
   let sts = mk_state ea "_s" in
   let stt = mk_state ea "_t" in
-  let ks = PC.enc (List.length ea.p) in
+  let ks = PC.enc (Program.length ea.p) in
   foralls (forall_vars ea)
     (enc_program ea sts &&
      enc_search_space ea stt &&
@@ -513,18 +513,18 @@ let enc_super_opt ea =
      stt.used_gas @@ (forall_vars ea @ [ea.kt]) &&
      (* bound the number of instructions in the target; aids solver in showing
         unsat, i.e., that program is optimal *)
-     ea.kt <= PC.enc (total_gas_cost ea.p))
+     ea.kt <= PC.enc (PC.of_int (total_gas_cost ea.p)))
 
 let enc_trans_val ea tp =
   let open Z3Ops in
   let sts = mk_state ea "_s" in
   let stt = mk_state ea "_t" in
-  let kt = PC.enc (List.length tp) and ks = PC.enc (List.length ea.p) in
+  let kt = PC.enc (Program.length tp) and ks = PC.enc (Program.length ea.p) in
   (* we're asking for inputs that distinguish the programs *)
   existss (ea.xs @ List.concat (Map.data ea.uis))
     (* encode source and target program *)
     ((List.foldi tp ~init:(enc_program ea sts)
-        ~f:(fun j enc oc -> enc <&> enc_instruction ea stt (PC.enc j) oc)) &&
+        ~f:(fun j enc oc -> enc <&> enc_instruction ea stt (PC.enc (PC.of_int j)) oc)) &&
      (* they start in the same state *)
      (enc_equivalence_at ea sts stt PC.init PC.init) &&
      sts.used_gas @@ (forall_vars ea @ [PC.init]) ==
@@ -537,7 +537,7 @@ let enc_classic_so_test ea cp js =
   let open Z3Ops in
   let sts = mk_state ea "_s" in
   let stc = mk_state ea "_c" in
-  let kt = PC.enc (List.length cp) and ks = PC.enc (List.length ea.p) in
+  let kt = PC.enc (Program.length cp) and ks = PC.enc (Program.length ea.p) in
   foralls (forall_vars ea)
     (* encode source program*)
     ((enc_program ea sts) &&
@@ -582,9 +582,9 @@ let dec_instr ea m j =
 
 let dec_super_opt ea m =
   let k = PC.dec @@ eval_const m ea.kt in
-  List.init k ~f:(dec_instr ea m)
+  Program.init k ~f:(dec_instr ea m)
 
 let dec_classic_super_opt ea m cp js =
   let js = List.map js ~f:(fun j -> eval_const m j |> PC.dec) in
   List.sort ~compare:(fun (_, j1) (_, j2) -> PC.compare j1 j2) (List.zip_exn cp js)
-  |> List.mapi ~f:(fun j (i, _) -> dec_push ea m j i)
+  |> List.mapi ~f:(fun j (i, _) -> dec_push ea m (PC.of_int j) i)

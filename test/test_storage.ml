@@ -31,7 +31,7 @@ let gas_cost =
         let xsstore0 = senum 0 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
           5006
-          (eval_gas ~xs:[xsstore0] st m (List.length p))
+          (eval_gas ~xs:[xsstore0] st m (Program.length p))
       );
 
     "cost of a single SSTORE with value 0, with refund" >:: (fun _ ->
@@ -44,7 +44,7 @@ let gas_cost =
         let xsstore0 = senum 2 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
           (-9994)
-          (eval_gas ~xs:[xsstore0] st m (List.length p))
+          (eval_gas ~xs:[xsstore0] st m (Program.length p))
       );
 
     "cost of a single SSTORE with non-zero value, overwriting zero" >:: (fun _ ->
@@ -57,7 +57,7 @@ let gas_cost =
         let xsstore0 = senum 0 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
           20006
-          (eval_gas ~xs:[xsstore0] st m (List.length p))
+          (eval_gas ~xs:[xsstore0] st m (Program.length p))
       );
 
     "cost of a single SSTORE with non-zero value, overwriting non-zero" >:: (fun _ ->
@@ -70,7 +70,7 @@ let gas_cost =
         let xsstore0 = senum 2 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
           5006
-          (eval_gas ~xs:[xsstore0] st m (List.length p))
+          (eval_gas ~xs:[xsstore0] st m (Program.length p))
       );
 
     "cost of SSTORing 0 to same key twice, no refund" >:: (fun _ ->
@@ -83,7 +83,7 @@ let gas_cost =
         let xsstore0 = senum 0 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
           10012
-          (eval_gas ~xs:[xsstore0; xsstore0] st m (List.length p))
+          (eval_gas ~xs:[xsstore0; xsstore0] st m (Program.length p))
       );
 
     "cost of SSTORing 0 to same key twice, with refund" >:: (fun _ ->
@@ -96,7 +96,7 @@ let gas_cost =
         let xsstore0 = senum 2 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
           (-4988)
-          (eval_gas ~xs:[xsstore0; xsstore0] st m (List.length p))
+          (eval_gas ~xs:[xsstore0; xsstore0] st m (Program.length p))
       );
 
     "cost of SSTORing 0 then non-zero to same key, no refund" >:: (fun _ ->
@@ -109,7 +109,7 @@ let gas_cost =
         let xsstore0 = senum 0 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
           25012
-          (eval_gas ~xs:[xsstore0; xsstore0] st m (List.length p))
+          (eval_gas ~xs:[xsstore0; xsstore0] st m (Program.length p))
       );
 
     "cost of SSTORing 0 then non-zero to same key, with refund" >:: (fun _ ->
@@ -122,7 +122,7 @@ let gas_cost =
         let xsstore0 = senum 2 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
           10012
-          (eval_gas ~xs:[xsstore0; xsstore0] st m (List.length p))
+          (eval_gas ~xs:[xsstore0; xsstore0] st m (Program.length p))
       );
 
     "cost of SSTORing non-zero then zero to same key, overwriting zero" >:: (fun _ ->
@@ -135,7 +135,7 @@ let gas_cost =
         let xsstore0 = senum 0 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
           10012
-          (eval_gas ~xs:[xsstore0; xsstore0] st m (List.length p))
+          (eval_gas ~xs:[xsstore0; xsstore0] st m (Program.length p))
       );
 
     "cost of SSTORing non-zero then zero to same key, overwriting non-zero" >:: (fun _ ->
@@ -148,7 +148,7 @@ let gas_cost =
         let xsstore0 = senum 2 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
           (-4988)
-          (eval_gas ~xs:[xsstore0; xsstore0] st m (List.length p))
+          (eval_gas ~xs:[xsstore0; xsstore0] st m (Program.length p))
       );
 
     "cost of SSTORing non-zero to same key twice, overwriting zero" >:: (fun _ ->
@@ -161,7 +161,7 @@ let gas_cost =
         let xsstore0 = senum 0 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
           25012
-          (eval_gas ~xs:[xsstore0; xsstore0] st m (List.length p))
+          (eval_gas ~xs:[xsstore0; xsstore0] st m (Program.length p))
       );
 
     "cost of SSTORing non-zero to same key twice, overwriting non-zero" >:: (fun _ ->
@@ -174,7 +174,7 @@ let gas_cost =
         let xsstore0 = senum 2 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
           10012
-          (eval_gas ~xs:[xsstore0; xsstore0] st m (List.length p))
+          (eval_gas ~xs:[xsstore0; xsstore0] st m (Program.length p))
       );
 
     "cost of SSTOREing an input value" >:: (fun _ ->
@@ -186,7 +186,7 @@ let gas_cost =
         let xs0 = senum 1 and xsstore0 = senum 1 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
           5003
-          (eval_gas ~xs:[xs0; xsstore0] st m (List.length p))
+          (eval_gas ~xs:[xs0; xsstore0] st m (Program.length p))
       );
 
     "cost of SSTOREing an input value with stack operations between" >:: (fun _ ->
@@ -198,7 +198,7 @@ let gas_cost =
         let xs0 = senum 1 and xsstore0 = senum 1 in
         assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
           5011
-          (eval_gas ~xs:[xs0; xsstore0] st m (List.length p))
+          (eval_gas ~xs:[xs0; xsstore0] st m (Program.length p))
       );
 
   ]
@@ -216,7 +216,7 @@ let effect =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
           [senum 0; senum 0]
-          (List.map keys ~f:(eval_storage ~xs:[xsstore0] st m 0))
+          (List.map keys ~f:(eval_storage ~xs:[xsstore0] st m (PC.of_int 0)))
       );
 
     "No SLOAD, return variable for key of SSTORE" >:: (fun _ ->
@@ -229,7 +229,7 @@ let effect =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
           xsstore0
-          (eval_storage ~xs:[xsstore0] st m 0 (senum 2))
+          (eval_storage ~xs:[xsstore0] st m (PC.of_int 0) (senum 2))
       );
 
     "SLOAD a key" >:: (fun _ ->
@@ -242,7 +242,7 @@ let effect =
         let xsload0 = senum 3 in (* set for all quantified variable to 3 for test *)
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
           xsload0
-          (eval_storage ~xs:[xsload0] st m 0 (enc_stackarg ea (num 0) k))
+          (eval_storage ~xs:[xsload0] st m (PC.of_int 0) (enc_stackarg ea (num 0) k))
       );
 
     "SLOAD a key not in range" >:: (fun _ ->
@@ -256,7 +256,7 @@ let effect =
         let xsload0 = senum 3 in (* set for all quantified variable to 3 for test *)
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
           (senum 0)
-          (eval_storage ~xs:[xsload0] st m 0 (enc_stackarg ea (num 0) k2))
+          (eval_storage ~xs:[xsload0] st m (PC.of_int 0) (enc_stackarg ea (num 0) k2))
       );
 
     "SLOAD twice from same key" >:: (fun _ ->
@@ -269,7 +269,7 @@ let effect =
         let xsload0 = senum 3 and xsload1 = senum 2 in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
           xsload0
-          (eval_storage ~xs:[xsload0; xsload1] st m 0 (enc_stackarg ea (num 0) k))
+          (eval_storage ~xs:[xsload0; xsload1] st m (PC.of_int 0) (enc_stackarg ea (num 0) k))
       );
 
     "SLOAD twice from different key" >:: (fun _ ->
@@ -283,8 +283,8 @@ let effect =
         assert_equal ~cmp:[%eq: Z3.Expr.t list]
           ~printer:(List.to_string ~f:Z3.Expr.to_string)
           [xsload0; xsload1]
-          [(eval_storage ~xs:[xsload0; xsload1] st m 0 (enc_stackarg ea (num 0) k1));
-           (eval_storage ~xs:[xsload0; xsload1] st m 0 (enc_stackarg ea (num 0) k2))]
+          [(eval_storage ~xs:[xsload0; xsload1] st m (PC.of_int 0) (enc_stackarg ea (num 0) k1));
+           (eval_storage ~xs:[xsload0; xsload1] st m (PC.of_int 0) (enc_stackarg ea (num 0) k2))]
       );
 
     "SLOAD from key after SSTORE" >:: (fun _ ->
@@ -300,7 +300,7 @@ let effect =
            are ordered before SSTORE variables *)
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
           xsload0
-          (eval_storage ~xs:[xsload0; xsstore0] st m 0 (enc_stackarg ea (num 0) k))
+          (eval_storage ~xs:[xsload0; xsstore0] st m (PC.of_int 0) (enc_stackarg ea (num 0) k))
       );
 
     "SLOAD twice from same key with SSTORE in between" >:: (fun _ ->
@@ -314,7 +314,7 @@ let effect =
         let xsload0 = senum 3 and xsload1 = senum 2 and xsstore0 = senum 4 in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
           xsload0
-          (eval_storage ~xs:[xsload0; xsload1; xsstore0] st m 0 (enc_stackarg ea (num 0) k))
+          (eval_storage ~xs:[xsload0; xsload1; xsstore0] st m (PC.of_int 0) (enc_stackarg ea (num 0) k))
       );
 
     "SLOAD SSTOREd value" >:: (fun _ ->
@@ -328,7 +328,7 @@ let effect =
         let xsload0 = senum 3 and xsload1 = senum 2 and xsstore0 = senum 4 in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
           (senum 2)
-          (eval_storage ~xs:[xsload0; xsload1; xsstore0] st m (List.length p) (enc_stackarg ea (num 0) k))
+          (eval_storage ~xs:[xsload0; xsload1; xsstore0] st m (Program.length p) (enc_stackarg ea (num 0) k))
       );
 
     "SSTORE to SLOADed key" >: test_case ~length:Long (fun _ ->
@@ -342,8 +342,8 @@ let effect =
         let xsload0 = senum 3 and xsload1 = senum 2 and xsstore0 = senum 5 in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
           [(senum 4); (senum 2)]
-          [(eval_storage ~xs:[xsload0; xsload1; xsstore0] st m (List.length p) (enc_stackarg ea (num 0) k1));
-           (eval_storage ~xs:[xsload0; xsload1; xsstore0] st m (List.length p) (enc_stackarg ea (num 0) k2))]
+          [(eval_storage ~xs:[xsload0; xsload1; xsstore0] st m (Program.length p) (enc_stackarg ea (num 0) k1));
+           (eval_storage ~xs:[xsload0; xsload1; xsstore0] st m (Program.length p) (enc_stackarg ea (num 0) k2))]
       );
 
     "SSTORE twice to same key" >:: (fun _ ->
@@ -358,8 +358,8 @@ let effect =
         let xsstore0 = senum 1 and xsstore1 = senum 4 in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
           [(senum 2); (senum 3)]
-          [(eval_storage ~xs:[xsstore0; xsstore1] st m (List.length p1) (enc_stackarg ea (num 0) k));
-           (eval_storage ~xs:[xsstore0; xsstore1] st m (List.length p) (enc_stackarg ea (num 0) k))]
+          [(eval_storage ~xs:[xsstore0; xsstore1] st m (Program.length p1) (enc_stackarg ea (num 0) k));
+           (eval_storage ~xs:[xsstore0; xsstore1] st m (Program.length p) (enc_stackarg ea (num 0) k))]
       );
 
     "SSTORE input from stack" >:: (fun _ ->
@@ -372,8 +372,8 @@ let effect =
         let xsstore0 = senum 2 and x0 = senum 3 in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
           [xsstore0; x0]
-          [(eval_storage ~xs:[x0; xsstore0] st m 0 (enc_stackarg ea (num 0) k));
-           (eval_storage ~xs:[x0; xsstore0] st m (List.length p) (enc_stackarg ea (num 0) k))]
+          [(eval_storage ~xs:[x0; xsstore0] st m (PC.of_int 0) (enc_stackarg ea (num 0) k));
+           (eval_storage ~xs:[x0; xsstore0] st m (Program.length p) (enc_stackarg ea (num 0) k))]
       );
 
     "SSTORE NUMBER" >:: (fun _ ->
@@ -386,8 +386,8 @@ let effect =
         let xsstore0 = senum 2 and number0 = senum 3 in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
           [xsstore0; number0]
-          [(eval_storage ~xs:[xsstore0; number0] st m 0 (enc_stackarg ea (num 0) k));
-           (eval_storage ~xs:[xsstore0; number0] st m (List.length p) (enc_stackarg ea (num 0) k))]
+          [(eval_storage ~xs:[xsstore0; number0] st m (PC.of_int 0) (enc_stackarg ea (num 0) k));
+           (eval_storage ~xs:[xsstore0; number0] st m (Program.length p) (enc_stackarg ea (num 0) k))]
       );
   ]
 

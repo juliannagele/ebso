@@ -12,21 +12,27 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 *)
-open Core
-open Z3util
 
-type t = int [@@deriving eq, compare, show]
+type t
 
-let sort = int_sort
+val sort : Z3.Sort.sort
 
-let const = intconst
+val const : string -> Z3.Expr.expr
 
-let enc = num
+val enc : t -> Z3.Expr.expr
 
-let dec = Z3.Arithmetic.Integer.get_int
+val dec : Z3.Expr.expr -> t
 
-let init = enc 0
+val init : Z3.Expr.expr
 
-let of_int = Fn.id
+val equal : t -> t -> bool
 
-let to_int = Fn.id
+val compare : t -> t -> int
+
+val pp : Format.formatter -> t -> unit
+
+val show : t -> string
+
+val of_int : int -> t
+
+val to_int : t -> int

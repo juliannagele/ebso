@@ -18,6 +18,8 @@ open Ebso
 open Instruction
 open Program
 
+module PC = Program_counter
+
 let suite =
   "suite" >:::
   [
@@ -391,12 +393,12 @@ let suite =
     (* pos *)
 
     "get position of instruction BALANCE" >:: (fun _ ->
-        assert_equal ~cmp:[%eq: int list]  ~printer:[%show: int list]
-          [0; 2] (poss_of_instr [BALANCE; POP; BALANCE] BALANCE)
+        assert_equal ~cmp:[%eq: PC.t list]  ~printer:[%show: PC.t list]
+          [PC.of_int 0; PC.of_int 2] (poss_of_instr [BALANCE; POP; BALANCE] BALANCE)
       );
 
     "get position of instruction BALANCE" >:: (fun _ ->
-        assert_equal ~cmp:[%eq: int list]  ~printer:[%show: int list]
+        assert_equal ~cmp:[%eq: PC.t list]  ~printer:[%show: PC.t list]
           [] (poss_of_instr [POP; POP] BALANCE);
       );
   ]
