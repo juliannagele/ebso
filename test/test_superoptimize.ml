@@ -40,7 +40,7 @@ let suite =
         assert_equal
           ~cmp:[%eq: int]
           ~printer:[%show: int]
-          (enc_opcode ea (PUSH (Val "1")))
+          (Opcode.from_instr ea.opcodes (PUSH (Val "1")))
           (eval_fis ea m 0)
       );
 
@@ -58,9 +58,9 @@ let suite =
         assert_equal
           ~cmp:[%eq: int list]
           ~printer:[%show: int list]
-          [enc_opcode ea (PUSH (Val "1"))
-          ; enc_opcode ea (PUSH (Val "1"))
-          ; enc_opcode ea ADD
+          [ Opcode.from_instr ea.opcodes (PUSH (Val "1"))
+          ; Opcode.from_instr ea.opcodes (PUSH (Val "1"))
+          ; Opcode.from_instr ea.opcodes ADD
           ]
           [eval_fis ea m 0; eval_fis ea m 1; eval_fis ea m 2]
       );
@@ -79,7 +79,7 @@ let suite =
         assert_equal
           ~cmp:[%eq: int]
           ~printer:[%show: int]
-          (enc_opcode ea (PUSH (Val "1")))
+          (Opcode.from_instr ea.opcodes (PUSH (Val "1")))
           (eval_fis ea m 0)
       );
 
@@ -112,7 +112,7 @@ let suite =
         assert_equal
           ~cmp:[%eq: int]
           ~printer:[%show: int]
-          (enc_opcode ea (PUSH (Val "1")))
+          (Opcode.from_instr ea.opcodes (PUSH (Val "1")))
           (eval_fis ea m 0)
       );
 
@@ -130,9 +130,9 @@ let suite =
         assert_equal
           ~cmp:[%eq: int list]
           ~printer:[%show: int list]
-          [enc_opcode ea (PUSH (Val "1"))
-          ; enc_opcode ea (PUSH (Val "1"))
-          ; enc_opcode ea ADD
+          [ Opcode.from_instr ea.opcodes (PUSH (Val "1"))
+          ; Opcode.from_instr ea.opcodes (PUSH (Val "1"))
+          ; Opcode.from_instr ea.opcodes ADD
           ]
           [eval_fis ea m 0; eval_fis ea m 1; eval_fis ea m 2]
       );
@@ -167,7 +167,7 @@ let suite =
         assert_equal
           ~cmp:[%eq: int]
           ~printer:[%show: int]
-          (enc_opcode ea (PUSH Tmpl))
+          (Opcode.from_instr ea.opcodes (PUSH Tmpl))
           (eval_fis ea m 0)
       );
 
@@ -200,9 +200,9 @@ let suite =
         assert_equal
           ~cmp:[%eq: int list]
           ~printer:[%show: int list]
-          [ enc_opcode ea (PUSH Tmpl)
-          ; enc_opcode ea (PUSH Tmpl)
-          ; enc_opcode ea ADD
+          [ Opcode.from_instr ea.opcodes (PUSH Tmpl)
+          ; Opcode.from_instr ea.opcodes (PUSH Tmpl)
+          ; Opcode.from_instr ea.opcodes ADD
           ]
           [eval_fis ea m 0; eval_fis ea m 1; eval_fis ea m 2]
       );

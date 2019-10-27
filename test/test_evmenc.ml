@@ -1411,14 +1411,6 @@ let gas_cost =
 
 let misc =
   [
-    (* enc dec opcode *)
-
-    "encoding and decoding an opcode is the identity">:: (fun _ ->
-        let ea = mk_enc_consts [] (`User [SUB; ADD; POP]) in
-        assert_equal ~cmp:[%eq: Instruction.t] ~printer:[%show: Instruction.t]
-          ADD (dec_opcode ea (enc_opcode ea ADD))
-      );
-
     (* init *)
 
     "model of the initial stack holds 0 for every stack address">:: (fun _ ->

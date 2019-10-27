@@ -43,7 +43,7 @@ type enc_consts = {
   a : Z3.FuncDecl.func_decl;
   cs : Z3.Expr.expr list;
   uis : Z3.Expr.expr list Map.Make_plain(Instruction).t;
-  opcodes : (Instruction.t * int) list;
+  opcodes : Opcode.instr_map;
   xs : Z3.Expr.expr list;
   ss : Z3.Expr.expr list;
   roms : Z3.FuncDecl.func_decl Map.Make_plain(Instruction).t;
@@ -105,13 +105,12 @@ let mk_enc_consts p cis_mde =
   (* number of instructions in target program *)
   kt = intconst "k";
   (* target program *)
-  fis = func_decl "instr" [int_sort] int_sort;
+  fis = func_decl "instr" [int_sort] Opcode.sort;
   (* arguments for PUSH instrucions in target program *)
   a = func_decl "a" [int_sort] !wsort;
   cs = cs;
   uis = uis;
-  (* integer encoding of opcodes *)
-  opcodes = List.mapi cis ~f:(fun i oc -> (oc, i));
+  opcodes = Opcode.mk_instr_map cis;
   xs = xs;
   (* intial words in storage *)
   ss = ss;
@@ -151,11 +150,6 @@ let mk_state ea idx =
     used_gas = func_decl ("used_gas" ^ idx)
         (mk_vars_sorts (forall_vars ea) @ [int_sort]) int_sort;
   }
-
-let enc_opcode ea i = List.Assoc.find_exn ea.opcodes ~equal:[%eq: Instruction.t] i
-
-let dec_opcode ea i =
-  List.Assoc.find_exn (List.Assoc.inverse ea.opcodes) ~equal:[%eq: int] i
 
 (* get the top d elements of the stack *)
 let enc_top_d_of_st ea st j d =
@@ -461,12 +455,12 @@ let enc_search_space ea st =
   let j = intconst "j" in
   let enc_cis =
     List.map ea.cis ~f:(fun is ->
-        (ea.fis @@ [j] == num (enc_opcode ea is)) ==> (enc_instruction ea st j is))
+        (ea.fis @@ [j] == Opcode.enc (Opcode.from_instr ea.opcodes is)) ==> (enc_instruction ea st j is))
   in
   (* optimization potential:
      choose opcodes = 1 .. |cis| and demand fis (j) < |cis| *)
   let in_cis =
-    List.map ea.cis ~f:(fun is -> ea.fis @@ [j] == num (enc_opcode ea is))
+    List.map ea.cis ~f:(fun is -> ea.fis @@ [j] == Opcode.enc (Opcode.from_instr ea.opcodes is))
   in
   forall j (((j < ea.kt) && (j >= (num 0))) ==> conj enc_cis && disj in_cis) &&
   ea.kt >= (num 0)
@@ -573,7 +567,7 @@ let eval_exc_halt st m i = eval_state_func_decl m i st.exc_halt
 let eval_gas ?(xs = []) st m i =
   eval_state_func_decl ~xs:xs m i st.used_gas |> Z3.Arithmetic.Integer.get_int
 
-let eval_fis ea m j = eval_state_func_decl m j ea.fis |> Z3.Arithmetic.Integer.get_int
+let eval_fis ea m j = eval_state_func_decl m j ea.fis |> Opcode.dec
 
 let eval_a ea m j = eval_state_func_decl m j ea.a |> Z3.Arithmetic.Integer.numeral_to_string
 
@@ -582,7 +576,7 @@ let dec_push ea m j = function
   | i -> i
 
 let dec_instr ea m j =
-  eval_fis ea m j |> dec_opcode ea |> dec_push ea m j
+  eval_fis ea m j |> Opcode.to_instr ea.opcodes |> dec_push ea m j
 
 let dec_super_opt ea m =
   let k = Z3.Arithmetic.Integer.get_int @@ eval_const m ea.kt in
