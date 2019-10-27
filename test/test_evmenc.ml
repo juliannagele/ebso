@@ -1392,8 +1392,8 @@ let gas_cost =
         let st = mk_state ea "" in
         let c = init ea st in
         let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
-          0
+        assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
+          GC.zero
           (eval_gas st m (PC.of_int 0))
       );
 
@@ -1403,7 +1403,7 @@ let gas_cost =
         let st = mk_state ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
+        assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
           (total_gas_cost p)
           (eval_gas st m (Program.length p))
       );

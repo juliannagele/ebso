@@ -18,6 +18,7 @@ open Instruction
 open Program
 
 module PC = Program_counter
+module GC = Gas_cost
 
 (* stack address size; design decision/quick fix: the slot 2^sas - 1 is reserved
    for exception handling, otherwise the stack counter wraps around
@@ -150,7 +151,7 @@ let mk_state ea idx =
     exc_halt = func_decl ("exc_halt" ^ idx) [PC.sort] bool_sort;
     (* gas(j) = amount of gas used to execute the first j instructions *)
     used_gas = func_decl ("used_gas" ^ idx)
-        (mk_vars_sorts (forall_vars ea) @ [PC.sort]) int_sort;
+        (mk_vars_sorts (forall_vars ea) @ [PC.sort]) GC.sort;
   }
 
 (* get the top d elements of the stack *)
@@ -194,7 +195,7 @@ let init ea st =
   && conj (List.mapi ea.xs ~f:(fun i x ->
       st.stack @@ (forall_vars ea @ [PC.init; sanum i]) == x))
   && (st.exc_halt @@ [PC.init] == btm)
-  && (st.used_gas @@ (forall_vars ea @ [PC.init]) == num 0)
+  && (st.used_gas @@ (forall_vars ea @ [PC.init]) == GC.enc GC.zero)
   && init_storage ea st
   && Map.fold ea.roms ~init:top ~f:(fun ~key:i ~data:f e -> e && init_rom ea st i f)
 
@@ -414,13 +415,15 @@ let enc_instruction ea st j is =
     let cost =
       let k = sk (sc - sanum 1) in
       let v' = sk (sc - sanum 2) in
-      let refund = num 15000 and set = num 20000 and reset = num 5000 in
+      let refund = GC.enc (GC.of_int 15000)
+      and set = GC.enc (GC.of_int 20000)
+      and reset = GC.enc (GC.of_int 5000) in
       match is with
       | SSTORE ->
         ite (strg k == senum 0)
           (ite (v' == senum 0) reset set)
           (ite (v' == senum 0) (reset - refund) reset)
-      | _ -> num (gas_cost is)
+      | _ -> GC.enc (gas_cost is)
     in
     ug' == (ug + cost)
   in
@@ -513,7 +516,7 @@ let enc_super_opt ea =
      stt.used_gas @@ (forall_vars ea @ [ea.kt]) &&
      (* bound the number of instructions in the target; aids solver in showing
         unsat, i.e., that program is optimal *)
-     ea.kt <= PC.enc (PC.of_int (total_gas_cost ea.p)))
+     ea.kt <= PC.enc (PC.of_int (GC.to_int (total_gas_cost ea.p))))
 
 let enc_trans_val ea tp =
   let open Z3Ops in
@@ -567,7 +570,7 @@ let eval_storage ?(xs = []) st m j k =
 let eval_exc_halt st m i = eval_state_func_decl m i st.exc_halt
 
 let eval_gas ?(xs = []) st m i =
-  eval_state_func_decl ~xs:xs m i st.used_gas |> Z3.Arithmetic.Integer.get_int
+  eval_state_func_decl ~xs:xs m i st.used_gas |> GC.dec
 
 let eval_fis ea m j = eval_state_func_decl m j ea.fis |> Opcode.dec
 

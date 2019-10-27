@@ -48,7 +48,7 @@ let create_ebso_snippets bbs =
   List.filter_map bbs ~f:(fun bb -> ebso_snippet bb |> Option.map ~f:(show_ebso_snippet))
 
 let show_step step =
-  let g = (total_gas_cost step.input - total_gas_cost step.opt) in
+  let g = (GC.to_int (total_gas_cost step.input) - GC.to_int (total_gas_cost step.opt)) in
   String.concat
     [ "Optimized\n"
     ;  Program.show step.input
@@ -75,9 +75,9 @@ let show_gas step =
   else
     let gas_source = total_gas_cost step.input
     and gas_target = total_gas_cost step.opt in
-    [ [%show: int] gas_source
-    ; [%show: int] gas_target
-    ; [%show: int] (gas_source - gas_target) ]
+    [ [%show: GC.t] gas_source
+    ; [%show: GC.t] gas_target
+    ; [%show: int] (GC.to_int gas_source - GC.to_int gas_target) ]
 
 let show_result step =
   [ show_hex step.input

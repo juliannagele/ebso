@@ -48,7 +48,9 @@ let stack_depth p =
     ~f:(fun (sc, sd) is ->
         let (d, a) = delta_alpha is in (sc - d + a, min sd (sc - d)))
 
-let total_gas_cost = List.fold ~init:0 ~f:(fun gc i -> gc + gas_cost i)
+let total_gas_cost =
+  let open Gas_cost in
+  List.fold ~init:zero ~f:(fun gc i -> gc + gas_cost i)
 
 let val_to_const wsz p =
   List.map p
@@ -160,7 +162,7 @@ let rec enumerate g cis m = match Int.Map.find m g with
     let pgs = List.init g ~f:Fn.id in
     let (ps, m') =
       List.fold_left pgs ~init:([], m) ~f:(fun (ps, m) pg ->
-          let is = List.filter cis ~f:(fun i -> gas_cost i = g - pg) in
+          let is = List.filter cis ~f:(fun i -> gas_cost i = Gas_cost.of_int (g - pg)) in
           let (pps, m') = enumerate pg cis m in
           let addi pp i = List.sort ~compare:Instruction.compare (i :: pp) in
           (List.concat_map pps ~f:(fun pp -> List.map is ~f:(addi pp)) @ ps, m'))

@@ -232,63 +232,66 @@ let encodable = [
   @ List.map all_of_idx ~f:(fun i -> SWAP i)
   @ List.map all_of_idx ~f:(fun i -> DUP i)
 
-let gas_cost = function
-  | ADD -> 3
-  | MUL -> 5
-  | SUB -> 3
-  | DIV -> 5
-  | SDIV -> 5
-  | MOD -> 5
-  | SMOD -> 5
-  | ADDMOD -> 8
-  | MULMOD -> 8
-  (* gas price of EXP depends on word on stack, 10 is lower bound,
-     since EXP is uninterpreted only value relative to DUP matters *)
-  | EXP -> 10
-  | SIGNEXTEND -> 5
-  | BYTE -> 3
-  (* gas price of SHA3 depends on word on stack, 30 is lower bound,
-     since SHA3 is uninterpreted only value relative to DUP matters *)
-  | SHA3 -> 30
-  | LT -> 3
-  | GT -> 3
-  | SLT -> 3
-  | SGT -> 3
-  | EQ -> 3
-  | ISZERO -> 3
-  | AND -> 3
-  | OR -> 3
-  | XOR -> 3
-  | NOT -> 3
-  | ADDRESS -> 2
-  | BALANCE -> 400
-  | ORIGIN -> 2
-  | CALLER -> 2
-  | CALLVALUE -> 2
-  | CALLDATALOAD -> 3
-  | CALLDATASIZE -> 2
-  | CODESIZE -> 2
-  | GASPRICE -> 2
-  | EXTCODESIZE -> 700
-  | RETURNDATASIZE -> 2
-  | BLOCKHASH -> 20
-  | COINBASE -> 2
-  | TIMESTAMP -> 2
-  | NUMBER -> 2
-  | DIFFICULTY -> 2
-  | GASLIMIT -> 2
-  | POP -> 2
-  | MLOAD -> 2
-  | SLOAD -> 200
-  (* fix to 20000 as upper bound *)
-  | SSTORE -> 20000
-  | PC -> 2
-  | MSIZE -> 2
-  | GAS -> 2
-  | PUSH _ -> 3
-  | SWAP _ -> 3
-  | DUP _ -> 3
-  | i -> failwith ("gas_cost not implemented for instruction " ^ [%show: t] i)
+let gas_cost i =
+  let gas_cost = function
+    | ADD -> 3
+    | MUL -> 5
+    | SUB -> 3
+    | DIV -> 5
+    | SDIV -> 5
+    | MOD -> 5
+    | SMOD -> 5
+    | ADDMOD -> 8
+    | MULMOD -> 8
+    (* gas price of EXP depends on word on stack, 10 is lower bound,
+       since EXP is uninterpreted only value relative to DUP matters *)
+    | EXP -> 10
+    | SIGNEXTEND -> 5
+    | BYTE -> 3
+    (* gas price of SHA3 depends on word on stack, 30 is lower bound,
+       since SHA3 is uninterpreted only value relative to DUP matters *)
+    | SHA3 -> 30
+    | LT -> 3
+    | GT -> 3
+    | SLT -> 3
+    | SGT -> 3
+    | EQ -> 3
+    | ISZERO -> 3
+    | AND -> 3
+    | OR -> 3
+    | XOR -> 3
+    | NOT -> 3
+    | ADDRESS -> 2
+    | BALANCE -> 400
+    | ORIGIN -> 2
+    | CALLER -> 2
+    | CALLVALUE -> 2
+    | CALLDATALOAD -> 3
+    | CALLDATASIZE -> 2
+    | CODESIZE -> 2
+    | GASPRICE -> 2
+    | EXTCODESIZE -> 700
+    | RETURNDATASIZE -> 2
+    | BLOCKHASH -> 20
+    | COINBASE -> 2
+    | TIMESTAMP -> 2
+    | NUMBER -> 2
+    | DIFFICULTY -> 2
+    | GASLIMIT -> 2
+    | POP -> 2
+    | MLOAD -> 2
+    | SLOAD -> 200
+    (* fix to 20000 as upper bound *)
+    | SSTORE -> 20000
+    | PC -> 2
+    | MSIZE -> 2
+    | GAS -> 2
+    | PUSH _ -> 3
+    | SWAP _ -> 3
+    | DUP _ -> 3
+    | i -> failwith ("gas_cost not implemented for instruction " ^ [%show: t] i)
+  in
+  Gas_cost.of_int (gas_cost i)
 
 let show_hex = function
   | STOP -> "00"

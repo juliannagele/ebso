@@ -29,8 +29,8 @@ let gas_cost =
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         let xsstore0 = senum 0 in
-        assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
-          5006
+        assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
+          (GC.of_int 5006)
           (eval_gas ~xs:[xsstore0] st m (Program.length p))
       );
 
@@ -42,8 +42,8 @@ let gas_cost =
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         let xsstore0 = senum 2 in
-        assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
-          (-9994)
+        assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
+          (GC.of_int (-9994))
           (eval_gas ~xs:[xsstore0] st m (Program.length p))
       );
 
@@ -55,8 +55,8 @@ let gas_cost =
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         let xsstore0 = senum 0 in
-        assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
-          20006
+        assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
+          (GC.of_int 20006)
           (eval_gas ~xs:[xsstore0] st m (Program.length p))
       );
 
@@ -68,8 +68,8 @@ let gas_cost =
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         let xsstore0 = senum 2 in
-        assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
-          5006
+        assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
+          (GC.of_int 5006)
           (eval_gas ~xs:[xsstore0] st m (Program.length p))
       );
 
@@ -81,8 +81,8 @@ let gas_cost =
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         let xsstore0 = senum 0 in
-        assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
-          10012
+        assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
+          (GC.of_int 10012)
           (eval_gas ~xs:[xsstore0; xsstore0] st m (Program.length p))
       );
 
@@ -94,8 +94,8 @@ let gas_cost =
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         let xsstore0 = senum 2 in
-        assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
-          (-4988)
+        assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
+          (GC.of_int (-4988))
           (eval_gas ~xs:[xsstore0; xsstore0] st m (Program.length p))
       );
 
@@ -107,8 +107,8 @@ let gas_cost =
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         let xsstore0 = senum 0 in
-        assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
-          25012
+        assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
+          (GC.of_int 25012)
           (eval_gas ~xs:[xsstore0; xsstore0] st m (Program.length p))
       );
 
@@ -120,8 +120,8 @@ let gas_cost =
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         let xsstore0 = senum 2 in
-        assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
-          10012
+        assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
+          (GC.of_int 10012)
           (eval_gas ~xs:[xsstore0; xsstore0] st m (Program.length p))
       );
 
@@ -133,8 +133,8 @@ let gas_cost =
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         let xsstore0 = senum 0 in
-        assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
-          10012
+        assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
+          (GC.of_int 10012)
           (eval_gas ~xs:[xsstore0; xsstore0] st m (Program.length p))
       );
 
@@ -146,8 +146,8 @@ let gas_cost =
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         let xsstore0 = senum 2 in
-        assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
-          (-4988)
+        assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
+          (GC.of_int (-4988))
           (eval_gas ~xs:[xsstore0; xsstore0] st m (Program.length p))
       );
 
@@ -159,8 +159,8 @@ let gas_cost =
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         let xsstore0 = senum 0 in
-        assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
-          25012
+        assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
+          (GC.of_int 25012)
           (eval_gas ~xs:[xsstore0; xsstore0] st m (Program.length p))
       );
 
@@ -172,8 +172,8 @@ let gas_cost =
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         let xsstore0 = senum 2 in
-        assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
-          10012
+        assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
+          (GC.of_int 10012)
           (eval_gas ~xs:[xsstore0; xsstore0] st m (Program.length p))
       );
 
@@ -184,8 +184,8 @@ let gas_cost =
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         let xs0 = senum 1 and xsstore0 = senum 1 in
-        assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
-          5003
+        assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
+          (GC.of_int 5003)
           (eval_gas ~xs:[xs0; xsstore0] st m (Program.length p))
       );
 
@@ -196,8 +196,8 @@ let gas_cost =
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         let xs0 = senum 1 and xsstore0 = senum 1 in
-        assert_equal ~cmp:[%eq: int] ~printer:Int.to_string
-          5011
+        assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
+          (GC.of_int 5011)
           (eval_gas ~xs:[xs0; xsstore0] st m (Program.length p))
       );
 
