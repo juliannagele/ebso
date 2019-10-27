@@ -22,48 +22,54 @@ type idx =
 
 let show_idx_hex idx = Z.format "x" (Z.of_int (idx_to_enum idx - 1))
 
-type t =
-  (* 0s:  Stop and Arithmetic Operations *)
-  | STOP | ADD | MUL | SUB | DIV | SDIV | MOD | SMOD | ADDMOD | MULMOD | EXP
-  | SIGNEXTEND
-  (* 10s:  Comparison & Bitwise Logic Operations *)
-  | LT | GT | SLT | SGT | EQ | ISZERO | AND | OR | XOR | NOT | BYTE
-  (* EIP 145 *)
-  | SHL | SHR | SAR
-  (* 20s:  SHA3 *)
-  | SHA3
-  (* 30s:  Environmental Information *)
-  | ADDRESS | BALANCE | ORIGIN | CALLER | CALLVALUE | CALLDATALOAD | CALLDATASIZE
-  | CALLDATACOPY | CODESIZE | CODECOPY | GASPRICE | EXTCODESIZE | EXTCODECOPY
-  | RETURNDATASIZE | RETURNDATACOPY
-  (* EIP 1052 *)
-  | EXTCODEHASH
-  (* 40s:  Block Information *)
-  | BLOCKHASH | COINBASE | TIMESTAMP | NUMBER | DIFFICULTY | GASLIMIT
-  (* 50s:  Stack, Memory, Storage and Flow Operations *)
-  | POP | MLOAD | MSTORE | MSTORE8 | SLOAD | SSTORE | JUMP | JUMPI | PC | MSIZE
-  | GAS | JUMPDEST
-  (* 60s & 70s:  Push Operations *)
-  | PUSH of Stackarg.t [@printer fun fmt x -> fprintf fmt "PUSH %s" (Stackarg.show x)]
-  (* 80s:  Duplication Operations *)
-  | DUP of idx [@printer fun fmt i -> fprintf fmt "DUP%i" (idx_to_enum i)]
-  (* 90s:  Exchange Operations *)
-  | SWAP of idx [@printer fun fmt i -> fprintf fmt "SWAP%i" (idx_to_enum i)]
-  (* a0s:  Logging Operations *)
-  | LOG0 | LOG1 | LOG2 | LOG3 | LOG4
-  (* b0s: EIP 615 *)
-  | JUMPTO | JUMPIF | JUMPV | JUMPSUB | JUMPSUBV | BEGINSUB | BEGINDATA
-  | RETURNSUB | PUTLOCAL | GETLOCAL
-  (* f0s:  System operations *)
-  | CREATE | CALL | CALLCODE | RETURN | DELEGATECALL
-  (* EIP 1014 *)
-  | CREATE2
-  | STATICCALL | REVERT | INVALID | SELFDESTRUCT
-[@@deriving show {with_path = false}, eq, enumerate, sexp, compare]
+module T = struct
+  type t =
+    (* 0s:  Stop and Arithmetic Operations *)
+    | STOP | ADD | MUL | SUB | DIV | SDIV | MOD | SMOD | ADDMOD | MULMOD | EXP
+    | SIGNEXTEND
+    (* 10s:  Comparison & Bitwise Logic Operations *)
+    | LT | GT | SLT | SGT | EQ | ISZERO | AND | OR | XOR | NOT | BYTE
+    (* EIP 145 *)
+    | SHL | SHR | SAR
+    (* 20s:  SHA3 *)
+    | SHA3
+    (* 30s:  Environmental Information *)
+    | ADDRESS | BALANCE | ORIGIN | CALLER | CALLVALUE | CALLDATALOAD | CALLDATASIZE
+    | CALLDATACOPY | CODESIZE | CODECOPY | GASPRICE | EXTCODESIZE | EXTCODECOPY
+    | RETURNDATASIZE | RETURNDATACOPY
+    (* EIP 1052 *)
+    | EXTCODEHASH
+    (* 40s:  Block Information *)
+    | BLOCKHASH | COINBASE | TIMESTAMP | NUMBER | DIFFICULTY | GASLIMIT
+    (* 50s:  Stack, Memory, Storage and Flow Operations *)
+    | POP | MLOAD | MSTORE | MSTORE8 | SLOAD | SSTORE | JUMP | JUMPI | PC | MSIZE
+    | GAS | JUMPDEST
+    (* 60s & 70s:  Push Operations *)
+    | PUSH of Stackarg.t [@printer fun fmt x -> fprintf fmt "PUSH %s" (Stackarg.show x)]
+    (* 80s:  Duplication Operations *)
+    | DUP of idx [@printer fun fmt i -> fprintf fmt "DUP%i" (idx_to_enum i)]
+    (* 90s:  Exchange Operations *)
+    | SWAP of idx [@printer fun fmt i -> fprintf fmt "SWAP%i" (idx_to_enum i)]
+    (* a0s:  Logging Operations *)
+    | LOG0 | LOG1 | LOG2 | LOG3 | LOG4
+    (* b0s: EIP 615 *)
+    | JUMPTO | JUMPIF | JUMPV | JUMPSUB | JUMPSUBV | BEGINSUB | BEGINDATA
+    | RETURNSUB | PUTLOCAL | GETLOCAL
+    (* f0s:  System operations *)
+    | CREATE | CALL | CALLCODE | RETURN | DELEGATECALL
+    (* EIP 1014 *)
+    | CREATE2
+    | STATICCALL | REVERT | INVALID | SELFDESTRUCT
+  [@@deriving show {with_path = false}, eq, enumerate, sexp, compare]
 
 let compare i i2 = match (i, i2) with
   | (PUSH _, PUSH _) -> 0
   | _ -> [%compare: t] i i2
+end
+
+include T
+
+module Map = Map.Make(T)
 
 let delta_alpha = function
   | STOP -> (0, 0)

@@ -45,25 +45,23 @@ type enc_consts = {
   fis : Z3.FuncDecl.func_decl;
   a : Z3.FuncDecl.func_decl;
   cs : Z3.Expr.expr list;
-  uis : Z3.Expr.expr list Map.Make_plain(Instruction).t;
+  uis : Z3.Expr.expr list Instruction.Map.t;
   opcodes : Opcode.instr_map;
   xs : Z3.Expr.expr list;
   ss : Z3.Expr.expr list;
-  roms : Z3.FuncDecl.func_decl Map.Make_plain(Instruction).t;
+  roms : Z3.FuncDecl.func_decl Instruction.Map.t
 }
 
 let mk_unint_vars p =
-  let module M = Map.Make_plain(Instruction) in
   let add_xi i xs = xs @ [seconst (Instruction.unint_name (List.length xs) i)]
-  in List.fold p ~init:M.empty ~f:(fun ue i ->
+  in List.fold p ~init:Instruction.Map.empty ~f:(fun ue i ->
       if Instruction.is_uninterpreted i
       then Map.update ue i ~f:(function | Some xs -> if Instruction.is_const i then xs else add_xi i xs
                                         | None -> [seconst (Instruction.unint_name 0 i)])
       else ue)
 
 let mk_unint_roms p vc =
-  let module M = Map.Make_plain(Instruction) in
-  List.fold p ~init:M.empty ~f:(fun ue i ->
+  List.fold p ~init:Instruction.Map.empty ~f:(fun ue i ->
       if Instruction.is_uninterpreted i && not (Instruction.is_const i)
       then Map.update ue i ~f:(function | Some f -> f
                                         | None ->
