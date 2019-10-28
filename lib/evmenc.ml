@@ -24,18 +24,9 @@ module GC = Gas_cost
    for exception handling, otherwise the stack counter wraps around
    --> max stack size 2^sas - 1 *)
 let sas = ref 6
-(* word size *)
-let wsz = ref 3
 let sasort = ref (bv_sort !sas)
-let wsort = ref (bv_sort !wsz)
-
-let set_wsz n = wsz := n; wsort := bv_sort !wsz
 let set_sas s = sas := s; sasort := bv_sort !sas
-
-let senum n = Z3.Expr.mk_numeral_int !ctxt n !wsort
-let senum_string n = Z3.Expr.mk_numeral_string !ctxt n !wsort
 let sanum n = Z3.Expr.mk_numeral_int !ctxt n !sasort
-let seconst s = Z3.Expr.mk_const_s !ctxt s !wsort
 let saconst s = Z3.Expr.mk_const_s !ctxt s !sasort
 
 type enc_consts = {
@@ -53,11 +44,11 @@ type enc_consts = {
 }
 
 let mk_unint_vars p =
-  let add_xi i xs = xs @ [seconst (Instruction.unint_name (List.length xs) i)]
+  let add_xi i xs = xs @ [Word.const (Instruction.unint_name (List.length xs) i)]
   in List.fold p ~init:Instruction.Map.empty ~f:(fun ue i ->
       if Instruction.is_uninterpreted i
       then Map.update ue i ~f:(function | Some xs -> if Instruction.is_const i then xs else add_xi i xs
-                                        | None -> [seconst (Instruction.unint_name 0 i)])
+                                        | None -> [Word.const (Instruction.unint_name 0 i)])
       else ue)
 
 let mk_unint_roms p vc =
@@ -66,24 +57,24 @@ let mk_unint_roms p vc =
       then Map.update ue i ~f:(function | Some f -> f
                                         | None ->
                                           let arity = Instruction.arity i + vc in
-                                          func_decl (Instruction.unint_rom_name i) (List.init arity ~f:(fun _ -> !wsort)) !wsort)
+                                          func_decl (Instruction.unint_rom_name i) (List.init arity ~f:(fun _ -> !Word.sort)) !Word.sort)
       else ue)
 
 let mk_store_vars p = List.fold p ~init:[] ~f:(fun vs i ->
     if Instruction.equal SLOAD i || Instruction.equal SSTORE i
-    then vs @ [seconst (Instruction.unint_name (List.length vs) i)]
+    then vs @ [Word.const (Instruction.unint_name (List.length vs) i)]
     else vs)
 
 (* list of free variables x_0 .. x_(stack_depth -1) for words already on stack *)
 (* careful: no check that this does not generate more than max stacksize variables *)
 let mk_input_vars p =
-  List.init (stack_depth p) ~f:(fun i -> seconst ("x_" ^ Int.to_string i))
+  List.init (stack_depth p) ~f:(fun i -> Word.const ("x_" ^ Int.to_string i))
 
 (* arguments of PUSH which are too large to fit in word size *)
-let mk_push_const_vars p = List.map (Program.consts p) ~f:(seconst)
+let mk_push_const_vars p = List.map (Program.consts p) ~f:(Word.const)
 
-(* list of wsorts for every variable in vs *)
-let mk_vars_sorts vs = List.map vs ~f:(fun _ -> !wsort)
+(* list of Word.sorts for every variable in vs *)
+let mk_vars_sorts vs = List.map vs ~f:(fun _ -> !Word.sort)
 
 (* list of candidate instructions *)
 let mk_cis p uis = function
@@ -108,7 +99,7 @@ let mk_enc_consts p cis_mde =
   (* target program *)
   fis = func_decl "instr" [PC.sort] Opcode.sort;
   (* arguments for PUSH instrucions in target program *)
-  a = func_decl "a" [PC.sort] !wsort;
+  a = func_decl "a" [PC.sort] !Word.sort;
   cs = cs;
   uis = uis;
   opcodes = Opcode.mk_instr_map cis;
@@ -139,12 +130,12 @@ let mk_state ea idx =
   { (* stack(x0 ... x(sd-1), j, n) = nth word on stack after j instructions
        starting from a stack that contained words x0 ... x(sd-1) *)
     stack = func_decl ("stack" ^ idx)
-        (mk_vars_sorts (forall_vars ea) @ [PC.sort; !sasort]) !wsort;
+        (mk_vars_sorts (forall_vars ea) @ [PC.sort; !sasort]) !Word.sort;
     (* sc(j) = index of the next free slot on the stack after j instructions *)
     stack_ctr = func_decl ("sc" ^ idx) [PC.sort] !sasort;
     (* storage(_, j, k) = v if storage after j instructions contains word v for key k *)
     storage = func_decl ("storage" ^ idx)
-        (mk_vars_sorts (forall_vars ea) @ [PC.sort; !wsort]) !wsort;
+        (mk_vars_sorts (forall_vars ea) @ [PC.sort; !Word.sort]) !Word.sort;
     (* exc_halt(j) is true if exceptional halting occurs after j instructions *)
     exc_halt = func_decl ("exc_halt" ^ idx) [PC.sort] bool_sort;
     (* gas(j) = amount of gas used to execute the first j instructions *)
@@ -164,8 +155,8 @@ let init_rom ea st i rom =
   let js = poss_of_instr ea.p i in
   let us = Map.find_exn ea.uis i in
   let ajs = List.map js ~f:(fun j -> enc_top_d_of_st ea st (PC.enc j) d) in
-  let w_dflt = senum 0 in
-  let ws = List.init d ~f:(fun l -> seconst ("w" ^ [%show: int] l)) in
+  let w_dflt = Word.enc_int 0 in
+  let ws = List.init d ~f:(fun l -> Word.const ("w" ^ [%show: int] l)) in
   foralls ws (
     (rom @@ (forall_vars ea @ ws)) ==
       List.fold_right (List.zip_exn ajs us) ~init:w_dflt
@@ -176,8 +167,8 @@ let init_storage ea st =
   let open Z3Ops in
   let js = poss_of_instr ea.p SLOAD @ poss_of_instr ea.p SSTORE in
   let ks = List.concat_map js ~f:(fun j -> enc_top_d_of_st ea st (PC.enc j) 1) in
-  let w_dflt = senum 0 in
-  let w = seconst "w" in
+  let w_dflt = Word.enc_int 0 in
+  let w = Word.const "w" in
   forall w (
     (st.storage @@ (forall_vars ea @ [PC.init; w]) ==
      List.fold_right (List.zip_exn ks ea.ss) ~init:w_dflt
@@ -199,10 +190,10 @@ let init ea st =
 
 (* TODO: check data layout on stack *)
 let enc_stackarg ea j = function
-  (* careful: if x is to large for wsort leftmost bits are truncated *)
-  | Stackarg.Val x -> Z3.Expr.mk_numeral_string !ctxt (Stackarg.valarg_to_dec x) !wsort
+  (* careful: if x is to large for Word.sort leftmost bits are truncated *)
+  | Stackarg.Val x -> Z3.Expr.mk_numeral_string !ctxt (Stackarg.valarg_to_dec x) !Word.sort
   | Tmpl -> ea.a <@@> [j]
-  | Const c -> seconst c
+  | Const c -> Word.const c
 
 let enc_push ea st j x =
   let open Z3Ops in
@@ -229,37 +220,37 @@ let enc_sub ea st j = enc_binop ea st j (<->)
 let enc_mul ea st j = enc_binop ea st j (<*>)
 let enc_div ea st j =
   (* EVM defines x / 0 = 0, Z3 says it's undefined *)
-  let div num denom = ite (denom <==> senum 0) (senum 0) (udiv num denom) in
+  let div num denom = ite (denom <==> Word.enc_int 0) (Word.enc_int 0) (udiv num denom) in
   enc_binop ea st j div
 let enc_sdiv ea st j =
   (* EVM defines x / 0 = 0, Z3 says it's undefined *)
-  let sdiv num denom = ite (denom <==> senum 0) (senum 0) (sdiv num denom) in
+  let sdiv num denom = ite (denom <==> Word.enc_int 0) (Word.enc_int 0) (sdiv num denom) in
   enc_binop ea st j sdiv
 let enc_mod ea st j =
   (* EVM defines x mod 0 = 0, Z3 says it's undefined *)
-  let evmmod num denom = ite (denom <==> senum 0) (senum 0) (urem num denom) in
+  let evmmod num denom = ite (denom <==> Word.enc_int 0) (Word.enc_int 0) (urem num denom) in
   enc_binop ea st j evmmod
 let enc_smod ea st j =
   (* Z3 has srem and smod; srem takes sign from dividend (= num),
      smod from divisor (= denom); EVM takes the latter *)
   (* EVM defines x smod 0 = 0, Z3 says it's undefined *)
-  let evmsmod num denom = ite (denom <==> senum 0) (senum 0) (srem num denom) in
+  let evmsmod num denom = ite (denom <==> Word.enc_int 0) (Word.enc_int 0) (srem num denom) in
   enc_binop ea st j evmsmod
 
 let enc_lt ea st j =
-  let bvlt x y = ite (Z3.BitVector.mk_ult !ctxt x y) (senum 1) (senum 0) in
+  let bvlt x y = ite (Z3.BitVector.mk_ult !ctxt x y) (Word.enc_int 1) (Word.enc_int 0) in
   enc_binop ea st j bvlt
 let enc_gt ea st j =
-  let bvgt x y = ite (Z3.BitVector.mk_ugt !ctxt x y) (senum 1) (senum 0) in
+  let bvgt x y = ite (Z3.BitVector.mk_ugt !ctxt x y) (Word.enc_int 1) (Word.enc_int 0) in
   enc_binop ea st j bvgt
 let enc_slt ea st j =
-  let bvslt x y = ite (x <<> y) (senum 1) (senum 0) in
+  let bvslt x y = ite (x <<> y) (Word.enc_int 1) (Word.enc_int 0) in
   enc_binop ea st j bvslt
 let enc_sgt ea st j =
-  let bvsgt x y = ite (x <>> y) (senum 1) (senum 0) in
+  let bvsgt x y = ite (x <>> y) (Word.enc_int 1) (Word.enc_int 0) in
   enc_binop ea st j bvsgt
 let enc_eq ea st j =
-  let bveq x y = ite (x <==> y) (senum 1) (senum 0) in
+  let bveq x y = ite (x <==> y) (Word.enc_int 1) (Word.enc_int 0) in
   enc_binop ea st j bveq
 
 let enc_and ea st j = enc_binop ea st j (Z3.BitVector.mk_and !ctxt)
@@ -274,9 +265,9 @@ let enc_addmod ea st j =
   let denom = sk (sc - sanum 3) and x =  sk (sc - sanum 2) and y =  sk (sc - sanum 1) in
   sk' (sc' - sanum 1) ==
   (* EVM defines (x + y) mod 0 = 0 as 0, Z3 says it's undefined *)
-  ite (denom == senum 0) (senum 0) (
+  ite (denom == Word.enc_int 0) (Word.enc_int 0) (
     (* truncate back to word size, safe because mod denom brings us back to range *)
-    extract (Int.pred !wsz) 0
+    extract (Int.pred !Word.size) 0
       (* requires non overflowing add, pad with 0s to avoid overflow *)
       (urem ((zeroext 1 y) + (zeroext 1 x)) (zeroext 1 denom)))
 
@@ -288,11 +279,11 @@ let enc_mulmod ea st j =
   let denom = sk (sc - sanum 3) and x =  sk (sc - sanum 2) and y =  sk (sc - sanum 1) in
   sk' (sc' - sanum 1) ==
   (* EVM defines (x + y) mod 0 = 0 as 0, Z3 says it's undefined *)
-  ite (denom == senum 0) (senum 0) (
+  ite (denom == Word.enc_int 0) (Word.enc_int 0) (
     (* truncate back to word size, safe because mod denom brings us back to range *)
-    extract (Int.pred !wsz) 0
+    extract (Int.pred !Word.size) 0
       (* requires non overflowing mul, pad with 0s to avoid overflow *)
-      (urem ((zeroext !wsz y) * (zeroext !wsz x)) (zeroext !wsz denom)))
+      (urem ((zeroext !Word.size y) * (zeroext !Word.size x)) (zeroext !Word.size denom)))
 
 let enc_not ea st j =
   let open Z3Ops in
@@ -308,7 +299,7 @@ let enc_iszero ea st j =
   and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   (* if the old top word is 0 then the new top word is 1 and 0 otherwise *)
-  (sk' (sc' - sanum 1) == ite (sk (sc - sanum 1) == (senum 0)) (senum 1) (senum 0))
+  (sk' (sc' - sanum 1) == ite (sk (sc - sanum 1) == (Word.enc_int 0)) (Word.enc_int 1) (Word.enc_int 0))
 
 let enc_swap ea st j idx =
   let sc_idx = sanum (idx + 1) in
@@ -363,7 +354,7 @@ let enc_sstore ea st j =
   let sk n = st.stack @@ (forall_vars ea @ [j; n]) and sc = st.stack_ctr @@ [j] in
   let strg w = st.storage @@ (forall_vars ea @ [j; w]) in
   let strg' w = st.storage @@ (forall_vars ea @ [j + one; w]) in
-  let w = seconst "w" in
+  let w = Word.const "w" in
   forall w (strg' w == (ite (w == sk (sc - sanum 1)) (sk (sc - sanum 2)) (strg w)))
 
 (* effect of instruction on state st after j steps *)
@@ -418,9 +409,9 @@ let enc_instruction ea st j is =
       and reset = GC.enc (GC.of_int 5000) in
       match is with
       | SSTORE ->
-        ite (strg k == senum 0)
-          (ite (v' == senum 0) reset set)
-          (ite (v' == senum 0) (reset - refund) reset)
+        ite (strg k == Word.enc_int 0)
+          (ite (v' == Word.enc_int 0) reset set)
+          (ite (v' == Word.enc_int 0) (reset - refund) reset)
       | _ -> GC.enc (gas_cost is)
     in
     ug' == (ug + cost)
@@ -444,7 +435,7 @@ let enc_instruction ea st j is =
     let pres_storage = match is with
       | SSTORE -> top
       | _ ->
-        let w = seconst "w" in
+        let w = Word.const "w" in
         forall w (strg' w == strg w)
     in
     let n = saconst "n" in
@@ -471,7 +462,7 @@ let enc_search_space ea st =
 let enc_equivalence_at ea sts stt js jt =
   let open Z3Ops in
   let n = saconst "n" in
-  let w = seconst "w" in
+  let w = Word.const "w" in
   (* source and target stack counter are equal *)
   sts.stack_ctr @@ [js] == stt.stack_ctr @@ [jt] &&
   (* source and target exceptional halting are equal *)

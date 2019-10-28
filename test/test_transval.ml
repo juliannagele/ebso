@@ -20,7 +20,7 @@ open Evmenc
 
 let suite =
   (* set to realistic values for validation *)
-  set_wsz 256; set_sas 10;
+  Word.set_wsz 256; set_sas 10;
   "suite" >:::
   [
     (* translation validation *)

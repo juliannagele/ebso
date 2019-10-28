@@ -28,7 +28,7 @@ let gas_cost =
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
-        let xsstore0 = senum 0 in
+        let xsstore0 = Word.enc_int 0 in
         assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
           (GC.of_int 5006)
           (eval_gas ~xs:[xsstore0] st m (Program.length p))
@@ -41,7 +41,7 @@ let gas_cost =
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
-        let xsstore0 = senum 2 in
+        let xsstore0 = Word.enc_int 2 in
         assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
           (GC.of_int (-9994))
           (eval_gas ~xs:[xsstore0] st m (Program.length p))
@@ -54,7 +54,7 @@ let gas_cost =
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
-        let xsstore0 = senum 0 in
+        let xsstore0 = Word.enc_int 0 in
         assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
           (GC.of_int 20006)
           (eval_gas ~xs:[xsstore0] st m (Program.length p))
@@ -67,7 +67,7 @@ let gas_cost =
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
-        let xsstore0 = senum 2 in
+        let xsstore0 = Word.enc_int 2 in
         assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
           (GC.of_int 5006)
           (eval_gas ~xs:[xsstore0] st m (Program.length p))
@@ -80,7 +80,7 @@ let gas_cost =
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
-        let xsstore0 = senum 0 in
+        let xsstore0 = Word.enc_int 0 in
         assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
           (GC.of_int 10012)
           (eval_gas ~xs:[xsstore0; xsstore0] st m (Program.length p))
@@ -93,7 +93,7 @@ let gas_cost =
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
-        let xsstore0 = senum 2 in
+        let xsstore0 = Word.enc_int 2 in
         assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
           (GC.of_int (-4988))
           (eval_gas ~xs:[xsstore0; xsstore0] st m (Program.length p))
@@ -106,7 +106,7 @@ let gas_cost =
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
-        let xsstore0 = senum 0 in
+        let xsstore0 = Word.enc_int 0 in
         assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
           (GC.of_int 25012)
           (eval_gas ~xs:[xsstore0; xsstore0] st m (Program.length p))
@@ -119,7 +119,7 @@ let gas_cost =
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
-        let xsstore0 = senum 2 in
+        let xsstore0 = Word.enc_int 2 in
         assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
           (GC.of_int 10012)
           (eval_gas ~xs:[xsstore0; xsstore0] st m (Program.length p))
@@ -132,7 +132,7 @@ let gas_cost =
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
-        let xsstore0 = senum 0 in
+        let xsstore0 = Word.enc_int 0 in
         assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
           (GC.of_int 10012)
           (eval_gas ~xs:[xsstore0; xsstore0] st m (Program.length p))
@@ -145,7 +145,7 @@ let gas_cost =
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
-        let xsstore0 = senum 2 in
+        let xsstore0 = Word.enc_int 2 in
         assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
           (GC.of_int (-4988))
           (eval_gas ~xs:[xsstore0; xsstore0] st m (Program.length p))
@@ -158,7 +158,7 @@ let gas_cost =
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
-        let xsstore0 = senum 0 in
+        let xsstore0 = Word.enc_int 0 in
         assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
           (GC.of_int 25012)
           (eval_gas ~xs:[xsstore0; xsstore0] st m (Program.length p))
@@ -171,7 +171,7 @@ let gas_cost =
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
-        let xsstore0 = senum 2 in
+        let xsstore0 = Word.enc_int 2 in
         assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
           (GC.of_int 10012)
           (eval_gas ~xs:[xsstore0; xsstore0] st m (Program.length p))
@@ -183,7 +183,7 @@ let gas_cost =
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
-        let xs0 = senum 1 and xsstore0 = senum 1 in
+        let xs0 = Word.enc_int 1 and xsstore0 = Word.enc_int 1 in
         assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
           (GC.of_int 5003)
           (eval_gas ~xs:[xs0; xsstore0] st m (Program.length p))
@@ -195,7 +195,7 @@ let gas_cost =
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
-        let xs0 = senum 1 and xsstore0 = senum 1 in
+        let xs0 = Word.enc_int 1 and xsstore0 = Word.enc_int 1 in
         assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
           (GC.of_int 5011)
           (eval_gas ~xs:[xs0; xsstore0] st m (Program.length p))
@@ -211,11 +211,11 @@ let effect =
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
-        let keys = [senum 0; senum 1] in
-        let xsstore0 = senum 3 in
+        let keys = [Word.enc_int 0; Word.enc_int 1] in
+        let xsstore0 = Word.enc_int 3 in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [senum 0; senum 0]
+          [Word.enc_int 0; Word.enc_int 0]
           (List.map keys ~f:(eval_storage ~xs:[xsstore0] st m (PC.of_int 0)))
       );
 
@@ -225,11 +225,11 @@ let effect =
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
-        let xsstore0 = senum 3 in (* initialize universally quantified variable to 3 *)
+        let xsstore0 = Word.enc_int 3 in (* initialize universally quantified variable to 3 *)
         assert_equal
           ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
           xsstore0
-          (eval_storage ~xs:[xsstore0] st m (PC.of_int 0) (senum 2))
+          (eval_storage ~xs:[xsstore0] st m (PC.of_int 0) (Word.enc_int 2))
       );
 
     "SLOAD a key" >:: (fun _ ->
@@ -239,7 +239,7 @@ let effect =
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
-        let xsload0 = senum 3 in (* set for all quantified variable to 3 for test *)
+        let xsload0 = Word.enc_int 3 in (* set for all quantified variable to 3 for test *)
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
           xsload0
           (eval_storage ~xs:[xsload0] st m (PC.of_int 0) (enc_stackarg ea (num 0) k))
@@ -253,9 +253,9 @@ let effect =
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
-        let xsload0 = senum 3 in (* set for all quantified variable to 3 for test *)
+        let xsload0 = Word.enc_int 3 in (* set for all quantified variable to 3 for test *)
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0)
+          (Word.enc_int 0)
           (eval_storage ~xs:[xsload0] st m (PC.of_int 0) (enc_stackarg ea (num 0) k2))
       );
 
@@ -266,7 +266,7 @@ let effect =
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
-        let xsload0 = senum 3 and xsload1 = senum 2 in
+        let xsload0 = Word.enc_int 3 and xsload1 = Word.enc_int 2 in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
           xsload0
           (eval_storage ~xs:[xsload0; xsload1] st m (PC.of_int 0) (enc_stackarg ea (num 0) k))
@@ -279,7 +279,7 @@ let effect =
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
-        let xsload0 = senum 3 and xsload1 = senum 2 in
+        let xsload0 = Word.enc_int 3 and xsload1 = Word.enc_int 2 in
         assert_equal ~cmp:[%eq: Z3.Expr.t list]
           ~printer:(List.to_string ~f:Z3.Expr.to_string)
           [xsload0; xsload1]
@@ -295,7 +295,7 @@ let effect =
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
-        let xsload0 = senum 3 and xsstore0 = senum 4 in
+        let xsload0 = Word.enc_int 3 and xsstore0 = Word.enc_int 4 in
         (* storage is initalized with xsload0, because SLOAD variables
            are ordered before SSTORE variables *)
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -311,7 +311,7 @@ let effect =
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
-        let xsload0 = senum 3 and xsload1 = senum 2 and xsstore0 = senum 4 in
+        let xsload0 = Word.enc_int 3 and xsload1 = Word.enc_int 2 and xsstore0 = Word.enc_int 4 in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
           xsload0
           (eval_storage ~xs:[xsload0; xsload1; xsstore0] st m (PC.of_int 0) (enc_stackarg ea (num 0) k))
@@ -325,9 +325,9 @@ let effect =
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
-        let xsload0 = senum 3 and xsload1 = senum 2 and xsstore0 = senum 4 in
+        let xsload0 = Word.enc_int 3 and xsload1 = Word.enc_int 2 and xsstore0 = Word.enc_int 4 in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 2)
+          (Word.enc_int 2)
           (eval_storage ~xs:[xsload0; xsload1; xsstore0] st m (Program.length p) (enc_stackarg ea (num 0) k))
       );
 
@@ -339,9 +339,9 @@ let effect =
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
-        let xsload0 = senum 3 and xsload1 = senum 2 and xsstore0 = senum 5 in
+        let xsload0 = Word.enc_int 3 and xsload1 = Word.enc_int 2 and xsstore0 = Word.enc_int 5 in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [(senum 4); (senum 2)]
+          [(Word.enc_int 4); (Word.enc_int 2)]
           [(eval_storage ~xs:[xsload0; xsload1; xsstore0] st m (Program.length p) (enc_stackarg ea (num 0) k1));
            (eval_storage ~xs:[xsload0; xsload1; xsstore0] st m (Program.length p) (enc_stackarg ea (num 0) k2))]
       );
@@ -355,9 +355,9 @@ let effect =
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
-        let xsstore0 = senum 1 and xsstore1 = senum 4 in
+        let xsstore0 = Word.enc_int 1 and xsstore1 = Word.enc_int 4 in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [(senum 2); (senum 3)]
+          [(Word.enc_int 2); (Word.enc_int 3)]
           [(eval_storage ~xs:[xsstore0; xsstore1] st m (Program.length p1) (enc_stackarg ea (num 0) k));
            (eval_storage ~xs:[xsstore0; xsstore1] st m (Program.length p) (enc_stackarg ea (num 0) k))]
       );
@@ -369,7 +369,7 @@ let effect =
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
-        let xsstore0 = senum 2 and x0 = senum 3 in
+        let xsstore0 = Word.enc_int 2 and x0 = Word.enc_int 3 in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
           [xsstore0; x0]
           [(eval_storage ~xs:[x0; xsstore0] st m (PC.of_int 0) (enc_stackarg ea (num 0) k));
@@ -383,7 +383,7 @@ let effect =
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
-        let xsstore0 = senum 2 and number0 = senum 3 in
+        let xsstore0 = Word.enc_int 2 and number0 = Word.enc_int 3 in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
           [xsstore0; number0]
           [(eval_storage ~xs:[xsstore0; number0] st m (PC.of_int 0) (enc_stackarg ea (num 0) k));
@@ -530,7 +530,7 @@ let superoptimize =
 
 let suite =
   (* set low for fast testing *)
-  set_wsz 2; set_sas 6;
+  Word.set_wsz 2; set_sas 6;
   "suite" >:::
   effect @ gas_cost @ superoptimize
 

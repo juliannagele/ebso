@@ -21,7 +21,7 @@ open Evmenc
 
 let suite =
   (* set low for fast testing *)
-  set_wsz 3; set_sas 6;
+  Word.set_wsz 3; set_sas 6;
   "suite" >:::
   [
     (* enc_search_space *)
@@ -149,7 +149,7 @@ let suite =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t list]
           ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          (List.init sk_size ~f:(fun _ -> senum 0))
+          (List.init sk_size ~f:(fun _ -> Word.enc_int 0))
           (List.init sk_size ~f:(eval_stack stt m (PC.of_int 0)))
       );
 

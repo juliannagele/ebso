@@ -32,7 +32,7 @@ let outputcfg =
 let set_options wordsize stackas pm psmt pinter csv =
   outputcfg := {pmodel = pm; psmt = psmt; pinter = pinter; csv = csv};
   Option.iter stackas ~f:(fun stackas -> set_sas stackas);
-  set_wsz wordsize
+  Word.set_wsz wordsize
 
 let log c m =
   log_benchmark c !outputcfg.psmt;
@@ -61,10 +61,10 @@ let is_translation_valid s t =
     | Some _ -> false
 
 let tvalidate s t sz =
-  let oldwsz = !wsz in
-  set_wsz sz;
+  let oldwsz = !Word.size in
+  Word.set_wsz sz;
   let tv = is_translation_valid s t in
-  set_wsz oldwsz; tv
+  Word.set_wsz oldwsz; tv
 
 let uso_step p cis tval =
   let ea = mk_enc_consts p cis in
@@ -89,7 +89,7 @@ let rec uso p hist cis tval hist_bbs =
     let p' =
       match stp.tval with
       | Some false ->
-        set_wsz (!wsz + 1); Program.val_to_const !wsz (Program.const_to_val p)
+        Word.set_wsz (!Word.size + 1); Program.val_to_const !Word.size (Program.const_to_val p)
       | _ -> stp.opt
     in uso p' hist cis tval hist_bbs
 
@@ -189,7 +189,7 @@ let () =
           | None -> Program.compute_word_size p 256
         in
         set_options wordsize stackas p_model p_smt p_inter csv;
-        let p = Program.val_to_const !wsz p in
+        let p = Program.val_to_const !Word.size p in
         let bbs = Program.split_into_bbs p in
         match opt_mode with
         | NO ->

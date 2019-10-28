@@ -21,7 +21,7 @@ open Program
 open Evmenc
 
 (* returns value within bounds of word size *)
-let val_of_int_safe i = Stackarg.Val (Int.to_string (i mod !wsz))
+let val_of_int_safe i = Stackarg.Val (Int.to_string (i mod !Word.size))
 
 let test_stack_pres oc =
   let (d, _) = delta_alpha oc in
@@ -35,9 +35,9 @@ let test_stack_pres oc =
   (* check all words below delta *)
   assert_equal ~cmp:[%eq: Z3.Expr.t list]
     ~printer:(List.to_string ~f:Z3.Expr.to_string)
-    [(senum 0); (senum 1)]
-    [(eval_stack ~xs:(List.map (forall_vars ea) ~f:(fun _ -> senum 1)) st m (Program.length p) 0);
-     (eval_stack ~xs:(List.map (forall_vars ea) ~f:(fun _ -> senum 1)) st m (Program.length p) 1)]
+    [(Word.enc_int 0); (Word.enc_int 1)]
+    [(eval_stack ~xs:(List.map (forall_vars ea) ~f:(fun _ -> Word.enc_int 1)) st m (Program.length p) 0);
+     (eval_stack ~xs:(List.map (forall_vars ea) ~f:(fun _ -> Word.enc_int 1)) st m (Program.length p) 1)]
 
 let test_stack_ctr p =
   let d = stack_depth p in
@@ -95,7 +95,7 @@ let effect =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
-          (senum 3)
+          (Word.enc_int 3)
           (eval_stack st m (Program.length p) 0)
       );
 
@@ -110,7 +110,7 @@ let effect =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
-          (senum 1)
+          (Word.enc_int 1)
           (eval_stack st m (Program.length p) 0)
       );
 
@@ -123,7 +123,7 @@ let effect =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
-          (senum (-1))
+          (Word.enc_int (-1))
           (eval_stack st m (Program.length p) 0)
       );
 
@@ -136,7 +136,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 1) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 1) (eval_stack st m (Program.length p) 0)
       );
 
     (* div *)
@@ -148,7 +148,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 1) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 1) (eval_stack st m (Program.length p) 0)
       );
 
     "divide 4 by 2" >::(fun _ ->
@@ -158,7 +158,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 2) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 2) (eval_stack st m (Program.length p) 0)
       );
 
     "divide 5 by 2" >::(fun _ ->
@@ -168,7 +168,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 2) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 2) (eval_stack st m (Program.length p) 0)
       );
 
     "divide 2 by 4" >::(fun _ ->
@@ -178,7 +178,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "divide 2 by 0" >::(fun _ ->
@@ -188,7 +188,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "divide 0 by 0" >::(fun _ ->
@@ -198,7 +198,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     (* sdiv *)
@@ -210,7 +210,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "3 sdiv 2 = 1" >::(fun _ ->
@@ -220,7 +220,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 1) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 1) (eval_stack st m (Program.length p) 0)
       );
 
     "-3 sdiv 2 = -1" >::(fun _ ->
@@ -230,7 +230,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum (-1)) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int (-1)) (eval_stack st m (Program.length p) 0)
       );
 
     "3 sdiv -2 = -1" >::(fun _ ->
@@ -240,7 +240,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum (-1)) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int (-1)) (eval_stack st m (Program.length p) 0)
       );
 
     "-3 sdiv -2 = 1" >::(fun _ ->
@@ -250,7 +250,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 1) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 1) (eval_stack st m (Program.length p) 0)
       );
 
     "-1 sdiv -1 = 1" >::(fun _ ->
@@ -260,7 +260,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 1) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 1) (eval_stack st m (Program.length p) 0)
       );
 
     "-1 sdiv 2 = 0" >::(fun _ ->
@@ -270,7 +270,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "-2^(wsz - 1) sdiv -1 = -2^(wsz - 1), wraps to negative" >::(fun _ ->
@@ -280,7 +280,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum (-4)) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int (-4)) (eval_stack st m (Program.length p) 0)
       );
 
     (* mod *)
@@ -292,7 +292,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "4 modulo 2" >::(fun _ ->
@@ -302,7 +302,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "5 modulo 2" >::(fun _ ->
@@ -312,7 +312,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 1) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 1) (eval_stack st m (Program.length p) 0)
       );
 
     "2 modulo 4" >::(fun _ ->
@@ -322,7 +322,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 2) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 2) (eval_stack st m (Program.length p) 0)
       );
 
     "2 modulo 0" >::(fun _ ->
@@ -332,7 +332,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "0 modulo 0" >::(fun _ ->
@@ -342,7 +342,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     (* smod *)
@@ -354,7 +354,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 1) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 1) (eval_stack st m (Program.length p) 0)
       );
 
     "-2 smodulo 3 is -2" >::(fun _ ->
@@ -364,7 +364,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum (-2)) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int (-2)) (eval_stack st m (Program.length p) 0)
       );
 
     "-2 smodulo 1 is 0" >::(fun _ ->
@@ -374,7 +374,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "2 smodulo -1 is 0" >::(fun _ ->
@@ -384,7 +384,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "-3 smodulo 2 is -1" >::(fun _ ->
@@ -394,7 +394,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum (-1)) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int (-1)) (eval_stack st m (Program.length p) 0)
       );
 
     "3 smodulo -2 is 1" >::(fun _ ->
@@ -404,7 +404,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 1) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 1) (eval_stack st m (Program.length p) 0)
       );
 
     "-4 smodulo 2 is 0 (largest negative number)" >::(fun _ ->
@@ -414,7 +414,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "-3 smodulo 0 is 0" >::(fun _ ->
@@ -424,7 +424,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "3 smodulo 0 is 0" >::(fun _ ->
@@ -434,7 +434,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     (* addmod *)
@@ -446,7 +446,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 1) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 1) (eval_stack st m (Program.length p) 0)
       );
 
     "(7 + 1) mod 3 = 2 (overflow which should be ignored)" >::(fun _ ->
@@ -456,7 +456,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 2) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 2) (eval_stack st m (Program.length p) 0)
       );
 
     "(1 + 1) mod 3 = 2" >::(fun _ ->
@@ -466,7 +466,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 2) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 2) (eval_stack st m (Program.length p) 0)
       );
 
     "(1 + 1) mod 2 = 0" >::(fun _ ->
@@ -476,7 +476,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "(0 + 1) mod 0 = 0" >::(fun _ ->
@@ -486,7 +486,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "(7 + 1) mod 2 = 0 (overflow which should be ignored)" >::(fun _ ->
@@ -496,7 +496,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "(-1 + 1) mod 2 = 0" >::(fun _ ->
@@ -506,7 +506,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     (* mulmod *)
@@ -518,7 +518,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "(7 * 7) mod 2 = 1 (overflow happens)" >::(fun _ ->
@@ -528,7 +528,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 1) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 1) (eval_stack st m (Program.length p) 0)
       );
 
     "(7 * 6) mod 7 = 0 (overflow happens)" >::(fun _ ->
@@ -538,7 +538,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "(2 * 1) mod 0 = 0" >::(fun _ ->
@@ -548,7 +548,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "(0 * 5) mod 2 = 0" >::(fun _ ->
@@ -558,7 +558,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     (* iszero *)
@@ -570,7 +570,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 1) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 1) (eval_stack st m (Program.length p) 0)
       );
 
     "1 iszero is false" >::(fun _ ->
@@ -580,7 +580,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "0 - 5 iszero is false" >::(fun _ ->
@@ -590,7 +590,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     (* and *)
@@ -602,7 +602,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "1 & 1 is 1" >::(fun _ ->
@@ -612,7 +612,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 1) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 1) (eval_stack st m (Program.length p) 0)
       );
 
     "0 & 0 is 0" >::(fun _ ->
@@ -622,7 +622,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "1 & 0 is 0" >::(fun _ ->
@@ -632,7 +632,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "AND is idempotent (0b101)" >::(fun _ ->
@@ -642,7 +642,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 5) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 5) (eval_stack st m (Program.length p) 0)
       );
 
     "0b111 & 0b100 is 0b100" >::(fun _ ->
@@ -652,7 +652,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 4) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 4) (eval_stack st m (Program.length p) 0)
       );
 
     (* or *)
@@ -664,7 +664,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 1) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 1) (eval_stack st m (Program.length p) 0)
       );
 
     "1 | 1 is 1" >::(fun _ ->
@@ -674,7 +674,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 1) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 1) (eval_stack st m (Program.length p) 0)
       );
 
     "0 | 0 is 0" >::(fun _ ->
@@ -684,7 +684,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "1 | 0 is 1" >::(fun _ ->
@@ -694,7 +694,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 1) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 1) (eval_stack st m (Program.length p) 0)
       );
 
     "OR is idempotent (0b101)" >::(fun _ ->
@@ -704,7 +704,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 5) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 5) (eval_stack st m (Program.length p) 0)
       );
 
     "0b001 | 0b100 is 0b101" >::(fun _ ->
@@ -714,7 +714,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 5) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 5) (eval_stack st m (Program.length p) 0)
       );
 
     (* xor *)
@@ -726,7 +726,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 1) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 1) (eval_stack st m (Program.length p) 0)
       );
 
     "1 ^ 1 is 0" >::(fun _ ->
@@ -736,7 +736,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "0 ^ 0 is 0" >::(fun _ ->
@@ -746,7 +746,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "1 ^ 0 is 1" >::(fun _ ->
@@ -756,7 +756,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 1) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 1) (eval_stack st m (Program.length p) 0)
       );
 
     "XOR is cancellative (0b101)" >::(fun _ ->
@@ -766,7 +766,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "0b101 ^ 0b100 is 0b001" >::(fun _ ->
@@ -776,7 +776,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 1) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 1) (eval_stack st m (Program.length p) 0)
       );
 
     (* eq *)
@@ -788,7 +788,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 1) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 1) (eval_stack st m (Program.length p) 0)
       );
 
     "1 = 0 is 0" >::(fun _ ->
@@ -798,7 +798,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "0 = 1 is 0" >::(fun _ ->
@@ -808,7 +808,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "1 = 1 is 1" >::(fun _ ->
@@ -818,7 +818,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 1) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 1) (eval_stack st m (Program.length p) 0)
       );
 
     "-1 = 1 is 0" >::(fun _ ->
@@ -828,7 +828,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     (* lt *)
@@ -840,7 +840,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "1 < 0 is 0" >::(fun _ ->
@@ -850,7 +850,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "0 < 1 is 1" >::(fun _ ->
@@ -860,7 +860,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 1) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 1) (eval_stack st m (Program.length p) 0)
       );
 
     "1 < -1 is 1 (unsigned LT)" >::(fun _ ->
@@ -870,7 +870,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 1) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 1) (eval_stack st m (Program.length p) 0)
       );
 
     "-1 < 1 is 0 (unsigned LT)" >::(fun _ ->
@@ -880,7 +880,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     (* gt *)
@@ -892,7 +892,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "1 > 0 is 1" >::(fun _ ->
@@ -902,7 +902,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 1) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 1) (eval_stack st m (Program.length p) 0)
       );
 
     "0 > 1 is 0" >::(fun _ ->
@@ -912,7 +912,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "1 > -1 is 0 (unsigned GT)" >::(fun _ ->
@@ -922,7 +922,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "-1 > 1 is 1 (unsigned GT)" >::(fun _ ->
@@ -932,7 +932,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 1) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 1) (eval_stack st m (Program.length p) 0)
       );
 
     (* slt *)
@@ -944,7 +944,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "1 <_signed 0 is 0" >::(fun _ ->
@@ -954,7 +954,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "0 <_signed 1 is 1" >::(fun _ ->
@@ -964,7 +964,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 1) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 1) (eval_stack st m (Program.length p) 0)
       );
 
     "1 <_signed -1 is 0" >::(fun _ ->
@@ -974,7 +974,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "-1 <_signed 1 is 1" >::(fun _ ->
@@ -984,7 +984,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 1) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 1) (eval_stack st m (Program.length p) 0)
       );
 
     (* sgt *)
@@ -996,7 +996,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "1 >_signed 0 is 1" >::(fun _ ->
@@ -1006,7 +1006,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 1) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 1) (eval_stack st m (Program.length p) 0)
       );
 
     "0 >_signed 1 is 0" >::(fun _ ->
@@ -1016,7 +1016,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     "1 >_signed -1 is 1" >::(fun _ ->
@@ -1026,7 +1026,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 1) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 1) (eval_stack st m (Program.length p) 0)
       );
 
     "-1 >_signed 1 is 0" >::(fun _ ->
@@ -1036,7 +1036,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 0) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 0) (eval_stack st m (Program.length p) 0)
       );
 
     (* not *)
@@ -1048,7 +1048,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 6) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 6) (eval_stack st m (Program.length p) 0)
       );
 
     "not 0b000 is 0b111" >::(fun _ ->
@@ -1058,7 +1058,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 7) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 7) (eval_stack st m (Program.length p) 0)
       );
 
     "not 0b101 is 0b010" >::(fun _ ->
@@ -1068,7 +1068,7 @@ let effect =
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 2) (eval_stack st m (Program.length p) 0)
+          (Word.enc_int 2) (eval_stack st m (Program.length p) 0)
       );
 
     (* push *)
@@ -1082,7 +1082,7 @@ let effect =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
-          (senum 5)
+          (Word.enc_int 5)
           (eval_stack st m (Program.length p) 0)
       );
 
@@ -1095,8 +1095,8 @@ let effect =
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-          (senum 3)
-          (eval_stack ~xs:[senum 3] st m (Program.length p) 0)
+          (Word.enc_int 3)
+          (eval_stack ~xs:[Word.enc_int 3] st m (Program.length p) 0)
       );
 
     "stack after NUMBER NUMBER" >:: (fun _ ->
@@ -1108,9 +1108,9 @@ let effect =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t list]
           ~printer:(List.to_string ~f:(Z3.Expr.to_string))
-          [senum 3; senum 3]
-          [eval_stack ~xs:[senum 3] st m (Program.length p) 0;
-           eval_stack ~xs:[senum 3] st m (Program.length p) 1]
+          [Word.enc_int 3; Word.enc_int 3]
+          [eval_stack ~xs:[Word.enc_int 3] st m (Program.length p) 0;
+           eval_stack ~xs:[Word.enc_int 3] st m (Program.length p) 1]
       );
 
     (* SWAP *)
@@ -1124,7 +1124,7 @@ let effect =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t list]
           ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [senum 2; senum 1]
+          [Word.enc_int 2; Word.enc_int 1]
           [(eval_stack st m (Program.length p) 0); (eval_stack st m (Program.length p) 1)]
       );
 
@@ -1138,9 +1138,9 @@ let effect =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t list]
           ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [senum 1; senum 2]
-          [(eval_stack ~xs:[senum 2] st m (Program.length p) 0);
-           (eval_stack ~xs:[senum 2] st m (Program.length p) 1)]
+          [Word.enc_int 1; Word.enc_int 2]
+          [(eval_stack ~xs:[Word.enc_int 2] st m (Program.length p) 0);
+           (eval_stack ~xs:[Word.enc_int 2] st m (Program.length p) 1)]
       );
 
     "swap I with no words" >::(fun _ ->
@@ -1153,9 +1153,9 @@ let effect =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t list]
           ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [senum 1; senum 2]
-          [(eval_stack ~xs:[senum 2; senum 1] st m (Program.length p) 0);
-           (eval_stack ~xs:[senum 2; senum 1] st m (Program.length p) 1)]
+          [Word.enc_int 1; Word.enc_int 2]
+          [(eval_stack ~xs:[Word.enc_int 2; Word.enc_int 1] st m (Program.length p) 0);
+           (eval_stack ~xs:[Word.enc_int 2; Word.enc_int 1] st m (Program.length p) 1)]
       );
 
      "words after swap II" >::(fun _ ->
@@ -1167,7 +1167,7 @@ let effect =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t list]
           ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [senum 3; senum 2; senum 1]
+          [Word.enc_int 3; Word.enc_int 2; Word.enc_int 1]
           [eval_stack st m (Program.length p) 0;
            eval_stack st m (Program.length p) 1;
            eval_stack st m (Program.length p) 2;]
@@ -1182,7 +1182,7 @@ let effect =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t list]
           ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [senum 2; senum 3]
+          [Word.enc_int 2; Word.enc_int 3]
           [eval_stack st m (Program.length p) 1;
            eval_stack st m (Program.length p) 2;]
       );
@@ -1198,7 +1198,7 @@ let effect =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t list]
           ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [senum 1; senum 1]
+          [Word.enc_int 1; Word.enc_int 1]
           [eval_stack st m (Program.length p) 0;
            eval_stack st m (Program.length p) 1;]
       );
@@ -1213,9 +1213,9 @@ let effect =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t list]
           ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [senum 1; senum 1]
-          [(eval_stack ~xs:[senum 1] st m (Program.length p) 0);
-           (eval_stack ~xs:[senum 1] st m (Program.length p) 1)]
+          [Word.enc_int 1; Word.enc_int 1]
+          [(eval_stack ~xs:[Word.enc_int 1] st m (Program.length p) 0);
+           (eval_stack ~xs:[Word.enc_int 1] st m (Program.length p) 1)]
       );
   ] @
   (List.map all_of_idx ~f:(fun idx ->
@@ -1422,7 +1422,7 @@ let misc =
         assert_equal
           ~cmp:[%eq: Z3.Expr.t list]
           ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          (List.init sk_size ~f:(fun _ -> senum 0))
+          (List.init sk_size ~f:(fun _ -> Word.enc_int 0))
           (List.init sk_size ~f:(eval_stack st m (PC.of_int 0)))
       );
 
@@ -1432,14 +1432,14 @@ let misc =
         let ea = mk_enc_consts [PUSH (Val "2"); BALANCE] (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
-        let i = senum 3 in (* set for all quantified variable to 3 for test *)
+        let i = Word.enc_int 3 in (* set for all quantified variable to 3 for test *)
         let m = solve_model_exn [c] in
         let brom = Map.find_exn ea.roms BALANCE in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
           i
-          (Z3util.eval_func_decl m brom ([i] @ [senum 2]))
+          (Z3util.eval_func_decl m brom ([i] @ [Word.enc_int 2]))
       );
 
     "initial balance for given args not in range">:: (fun _ ->
@@ -1450,22 +1450,22 @@ let misc =
         let brom = Map.find_exn ea.roms BALANCE in
         let ias = [0; 1; 3] in (* not 2, as this is the argument of BALANCE *)
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [senum 0; senum 0; senum 0] (* return default value 0 *)
-          (List.map ias ~f:(fun ia -> Z3util.eval_func_decl m brom (forall_vars ea @ [senum ia])))
+          [Word.enc_int 0; Word.enc_int 0; Word.enc_int 0] (* return default value 0 *)
+          (List.map ias ~f:(fun ia -> Z3util.eval_func_decl m brom (forall_vars ea @ [Word.enc_int ia])))
       );
 
     "inital balance for computed arg in range">:: (fun _ ->
         let ea = mk_enc_consts [PUSH (Val "1"); PUSH (Val "1"); ADD; BALANCE] (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
-        let i = senum 3 in (* set for all quantified variable to 3 for test *)
+        let i = Word.enc_int 3 in (* set for all quantified variable to 3 for test *)
         let m = solve_model_exn [c] in
         let brom = Map.find_exn ea.roms BALANCE in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
           ~printer:Z3.Expr.to_string
           i
-          (Z3util.eval_func_decl m brom ([i] @ [senum 2]))
+          (Z3util.eval_func_decl m brom ([i] @ [Word.enc_int 2]))
       );
 
     "initial balance for computed arg where given args are not in range">:: (fun _ ->
@@ -1476,8 +1476,8 @@ let misc =
         let ias = [0; 1; 3] in (* not 2, as this is the argument of BALANCE *)
         let brom = Map.find_exn ea.roms BALANCE in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [senum 0; senum 0; senum 0] (* return default value 0 *)
-          (List.map ias ~f:(fun ia -> Z3util.eval_func_decl m brom (forall_vars ea @ [senum ia])))
+          [Word.enc_int 0; Word.enc_int 0; Word.enc_int 0] (* return default value 0 *)
+          (List.map ias ~f:(fun ia -> Z3util.eval_func_decl m brom (forall_vars ea @ [Word.enc_int ia])))
       );
 
     (* mk_uint_vars *)
@@ -1492,28 +1492,28 @@ let misc =
         let p = [NUMBER] in
         let ue = mk_unint_vars p in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [(seconst "x_NUMBER")] (Option.value_exn (Map.find ue NUMBER))
+          [(Word.const "x_NUMBER")] (Option.value_exn (Map.find ue NUMBER))
       );
 
     "[NUMBER; NUMBER] generates one variable">:: (fun _ ->
         let p = [NUMBER; NUMBER] in
         let ue = mk_unint_vars p in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [(seconst "x_NUMBER")] (Option.value_exn (Map.find ue NUMBER))
+          [(Word.const "x_NUMBER")] (Option.value_exn (Map.find ue NUMBER))
       );
 
     "[BALANCE] generates one variable">:: (fun _ ->
         let p = [BALANCE] in
         let ue = mk_unint_vars p in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [(seconst "x_BALANCE_0")] (Option.value_exn (Map.find ue BALANCE))
+          [(Word.const "x_BALANCE_0")] (Option.value_exn (Map.find ue BALANCE))
       );
 
     "[BALANCE; BALANCE] generates two variables">:: (fun _ ->
         let p = [BALANCE; BALANCE] in
         let ue = mk_unint_vars p in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [(seconst "x_BALANCE_0"); (seconst "x_BALANCE_1")] (Option.value_exn (Map.find ue BALANCE))
+          [(Word.const "x_BALANCE_0"); (Word.const "x_BALANCE_1")] (Option.value_exn (Map.find ue BALANCE))
       );
 
     (* mk_unint_fun *)
@@ -1588,27 +1588,27 @@ let misc =
         let p = [SSTORE] in
         let xs = mk_store_vars p in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [(seconst "x_SSTORE_0")] xs
+          [(Word.const "x_SSTORE_0")] xs
       );
 
     "[SLOAD] generates one variable">:: (fun _ ->
         let p = [PUSH (Val "1"); SLOAD;] in
         let xs = mk_store_vars p in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [(seconst "x_SLOAD_0")] xs
+          [(Word.const "x_SLOAD_0")] xs
       );
 
     "Two SLOADs generate two variables">:: (fun _ ->
         let p = [PUSH (Val "1"); SLOAD; PUSH (Val "2"); PUSH (Val "1"); SLOAD;] in
         let xs = mk_store_vars p in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [(seconst "x_SLOAD_0"); (seconst "x_SLOAD_1")] xs
+          [(Word.const "x_SLOAD_0"); (Word.const "x_SLOAD_1")] xs
     );
 ]
 
 let suite =
   (* set low for fast testing *)
-  set_wsz 3; set_sas 6;
+  Word.set_wsz 3; set_sas 6;
   "suite" >:::
   effect @ pres_stack @ stack_ctr @ exc_halt @ forced_stack_underflow
   @ gas_cost @ misc
