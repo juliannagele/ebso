@@ -13,6 +13,7 @@
    limitations under the License.
 *)
 open Core
+open Z3util
 
 (* a value argument can be either decimal, e.g., "1", hex, e.g., "0x1"
    or binary, e.g. "0b1" *)
@@ -66,3 +67,7 @@ let val_to_const wsz a =
 let const_to_val = function
   | Const c -> Val (constarg_to_valarg c)
   | a -> a
+
+(* careful: if x is to large for Word.sort leftmost bits are truncated *)
+let enc x =
+  Z3.Expr.mk_numeral_string !ctxt (valarg_to_dec x) !Word.sort

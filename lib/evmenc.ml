@@ -180,10 +180,8 @@ let init ea st =
   && init_storage ea st
   && Map.fold ea.roms ~init:top ~f:(fun ~key:i ~data:f e -> e && init_rom ea st i f)
 
-(* TODO: check data layout on stack *)
 let enc_stackarg ea j = function
-  (* careful: if x is to large for Word.sort leftmost bits are truncated *)
-  | Stackarg.Val x -> Z3.Expr.mk_numeral_string !ctxt (Stackarg.valarg_to_dec x) !Word.sort
+  | Stackarg.Val x -> Stackarg.enc x
   | Tmpl -> ea.a <@@> [j]
   | Const c -> Word.const c
 
