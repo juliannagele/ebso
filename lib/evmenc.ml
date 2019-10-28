@@ -136,7 +136,7 @@ let mk_state ea idx =
   }
 
 (* get the top d elements of the stack *)
-let enc_top_d_of_st ea st j d =
+let enc_top_d_of_sk ea st j d =
   let open Z3Ops in
   let pos l = (st.stack_ctr @@ [j]) - SI.enc (Int.succ l) in
   List.init d ~f:(fun l -> st.stack @@ (forall_vars ea @ [j; pos l]))
@@ -146,7 +146,7 @@ let init_rom ea st i rom =
   let d = arity i in
   let js = poss_of_instr ea.p i in
   let us = Map.find_exn ea.uis i in
-  let ajs = List.map js ~f:(fun j -> enc_top_d_of_st ea st (PC.enc j) d) in
+  let ajs = List.map js ~f:(fun j -> enc_top_d_of_sk ea st (PC.enc j) d) in
   let w_dflt = Word.enc_int 0 in
   let ws = List.init d ~f:(fun l -> Word.const ("w" ^ [%show: int] l)) in
   foralls ws (
@@ -158,7 +158,7 @@ let init_rom ea st i rom =
 let init_storage ea st =
   let open Z3Ops in
   let js = poss_of_instr ea.p SLOAD @ poss_of_instr ea.p SSTORE in
-  let ks = List.concat_map js ~f:(fun j -> enc_top_d_of_st ea st (PC.enc j) 1) in
+  let ks = List.concat_map js ~f:(fun j -> enc_top_d_of_sk ea st (PC.enc j) 1) in
   let w_dflt = Word.enc_int 0 in
   let w = Word.const "w" in
   forall w (
@@ -330,7 +330,7 @@ let enc_nonconst_uninterpreted ea st j i =
   let open Z3Ops in
   let sk' n = st.stack @@ (forall_vars ea @ [j + one; n])
   and sc'= st.stack_ctr @@ [j + one] in
-  let ajs = enc_top_d_of_st ea st j (arity i) in
+  let ajs = enc_top_d_of_sk ea st j (arity i) in
   (sk' (sc' - SI.enc 1)) == (rom @@ ((forall_vars ea) @ ajs))
 
 let enc_sload ea st j =
