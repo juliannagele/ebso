@@ -19,15 +19,7 @@ open Program
 
 module PC = Program_counter
 module GC = Gas_cost
-
-(* stack address size; design decision/quick fix: the slot 2^sas - 1 is reserved
-   for exception handling, otherwise the stack counter wraps around
-   --> max stack size 2^sas - 1 *)
-let sas = ref 6
-let sasort = ref (bv_sort !sas)
-let set_sas s = sas := s; sasort := bv_sort !sas
-let sanum n = Z3.Expr.mk_numeral_int !ctxt n !sasort
-let saconst s = Z3.Expr.mk_const_s !ctxt s !sasort
+module SI = Stack_index
 
 type enc_consts = {
   p : Program.t;
@@ -130,9 +122,9 @@ let mk_state ea idx =
   { (* stack(x0 ... x(sd-1), j, n) = nth word on stack after j instructions
        starting from a stack that contained words x0 ... x(sd-1) *)
     stack = func_decl ("stack" ^ idx)
-        (mk_vars_sorts (forall_vars ea) @ [PC.sort; !sasort]) !Word.sort;
+        (mk_vars_sorts (forall_vars ea) @ [PC.sort; !SI.sort]) !Word.sort;
     (* sc(j) = index of the next free slot on the stack after j instructions *)
-    stack_ctr = func_decl ("sc" ^ idx) [PC.sort] !sasort;
+    stack_ctr = func_decl ("sc" ^ idx) [PC.sort] !SI.sort;
     (* storage(_, j, k) = v if storage after j instructions contains word v for key k *)
     storage = func_decl ("storage" ^ idx)
         (mk_vars_sorts (forall_vars ea) @ [PC.sort; !Word.sort]) !Word.sort;
@@ -146,7 +138,7 @@ let mk_state ea idx =
 (* get the top d elements of the stack *)
 let enc_top_d_of_st ea st j d =
   let open Z3Ops in
-  let pos l = (st.stack_ctr @@ [j]) - sanum (Int.succ l) in
+  let pos l = (st.stack_ctr @@ [j]) - SI.enc (Int.succ l) in
   List.init d ~f:(fun l -> st.stack @@ (forall_vars ea @ [j; pos l]))
 
 let init_rom ea st i rom =
@@ -179,10 +171,10 @@ let init ea st =
   (* careful: if stack_depth is larger than 2^sas, no checks *)
   let skd = stack_depth (ea.p) in
   (* set stack counter to skd *)
-  (st.stack_ctr @@ [PC.init] == sanum skd)
+  (st.stack_ctr @@ [PC.init] == SI.enc skd)
   (* set inital words on stack *)
   && conj (List.mapi ea.xs ~f:(fun i x ->
-      st.stack @@ (forall_vars ea @ [PC.init; sanum i]) == x))
+      st.stack @@ (forall_vars ea @ [PC.init; SI.enc i]) == x))
   && (st.exc_halt @@ [PC.init] == btm)
   && (st.used_gas @@ (forall_vars ea @ [PC.init]) == GC.enc GC.zero)
   && init_storage ea st
@@ -213,7 +205,7 @@ let enc_binop ea st j op =
   and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] in
   (* the new top word is the result of applying op to the previous two *)
-  (sk' (sc - sanum 2) == op (sk (sc - sanum 1)) (sk (sc - sanum 2)))
+  (sk' (sc - SI.enc 2) == op (sk (sc - SI.enc 1)) (sk (sc - SI.enc 2)))
 
 let enc_add ea st j = enc_binop ea st j (<+>)
 let enc_sub ea st j = enc_binop ea st j (<->)
@@ -262,8 +254,8 @@ let enc_addmod ea st j =
   let sk n = st.stack @@ (forall_vars ea @ [j; n])
   and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
-  let denom = sk (sc - sanum 3) and x =  sk (sc - sanum 2) and y =  sk (sc - sanum 1) in
-  sk' (sc' - sanum 1) ==
+  let denom = sk (sc - SI.enc 3) and x =  sk (sc - SI.enc 2) and y =  sk (sc - SI.enc 1) in
+  sk' (sc' - SI.enc 1) ==
   (* EVM defines (x + y) mod 0 = 0 as 0, Z3 says it's undefined *)
   ite (denom == Word.enc_int 0) (Word.enc_int 0) (
     (* truncate back to word size, safe because mod denom brings us back to range *)
@@ -276,8 +268,8 @@ let enc_mulmod ea st j =
   let sk n = st.stack @@ (forall_vars ea @ [j; n])
   and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
-  let denom = sk (sc - sanum 3) and x =  sk (sc - sanum 2) and y =  sk (sc - sanum 1) in
-  sk' (sc' - sanum 1) ==
+  let denom = sk (sc - SI.enc 3) and x =  sk (sc - SI.enc 2) and y =  sk (sc - SI.enc 1) in
+  sk' (sc' - SI.enc 1) ==
   (* EVM defines (x + y) mod 0 = 0 as 0, Z3 says it's undefined *)
   ite (denom == Word.enc_int 0) (Word.enc_int 0) (
     (* truncate back to word size, safe because mod denom brings us back to range *)
@@ -291,7 +283,7 @@ let enc_not ea st j =
   and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   (* the new top word is the bitwise negation of the old top word *)
-  (sk' (sc' - sanum 1) == Z3.BitVector.mk_not !ctxt (sk (sc - sanum 1)))
+  (sk' (sc' - SI.enc 1) == Z3.BitVector.mk_not !ctxt (sk (sc - SI.enc 1)))
 
 let enc_iszero ea st j =
   let open Z3Ops in
@@ -299,34 +291,34 @@ let enc_iszero ea st j =
   and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   (* if the old top word is 0 then the new top word is 1 and 0 otherwise *)
-  (sk' (sc' - sanum 1) == ite (sk (sc - sanum 1) == (Word.enc_int 0)) (Word.enc_int 1) (Word.enc_int 0))
+  (sk' (sc' - SI.enc 1) == ite (sk (sc - SI.enc 1) == (Word.enc_int 0)) (Word.enc_int 1) (Word.enc_int 0))
 
 let enc_swap ea st j idx =
-  let sc_idx = sanum (idx + 1) in
+  let sc_idx = SI.enc (idx + 1) in
   let open Z3Ops in
   let sk n = st.stack @@ (forall_vars ea @ [j; n])
   and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   (* the new top word is the 1+idx'th from the old stack *)
-  (sk' (sc' - sanum 1) == sk (sc - sc_idx)) &&
+  (sk' (sc' - SI.enc 1) == sk (sc - sc_idx)) &&
   (* the new 1+idx'th word is the top from the old stack*)
-  (sk' (sc' - sc_idx) == sk (sc - sanum 1)) &&
+  (sk' (sc' - sc_idx) == sk (sc - SI.enc 1)) &&
   (* the words between top and idx+1 are not touched *)
   conj (List.init (Int.pred idx) ~f:(fun i ->
-      let sc_iidx = sanum (Int.(-) idx i) in
+      let sc_iidx = SI.enc (Int.(-) idx i) in
       (sk' (sc' - sc_iidx) == sk (sc - sc_iidx))))
 
 let enc_dup ea st j idx =
-  let sc_idx = sanum idx in
+  let sc_idx = SI.enc idx in
   let open Z3Ops in
   let sk n = st.stack @@ (forall_vars ea @ [j; n])
   and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   (* the new top word is the idx'th from the old stack *)
-  (sk' (sc' - sanum 1) == sk (sc - sc_idx)) &&
+  (sk' (sc' - SI.enc 1) == sk (sc - sc_idx)) &&
   (* all words down to idx are not touched *)
   conj (List.init idx ~f:(fun i ->
-      let sc_iidx = sanum (Int.(-) idx i) in
+      let sc_iidx = SI.enc (Int.(-) idx i) in
       (sk' (sc - sc_iidx) == sk (sc - sc_iidx))))
 
 let enc_const_uninterpreted ea st j i =
@@ -339,15 +331,15 @@ let enc_nonconst_uninterpreted ea st j i =
   let sk' n = st.stack @@ (forall_vars ea @ [j + one; n])
   and sc'= st.stack_ctr @@ [j + one] in
   let ajs = enc_top_d_of_st ea st j (arity i) in
-  (sk' (sc' - sanum 1)) == (rom @@ ((forall_vars ea) @ ajs))
+  (sk' (sc' - SI.enc 1)) == (rom @@ ((forall_vars ea) @ ajs))
 
 let enc_sload ea st j =
   let open Z3Ops in
   let sk n = st.stack @@ (forall_vars ea @ [j; n])
   and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
-  (sk' (sc' - sanum 1)) ==
-  (st.storage @@ ((forall_vars ea) @ [j; sk (sc - sanum 1)]))
+  (sk' (sc' - SI.enc 1)) ==
+  (st.storage @@ ((forall_vars ea) @ [j; sk (sc - SI.enc 1)]))
 
 let enc_sstore ea st j =
   let open Z3Ops in
@@ -355,7 +347,7 @@ let enc_sstore ea st j =
   let strg w = st.storage @@ (forall_vars ea @ [j; w]) in
   let strg' w = st.storage @@ (forall_vars ea @ [j + one; w]) in
   let w = Word.const "w" in
-  forall w (strg' w == (ite (w == sk (sc - sanum 1)) (sk (sc - sanum 2)) (strg w)))
+  forall w (strg' w == (ite (w == sk (sc - SI.enc 1)) (sk (sc - SI.enc 2)) (strg w)))
 
 (* effect of instruction on state st after j steps *)
 let enc_instruction ea st j is =
@@ -402,8 +394,8 @@ let enc_instruction ea st j is =
   and ug' = st.used_gas @@ (forall_vars ea @ [j + one]) in
   let enc_used_gas =
     let cost =
-      let k = sk (sc - sanum 1) in
-      let v' = sk (sc - sanum 2) in
+      let k = sk (sc - SI.enc 1) in
+      let v' = sk (sc - SI.enc 2) in
       let refund = GC.enc (GC.of_int 15000)
       and set = GC.enc (GC.of_int 20000)
       and reset = GC.enc (GC.of_int 5000) in
@@ -417,15 +409,15 @@ let enc_instruction ea st j is =
     ug' == (ug + cost)
   in
   let enc_stack_ctr =
-    st.stack_ctr @@ [j + one] == (sc + sanum diff)
+    st.stack_ctr @@ [j + one] == (sc + SI.enc diff)
   in
   let enc_exc_halt =
-    let underflow = if Int.is_positive d then (sc - (sanum d)) < (sanum 0) else btm in
+    let underflow = if Int.is_positive d then (sc - (SI.enc d)) < (SI.enc 0) else btm in
     let overflow =
       if Int.is_positive diff then
-        match Z3.Sort.get_sort_kind !sasort with
-        | BV_SORT -> ~! (nuw sc (sanum diff) `Add)
-        | INT_SORT -> (sc + (sanum diff)) > (sanum 1024)
+        match Z3.Sort.get_sort_kind !SI.sort with
+        | BV_SORT -> ~! (nuw sc (SI.enc diff) `Add)
+        | INT_SORT -> (sc + (SI.enc diff)) > (SI.enc 1024)
         | _ -> btm
       else btm
     in
@@ -438,9 +430,9 @@ let enc_instruction ea st j is =
         let w = Word.const "w" in
         forall w (strg' w == strg w)
     in
-    let n = saconst "n" in
+    let n = SI.const "n" in
     (* all words below d stay the same *)
-    (forall n ((n < sc - sanum d) ==> (sk' n == sk n))) && pres_storage
+    (forall n ((n < sc - SI.enc d) ==> (sk' n == sk n))) && pres_storage
   in
   enc_effect && enc_used_gas && enc_stack_ctr && enc_pres && enc_exc_halt
 
@@ -461,7 +453,7 @@ let enc_search_space ea st =
 
 let enc_equivalence_at ea sts stt js jt =
   let open Z3Ops in
-  let n = saconst "n" in
+  let n = SI.const "n" in
   let w = Word.const "w" in
   (* source and target stack counter are equal *)
   sts.stack_ctr @@ [js] == stt.stack_ctr @@ [jt] &&
@@ -549,7 +541,7 @@ let eval_state_func_decl  m j ?(n = []) ?(xs = []) f =
   eval_func_decl m f (xs @ [PC.enc j] @ n)
 
 let eval_stack ?(xs = []) st m i n =
-  eval_state_func_decl m i ~n:[sanum n] ~xs:xs st.stack
+  eval_state_func_decl m i ~n:[SI.enc n] ~xs:xs st.stack
 
 let eval_stack_ctr st m i = eval_state_func_decl m i st.stack_ctr
 

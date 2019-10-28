@@ -31,7 +31,7 @@ let outputcfg =
 
 let set_options wordsize stackas pm psmt pinter csv =
   outputcfg := {pmodel = pm; psmt = psmt; pinter = pinter; csv = csv};
-  Option.iter stackas ~f:(fun stackas -> set_sas stackas);
+  Option.iter stackas ~f:(fun stackas -> Stack_index.set_sas stackas);
   Word.set_wsz wordsize
 
 let log c m =

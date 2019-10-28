@@ -21,7 +21,7 @@ open Evmenc
 
 let suite =
   (* set low for fast testing *)
-  Word.set_wsz 3; set_sas 10;
+  Word.set_wsz 3; SI.set_sas 10;
   "suite" >:::
   [
     "correct candidate program" >::(fun _ ->

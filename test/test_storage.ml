@@ -530,7 +530,7 @@ let superoptimize =
 
 let suite =
   (* set low for fast testing *)
-  Word.set_wsz 2; set_sas 6;
+  Word.set_wsz 2; SI.set_sas 6;
   "suite" >:::
   effect @ gas_cost @ superoptimize
 

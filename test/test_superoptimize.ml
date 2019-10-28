@@ -21,7 +21,7 @@ open Evmenc
 
 let suite =
   (* set low for fast testing *)
-  Word.set_wsz 3; set_sas 6;
+  Word.set_wsz 3; SI.set_sas 6;
   "suite" >:::
   [
     (* enc_search_space *)
@@ -145,7 +145,7 @@ let suite =
         let stt = mk_state ea "_t" in
         let c = init ea sts <&> enc_equivalence ea sts stt in
         let m = solve_model_exn [c] in
-        let sk_size = (Int.pow 2 !sas) - 1 in
+        let sk_size = (Int.pow 2 !SI.size) - 1 in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t list]
           ~printer:(List.to_string ~f:Z3.Expr.to_string)

@@ -51,7 +51,7 @@ let test_stack_ctr p =
   let upd_sc sc oc = let (d, a) = delta_alpha oc in sc - d + a in
   (* check that stack counter is adjusted accordingly *)
   assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
-    (sanum (List.fold_left p ~init:0 ~f:upd_sc))
+    (SI.enc (List.fold_left p ~init:0 ~f:upd_sc))
     (eval_stack_ctr st m (Program.length p))
 
 let test_no_exc_halt p =
@@ -69,7 +69,7 @@ let test_no_exc_halt p =
     (eval_exc_halt st m (Program.length p))
 
 let test_exc_halt_pres p =
-  let max = Int.pow 2 !sas in
+  let max = Int.pow 2 !SI.size in
   let ip = List.init max ~f:(fun _ -> PUSH (Val "1")) in
   let p = ip @ p in
   let ea = mk_enc_consts p (`User []) in
@@ -1283,7 +1283,7 @@ let exc_halt =
       );
 
     "PUSHing too many words leads to a stack overflow">:: (fun _ ->
-        let max = Int.pow 2 !sas in
+        let max = Int.pow 2 !SI.size in
         let p = List.init max ~f:(fun _ -> PUSH (Val "1")) in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
@@ -1418,7 +1418,7 @@ let misc =
         let st = mk_state ea "" in
         let c = init ea st in
         let m = solve_model_exn [c] in
-        let sk_size = (Int.pow 2 !sas) - 1 in
+        let sk_size = (Int.pow 2 !SI.size) - 1 in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t list]
           ~printer:(List.to_string ~f:Z3.Expr.to_string)
@@ -1608,7 +1608,7 @@ let misc =
 
 let suite =
   (* set low for fast testing *)
-  Word.set_wsz 3; set_sas 6;
+  Word.set_wsz 3; SI.set_sas 6;
   "suite" >:::
   effect @ pres_stack @ stack_ctr @ exc_halt @ forced_stack_underflow
   @ gas_cost @ misc
