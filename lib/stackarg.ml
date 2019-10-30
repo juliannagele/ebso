@@ -34,8 +34,3 @@ let show_stackarg_hex a =
   match a with
   | Word x -> Word.show_hex x
   | Tmpl -> failwith "hex output not supported for template"
-
-let val_to_const wsz a =
-  match a with
-  | Word (Val x) when not (Word.fits_wsz wsz (Val x)) -> Word (Word.val_to_const (Val x))
-  | a -> a
