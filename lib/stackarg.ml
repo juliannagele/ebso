@@ -15,59 +15,46 @@
 open Core
 open Z3util
 
-(* a value argument can be either decimal, e.g., "1", hex, e.g., "0x1"
-   or binary, e.g. "0b1" *)
-type valarg = string [@@deriving show { with_path = false }, sexp, compare]
-let valarg_to_dec x = Z.of_string x |> Z.to_string
-let valarg_to_hex x = Z.of_string x |> Z.format "x"
-let equal_valarg x y = Z.equal (Z.of_string x) (Z.of_string y)
-let show_valarg_hex x =
-  let hx = valarg_to_hex x in
-  if Int.rem (String.length hx) 2 = 1 then "0" ^ hx else hx
-
 type constarg = string [@@deriving show { with_path = false }, sexp, compare]
-let constarg_to_valarg c =
-  try String.chop_prefix_exn c ~prefix:"c" |> valarg_to_dec
-  with _ -> failwith "Cannot convert " ^ c ^ " into value"
-let valarg_to_constarg v = "c" ^ (valarg_to_dec v)
+
 let equal_constarg = String.equal
-let constarg_to_dec = constarg_to_valarg (* convention is that constarg is in dec *)
-let show_constarg_hex c = show_valarg_hex (constarg_to_valarg c)
+let constarg_to_dec = Word.const_to_val (* convention is that constarg is in dec *)
+let show_constarg_hex c = Word.show_hex (Word.const_to_val c)
 
 type t =
-  | Val of valarg [@printer fun fmt x -> fprintf fmt "%s" (valarg_to_dec x)]
+  | Word of Word.t [@printer fun fmt x -> fprintf fmt "%s" (Word.to_dec x)]
   | Tmpl
   | Const of constarg [@printer fun fmt x -> fprintf fmt "%s" x]
 [@@deriving show { with_path = false }, sexp, compare]
 
 let equal x y = match (x, y) with
-  | Val x, Val y -> equal_valarg x y
+  | Word w1, Word w2 -> Word.equal w1 w2
   | Tmpl, Tmpl -> true
   | Const c, Const d -> equal_constarg c d
   | _, _ -> false
 
 let of_sexp s = match s with
-  | Sexp.Atom i -> if String.equal i "Tmpl" then Tmpl else Val i
+  | Sexp.Atom i -> if String.equal i "Tmpl" then Tmpl else Word (Word.from_string i)
   | Sexp.List _ -> failwith "could not parse argument of PUSH"
 
 let all = [Tmpl]
 
 let show_stackarg_hex a =
   match a with
-  | Val x -> show_valarg_hex x
+  | Word x -> Word.show_hex x
   | Const c -> show_constarg_hex c
   | Tmpl -> failwith "hex output not supported for template"
 
 let val_to_const wsz a =
   let max_repr = Z.pow (Z.of_int 2) wsz in
   match a with
-  | Val x when Z.of_string x >= max_repr -> Const (valarg_to_constarg x)
+  | Word (Val x) when Z.of_string (Word.to_dec (Val x)) >= max_repr -> Const (Word.val_to_const (Val x))
   | a -> a
 
 let const_to_val = function
-  | Const c -> Val (constarg_to_valarg c)
+  | Const c -> Word (Word.const_to_val c)
   | a -> a
 
 (* careful: if x is to large for Word.sort leftmost bits are truncated *)
 let enc x =
-  Z3.Expr.mk_numeral_string !ctxt (valarg_to_dec x) !Word.sort
+  Z3.Expr.mk_numeral_string !ctxt (Word.to_dec x) !Word.sort

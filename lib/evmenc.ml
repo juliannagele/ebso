@@ -181,7 +181,7 @@ let init ea st =
   && Map.fold ea.roms ~init:top ~f:(fun ~key:i ~data:f e -> e && init_rom ea st i f)
 
 let enc_stackarg ea j = function
-  | Stackarg.Val x -> Stackarg.enc x
+  | Stackarg.Word x -> Stackarg.enc x
   | Tmpl -> ea.a <@@> [j]
   | Const c -> Word.const c
 
@@ -556,7 +556,7 @@ let eval_fis ea m j = eval_state_func_decl m j ea.fis |> Opcode.dec
 let eval_a ea m j = eval_state_func_decl m j ea.a |> Z3.Arithmetic.Integer.numeral_to_string
 
 let dec_push ea m j = function
-  | PUSH Tmpl -> PUSH (Val (eval_a ea m j))
+  | PUSH Tmpl -> PUSH (Word (Word.from_string (eval_a ea m j)))
   | i -> i
 
 let dec_instr ea m j =

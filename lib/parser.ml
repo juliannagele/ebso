@@ -39,7 +39,7 @@ let rec parse_stackarg buf =
   match%sedlex buf with
   | white_space -> parse_stackarg buf
   | "Tmpl" -> Tmpl
-  | "0x", Plus hexdigit | Plus digit -> Val (Latin1.lexeme buf)
+  | "0x", Plus hexdigit | Plus digit -> Word (Word.from_string (Latin1.lexeme buf))
   | _ -> raise (SyntaxError (lexeme_start buf))
 
 let  parse_instruction buf =
@@ -222,7 +222,7 @@ let parse_hex buf =
       (* 0x60 = 96, so x in PUSHx is 0x<lexeme> - 95 *)
       let n = Int.of_string ("0x" ^ Latin1.lexeme buf) - 95 in
       let i = parse_hex_bytes n buf in
-      parse_token (PUSH (Val i) :: acc)
+      parse_token (PUSH (Word (Word.from_string i)) :: acc)
     | '8', hexdigit ->
       (* 0x80 = 128, so x in DUPx is 0x<lexeme> - 127 *)
       let idx = parse_hex_idx (Latin1.lexeme buf) 127 in

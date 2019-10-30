@@ -73,7 +73,7 @@ let compute_word_size p max_ws =
   let d = stack_depth p in
   let abstr_vals ws =
     List.count p
-      ~f:(function PUSH (Val x) -> Z.numbits (Z.of_string x) > ws | _ -> false)
+      ~f:(function PUSH (Word (Val x)) -> Word.numbits (Val x) > ws | _ -> false)
   in
   let rec get_min_ws n m =
     if n <= 0 then m else

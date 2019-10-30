@@ -21,7 +21,7 @@ open Program
 open Evmenc
 
 (* returns value within bounds of word size *)
-let val_of_int_safe i = Stackarg.Val (Int.to_string (i mod !Word.size))
+let val_of_int_safe i = Stackarg.Word (Val (Int.to_string (i mod !Word.size)))
 
 let test_stack_pres oc =
   let (d, _) = delta_alpha oc in
@@ -70,7 +70,7 @@ let test_no_exc_halt p =
 
 let test_exc_halt_pres p =
   let max = Int.pow 2 !SI.size in
-  let ip = List.init max ~f:(fun _ -> PUSH (Val "1")) in
+  let ip = List.init max ~f:(fun _ -> PUSH (Word (Val "1"))) in
   let p = ip @ p in
   let ea = mk_enc_consts p (`User []) in
   let st = mk_state ea "" in
@@ -87,7 +87,7 @@ let effect =
     (* add *)
 
     "add two words on the stack">:: (fun _ ->
-        let p = [PUSH (Val "1"); PUSH (Val "2"); ADD] in
+        let p = [PUSH (Word (Val "1")); PUSH (Word (Val "2")); ADD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -102,7 +102,7 @@ let effect =
     (* sub *)
 
     "subtract two words on the stack">:: (fun _ ->
-        let p = [PUSH (Val "3"); PUSH (Val "4"); SUB] in
+        let p = [PUSH (Word (Val "3")); PUSH (Word (Val "4")); SUB] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -115,7 +115,7 @@ let effect =
       );
 
     "subtract two words on the stack with negative result">:: (fun _ ->
-        let p = [PUSH (Val "4"); PUSH (Val "3"); SUB] in
+        let p = [PUSH (Word (Val "4")); PUSH (Word (Val "3")); SUB] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -130,7 +130,7 @@ let effect =
     (* add and sub *)
 
     "combine add and sub">:: (fun _ ->
-        let p = [PUSH (Val "3"); PUSH (Val "2"); PUSH (Val "2"); ADD; SUB] in
+        let p = [PUSH (Word (Val "3")); PUSH (Word (Val "2")); PUSH (Word (Val "2")); ADD; SUB] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -142,7 +142,7 @@ let effect =
     (* div *)
 
     "divide 1 by 1" >::(fun _ ->
-        let p = [PUSH (Val "1"); PUSH (Val "1"); DIV] in
+        let p = [PUSH (Word (Val "1")); PUSH (Word (Val "1")); DIV] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -152,7 +152,7 @@ let effect =
       );
 
     "divide 4 by 2" >::(fun _ ->
-        let p = [PUSH (Val "2"); PUSH (Val "4"); DIV] in
+        let p = [PUSH (Word (Val "2")); PUSH (Word (Val "4")); DIV] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -162,7 +162,7 @@ let effect =
       );
 
     "divide 5 by 2" >::(fun _ ->
-        let p = [PUSH (Val "2"); PUSH (Val "5"); DIV] in
+        let p = [PUSH (Word (Val "2")); PUSH (Word (Val "5")); DIV] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -172,7 +172,7 @@ let effect =
       );
 
     "divide 2 by 4" >::(fun _ ->
-        let p = [PUSH (Val "4"); PUSH (Val "2"); DIV] in
+        let p = [PUSH (Word (Val "4")); PUSH (Word (Val "2")); DIV] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -182,7 +182,7 @@ let effect =
       );
 
     "divide 2 by 0" >::(fun _ ->
-        let p = [PUSH (Val "0"); PUSH (Val "2"); DIV] in
+        let p = [PUSH (Word (Val "0")); PUSH (Word (Val "2")); DIV] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -192,7 +192,7 @@ let effect =
       );
 
     "divide 0 by 0" >::(fun _ ->
-        let p = [PUSH (Val "0"); PUSH (Val "0"); DIV] in
+        let p = [PUSH (Word (Val "0")); PUSH (Word (Val "0")); DIV] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -204,7 +204,7 @@ let effect =
     (* sdiv *)
 
     "1 sdiv 0 = 0" >::(fun _ ->
-        let p = [PUSH (Val "0"); PUSH (Val "1"); SDIV] in
+        let p = [PUSH (Word (Val "0")); PUSH (Word (Val "1")); SDIV] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -214,7 +214,7 @@ let effect =
       );
 
     "3 sdiv 2 = 1" >::(fun _ ->
-        let p = [PUSH (Val "2"); PUSH (Val "3"); SDIV] in
+        let p = [PUSH (Word (Val "2")); PUSH (Word (Val "3")); SDIV] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -224,7 +224,7 @@ let effect =
       );
 
     "-3 sdiv 2 = -1" >::(fun _ ->
-        let p = [PUSH (Val "2"); PUSH (Val "-3"); SDIV] in
+        let p = [PUSH (Word (Val "2")); PUSH (Word (Val "-3")); SDIV] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -234,7 +234,7 @@ let effect =
       );
 
     "3 sdiv -2 = -1" >::(fun _ ->
-        let p = [PUSH (Val "-2"); PUSH (Val "3"); SDIV] in
+        let p = [PUSH (Word (Val "-2")); PUSH (Word (Val "3")); SDIV] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -244,7 +244,7 @@ let effect =
       );
 
     "-3 sdiv -2 = 1" >::(fun _ ->
-        let p = [PUSH (Val "-2"); PUSH (Val "-3"); SDIV] in
+        let p = [PUSH (Word (Val "-2")); PUSH (Word (Val "-3")); SDIV] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -254,7 +254,7 @@ let effect =
       );
 
     "-1 sdiv -1 = 1" >::(fun _ ->
-        let p = [PUSH (Val "-1"); PUSH (Val "-1"); SDIV] in
+        let p = [PUSH (Word (Val "-1")); PUSH (Word (Val "-1")); SDIV] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -264,7 +264,7 @@ let effect =
       );
 
     "-1 sdiv 2 = 0" >::(fun _ ->
-        let p = [PUSH (Val "2"); PUSH (Val "-1"); SDIV] in
+        let p = [PUSH (Word (Val "2")); PUSH (Word (Val "-1")); SDIV] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -274,7 +274,7 @@ let effect =
       );
 
     "-2^(wsz - 1) sdiv -1 = -2^(wsz - 1), wraps to negative" >::(fun _ ->
-        let p = [PUSH (Val "-1"); PUSH (Val "0b100"); SDIV] in
+        let p = [PUSH (Word (Val "-1")); PUSH (Word (Val "0b100")); SDIV] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -286,7 +286,7 @@ let effect =
     (* mod *)
 
     "2 modulo 1" >::(fun _ ->
-        let p = [PUSH (Val "1"); PUSH (Val "2"); MOD] in
+        let p = [PUSH (Word (Val "1")); PUSH (Word (Val "2")); MOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -296,7 +296,7 @@ let effect =
       );
 
     "4 modulo 2" >::(fun _ ->
-        let p = [PUSH (Val "2"); PUSH (Val "4"); MOD] in
+        let p = [PUSH (Word (Val "2")); PUSH (Word (Val "4")); MOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -306,7 +306,7 @@ let effect =
       );
 
     "5 modulo 2" >::(fun _ ->
-        let p = [PUSH (Val "2"); PUSH (Val "5"); MOD] in
+        let p = [PUSH (Word (Val "2")); PUSH (Word (Val "5")); MOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -316,7 +316,7 @@ let effect =
       );
 
     "2 modulo 4" >::(fun _ ->
-        let p = [PUSH (Val "4"); PUSH (Val "2"); MOD] in
+        let p = [PUSH (Word (Val "4")); PUSH (Word (Val "2")); MOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -326,7 +326,7 @@ let effect =
       );
 
     "2 modulo 0" >::(fun _ ->
-        let p = [PUSH (Val "0"); PUSH (Val "2"); MOD] in
+        let p = [PUSH (Word (Val "0")); PUSH (Word (Val "2")); MOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -336,7 +336,7 @@ let effect =
       );
 
     "0 modulo 0" >::(fun _ ->
-        let p = [PUSH (Val "0"); PUSH (Val "0"); MOD] in
+        let p = [PUSH (Word (Val "0")); PUSH (Word (Val "0")); MOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -348,7 +348,7 @@ let effect =
     (* smod *)
 
     "3 smodulo 2 is 1" >::(fun _ ->
-        let p = [PUSH (Val "2"); PUSH (Val "3"); SMOD] in
+        let p = [PUSH (Word (Val "2")); PUSH (Word (Val "3")); SMOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -358,7 +358,7 @@ let effect =
       );
 
     "-2 smodulo 3 is -2" >::(fun _ ->
-        let p = [PUSH (Val "3"); PUSH (Val "-2"); SMOD] in
+        let p = [PUSH (Word (Val "3")); PUSH (Word (Val "-2")); SMOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -368,7 +368,7 @@ let effect =
       );
 
     "-2 smodulo 1 is 0" >::(fun _ ->
-        let p = [PUSH (Val "1"); PUSH (Val "-2"); SMOD] in
+        let p = [PUSH (Word (Val "1")); PUSH (Word (Val "-2")); SMOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -378,7 +378,7 @@ let effect =
       );
 
     "2 smodulo -1 is 0" >::(fun _ ->
-        let p = [PUSH (Val "-1"); PUSH (Val "2"); SMOD] in
+        let p = [PUSH (Word (Val "-1")); PUSH (Word (Val "2")); SMOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -388,7 +388,7 @@ let effect =
       );
 
     "-3 smodulo 2 is -1" >::(fun _ ->
-        let p = [PUSH (Val "2"); PUSH (Val "-3"); SMOD] in
+        let p = [PUSH (Word (Val "2")); PUSH (Word (Val "-3")); SMOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -398,7 +398,7 @@ let effect =
       );
 
     "3 smodulo -2 is 1" >::(fun _ ->
-        let p = [PUSH (Val "-2"); PUSH (Val "3"); SMOD] in
+        let p = [PUSH (Word (Val "-2")); PUSH (Word (Val "3")); SMOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -408,7 +408,7 @@ let effect =
       );
 
     "-4 smodulo 2 is 0 (largest negative number)" >::(fun _ ->
-        let p = [PUSH (Val "2"); PUSH (Val "-4"); SMOD] in
+        let p = [PUSH (Word (Val "2")); PUSH (Word (Val "-4")); SMOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -418,7 +418,7 @@ let effect =
       );
 
     "-3 smodulo 0 is 0" >::(fun _ ->
-        let p = [PUSH (Val "0"); PUSH (Val "-3"); SMOD] in
+        let p = [PUSH (Word (Val "0")); PUSH (Word (Val "-3")); SMOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -428,7 +428,7 @@ let effect =
       );
 
     "3 smodulo 0 is 0" >::(fun _ ->
-        let p = [PUSH (Val "0"); PUSH (Val "3"); SMOD] in
+        let p = [PUSH (Word (Val "0")); PUSH (Word (Val "3")); SMOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -440,7 +440,7 @@ let effect =
     (* addmod *)
 
     "(2 + 1) mod 2 = 1" >::(fun _ ->
-        let p = [PUSH (Val "2"); PUSH (Val "1"); PUSH (Val "2"); ADDMOD] in
+        let p = [PUSH (Word (Val "2")); PUSH (Word (Val "1")); PUSH (Word (Val "2")); ADDMOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -450,7 +450,7 @@ let effect =
       );
 
     "(7 + 1) mod 3 = 2 (overflow which should be ignored)" >::(fun _ ->
-        let p = [PUSH (Val "3"); PUSH (Val "1"); PUSH (Val "7"); ADDMOD] in
+        let p = [PUSH (Word (Val "3")); PUSH (Word (Val "1")); PUSH (Word (Val "7")); ADDMOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -460,7 +460,7 @@ let effect =
       );
 
     "(1 + 1) mod 3 = 2" >::(fun _ ->
-        let p = [PUSH (Val "3"); PUSH (Val "1"); PUSH (Val "1"); ADDMOD] in
+        let p = [PUSH (Word (Val "3")); PUSH (Word (Val "1")); PUSH (Word (Val "1")); ADDMOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -470,7 +470,7 @@ let effect =
       );
 
     "(1 + 1) mod 2 = 0" >::(fun _ ->
-        let p = [PUSH (Val "2"); PUSH (Val "1"); PUSH (Val "1"); ADDMOD] in
+        let p = [PUSH (Word (Val "2")); PUSH (Word (Val "1")); PUSH (Word (Val "1")); ADDMOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -480,7 +480,7 @@ let effect =
       );
 
     "(0 + 1) mod 0 = 0" >::(fun _ ->
-        let p = [PUSH (Val "0"); PUSH (Val "1"); PUSH (Val "0"); ADDMOD] in
+        let p = [PUSH (Word (Val "0")); PUSH (Word (Val "1")); PUSH (Word (Val "0")); ADDMOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -490,7 +490,7 @@ let effect =
       );
 
     "(7 + 1) mod 2 = 0 (overflow which should be ignored)" >::(fun _ ->
-        let p = [PUSH (Val "2"); PUSH (Val "1"); PUSH (Val "7"); ADDMOD] in
+        let p = [PUSH (Word (Val "2")); PUSH (Word (Val "1")); PUSH (Word (Val "7")); ADDMOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -500,7 +500,7 @@ let effect =
       );
 
     "(-1 + 1) mod 2 = 0" >::(fun _ ->
-        let p = [PUSH (Val "2"); PUSH (Val "1"); PUSH (Val "-1"); ADDMOD] in
+        let p = [PUSH (Word (Val "2")); PUSH (Word (Val "1")); PUSH (Word (Val "-1")); ADDMOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -512,7 +512,7 @@ let effect =
     (* mulmod *)
 
     "(2 * 1) mod 2 = 0" >::(fun _ ->
-        let p = [PUSH (Val "2"); PUSH (Val "1"); PUSH (Val "2"); MULMOD] in
+        let p = [PUSH (Word (Val "2")); PUSH (Word (Val "1")); PUSH (Word (Val "2")); MULMOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -522,7 +522,7 @@ let effect =
       );
 
     "(7 * 7) mod 2 = 1 (overflow happens)" >::(fun _ ->
-        let p = [PUSH (Val "2"); PUSH (Val "7"); PUSH (Val "7"); MULMOD] in
+        let p = [PUSH (Word (Val "2")); PUSH (Word (Val "7")); PUSH (Word (Val "7")); MULMOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -532,7 +532,7 @@ let effect =
       );
 
     "(7 * 6) mod 7 = 0 (overflow happens)" >::(fun _ ->
-        let p = [PUSH (Val "7"); PUSH (Val "6"); PUSH (Val "7"); MULMOD] in
+        let p = [PUSH (Word (Val "7")); PUSH (Word (Val "6")); PUSH (Word (Val "7")); MULMOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -542,7 +542,7 @@ let effect =
       );
 
     "(2 * 1) mod 0 = 0" >::(fun _ ->
-        let p = [PUSH (Val "0"); PUSH (Val "1"); PUSH (Val "2"); MULMOD] in
+        let p = [PUSH (Word (Val "0")); PUSH (Word (Val "1")); PUSH (Word (Val "2")); MULMOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -552,7 +552,7 @@ let effect =
       );
 
     "(0 * 5) mod 2 = 0" >::(fun _ ->
-        let p = [PUSH (Val "2"); PUSH (Val "5"); PUSH (Val "0"); MULMOD] in
+        let p = [PUSH (Word (Val "2")); PUSH (Word (Val "5")); PUSH (Word (Val "0")); MULMOD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -564,7 +564,7 @@ let effect =
     (* iszero *)
 
     "0 iszero is true" >::(fun _ ->
-        let p = [PUSH (Val "0"); ISZERO] in
+        let p = [PUSH (Word (Val "0")); ISZERO] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -574,7 +574,7 @@ let effect =
       );
 
     "1 iszero is false" >::(fun _ ->
-        let p = [PUSH (Val "1"); ISZERO] in
+        let p = [PUSH (Word (Val "1")); ISZERO] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -584,7 +584,7 @@ let effect =
       );
 
     "0 - 5 iszero is false" >::(fun _ ->
-        let p = [PUSH (Val "5"); PUSH (Val "0"); SUB; ISZERO] in
+        let p = [PUSH (Word (Val "5")); PUSH (Word (Val "0")); SUB; ISZERO] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -596,7 +596,7 @@ let effect =
     (* and *)
 
     "0 & 1 is 0" >::(fun _ ->
-        let p = [PUSH (Val "1"); PUSH (Val "0"); AND] in
+        let p = [PUSH (Word (Val "1")); PUSH (Word (Val "0")); AND] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -606,7 +606,7 @@ let effect =
       );
 
     "1 & 1 is 1" >::(fun _ ->
-        let p = [PUSH (Val "1"); PUSH (Val "1"); AND] in
+        let p = [PUSH (Word (Val "1")); PUSH (Word (Val "1")); AND] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -616,7 +616,7 @@ let effect =
       );
 
     "0 & 0 is 0" >::(fun _ ->
-        let p = [PUSH (Val "0"); PUSH (Val "0"); AND] in
+        let p = [PUSH (Word (Val "0")); PUSH (Word (Val "0")); AND] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -626,7 +626,7 @@ let effect =
       );
 
     "1 & 0 is 0" >::(fun _ ->
-        let p = [PUSH (Val "1"); PUSH (Val "0"); AND] in
+        let p = [PUSH (Word (Val "1")); PUSH (Word (Val "0")); AND] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -636,7 +636,7 @@ let effect =
       );
 
     "AND is idempotent (0b101)" >::(fun _ ->
-        let p = [PUSH (Val "0b101"); PUSH (Val "0b101"); AND] in
+        let p = [PUSH (Word (Val "0b101")); PUSH (Word (Val "0b101")); AND] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -646,7 +646,7 @@ let effect =
       );
 
     "0b111 & 0b100 is 0b100" >::(fun _ ->
-        let p = [PUSH (Val "0b111"); PUSH (Val "0b100"); AND] in
+        let p = [PUSH (Word (Val "0b111")); PUSH (Word (Val "0b100")); AND] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -658,7 +658,7 @@ let effect =
     (* or *)
 
     "0 | 1 is 1" >::(fun _ ->
-        let p = [PUSH (Val "0"); PUSH (Val "1"); OR] in
+        let p = [PUSH (Word (Val "0")); PUSH (Word (Val "1")); OR] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -668,7 +668,7 @@ let effect =
       );
 
     "1 | 1 is 1" >::(fun _ ->
-        let p = [PUSH (Val "1"); PUSH (Val "1"); OR] in
+        let p = [PUSH (Word (Val "1")); PUSH (Word (Val "1")); OR] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -678,7 +678,7 @@ let effect =
       );
 
     "0 | 0 is 0" >::(fun _ ->
-        let p = [PUSH (Val "0"); PUSH (Val "0"); OR] in
+        let p = [PUSH (Word (Val "0")); PUSH (Word (Val "0")); OR] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -688,7 +688,7 @@ let effect =
       );
 
     "1 | 0 is 1" >::(fun _ ->
-        let p = [PUSH (Val "1"); PUSH (Val "0"); OR] in
+        let p = [PUSH (Word (Val "1")); PUSH (Word (Val "0")); OR] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -698,7 +698,7 @@ let effect =
       );
 
     "OR is idempotent (0b101)" >::(fun _ ->
-        let p = [PUSH (Val "0b101"); PUSH (Val "0b101"); OR] in
+        let p = [PUSH (Word (Val "0b101")); PUSH (Word (Val "0b101")); OR] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -708,7 +708,7 @@ let effect =
       );
 
     "0b001 | 0b100 is 0b101" >::(fun _ ->
-        let p = [PUSH (Val "0b001"); PUSH (Val "0b100"); OR] in
+        let p = [PUSH (Word (Val "0b001")); PUSH (Word (Val "0b100")); OR] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -720,7 +720,7 @@ let effect =
     (* xor *)
 
     "0 ^ 1 is 1" >::(fun _ ->
-        let p = [PUSH (Val "0"); PUSH (Val "1"); XOR] in
+        let p = [PUSH (Word (Val "0")); PUSH (Word (Val "1")); XOR] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -730,7 +730,7 @@ let effect =
       );
 
     "1 ^ 1 is 0" >::(fun _ ->
-        let p = [PUSH (Val "1"); PUSH (Val "1"); XOR] in
+        let p = [PUSH (Word (Val "1")); PUSH (Word (Val "1")); XOR] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -740,7 +740,7 @@ let effect =
       );
 
     "0 ^ 0 is 0" >::(fun _ ->
-        let p = [PUSH (Val "0"); PUSH (Val "0"); XOR] in
+        let p = [PUSH (Word (Val "0")); PUSH (Word (Val "0")); XOR] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -750,7 +750,7 @@ let effect =
       );
 
     "1 ^ 0 is 1" >::(fun _ ->
-        let p = [PUSH (Val "1"); PUSH (Val "0"); XOR] in
+        let p = [PUSH (Word (Val "1")); PUSH (Word (Val "0")); XOR] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -760,7 +760,7 @@ let effect =
       );
 
     "XOR is cancellative (0b101)" >::(fun _ ->
-        let p = [PUSH (Val "0b101"); PUSH (Val "0b101"); XOR] in
+        let p = [PUSH (Word (Val "0b101")); PUSH (Word (Val "0b101")); XOR] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -770,7 +770,7 @@ let effect =
       );
 
     "0b101 ^ 0b100 is 0b001" >::(fun _ ->
-        let p = [PUSH (Val "0b101"); PUSH (Val "0b100"); XOR] in
+        let p = [PUSH (Word (Val "0b101")); PUSH (Word (Val "0b100")); XOR] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -782,7 +782,7 @@ let effect =
     (* eq *)
 
     "0 = 0 is 1" >::(fun _ ->
-        let p = [PUSH (Val "0"); PUSH (Val "0"); EQ] in
+        let p = [PUSH (Word (Val "0")); PUSH (Word (Val "0")); EQ] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -792,7 +792,7 @@ let effect =
       );
 
     "1 = 0 is 0" >::(fun _ ->
-        let p = [PUSH (Val "0"); PUSH (Val "1"); EQ] in
+        let p = [PUSH (Word (Val "0")); PUSH (Word (Val "1")); EQ] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -802,7 +802,7 @@ let effect =
       );
 
     "0 = 1 is 0" >::(fun _ ->
-        let p = [PUSH (Val "1"); PUSH (Val "0"); EQ] in
+        let p = [PUSH (Word (Val "1")); PUSH (Word (Val "0")); EQ] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -812,7 +812,7 @@ let effect =
       );
 
     "1 = 1 is 1" >::(fun _ ->
-        let p = [PUSH (Val "1"); PUSH (Val "1"); EQ] in
+        let p = [PUSH (Word (Val "1")); PUSH (Word (Val "1")); EQ] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -822,7 +822,7 @@ let effect =
       );
 
     "-1 = 1 is 0" >::(fun _ ->
-        let p = [PUSH (Val "1"); PUSH (Val "-1"); EQ] in
+        let p = [PUSH (Word (Val "1")); PUSH (Word (Val "-1")); EQ] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -834,7 +834,7 @@ let effect =
     (* lt *)
 
     "0 < 0 is 0" >::(fun _ ->
-        let p = [PUSH (Val "0"); PUSH (Val "0"); LT] in
+        let p = [PUSH (Word (Val "0")); PUSH (Word (Val "0")); LT] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -844,7 +844,7 @@ let effect =
       );
 
     "1 < 0 is 0" >::(fun _ ->
-        let p = [PUSH (Val "0"); PUSH (Val "1"); LT] in
+        let p = [PUSH (Word (Val "0")); PUSH (Word (Val "1")); LT] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -854,7 +854,7 @@ let effect =
       );
 
     "0 < 1 is 1" >::(fun _ ->
-        let p = [PUSH (Val "1"); PUSH (Val "0"); LT] in
+        let p = [PUSH (Word (Val "1")); PUSH (Word (Val "0")); LT] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -864,7 +864,7 @@ let effect =
       );
 
     "1 < -1 is 1 (unsigned LT)" >::(fun _ ->
-        let p = [PUSH (Val "-1"); PUSH (Val "1"); LT] in
+        let p = [PUSH (Word (Val "-1")); PUSH (Word (Val "1")); LT] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -874,7 +874,7 @@ let effect =
       );
 
     "-1 < 1 is 0 (unsigned LT)" >::(fun _ ->
-        let p = [PUSH (Val "1"); PUSH (Val "-1"); LT] in
+        let p = [PUSH (Word (Val "1")); PUSH (Word (Val "-1")); LT] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -886,7 +886,7 @@ let effect =
     (* gt *)
 
     "0 > 0 is 0" >::(fun _ ->
-        let p = [PUSH (Val "0"); PUSH (Val "0"); GT] in
+        let p = [PUSH (Word (Val "0")); PUSH (Word (Val "0")); GT] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -896,7 +896,7 @@ let effect =
       );
 
     "1 > 0 is 1" >::(fun _ ->
-        let p = [PUSH (Val "0"); PUSH (Val "1"); GT] in
+        let p = [PUSH (Word (Val "0")); PUSH (Word (Val "1")); GT] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -906,7 +906,7 @@ let effect =
       );
 
     "0 > 1 is 0" >::(fun _ ->
-        let p = [PUSH (Val "1"); PUSH (Val "0"); GT] in
+        let p = [PUSH (Word (Val "1")); PUSH (Word (Val "0")); GT] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -916,7 +916,7 @@ let effect =
       );
 
     "1 > -1 is 0 (unsigned GT)" >::(fun _ ->
-        let p = [PUSH (Val "-1"); PUSH (Val "1"); GT] in
+        let p = [PUSH (Word (Val "-1")); PUSH (Word (Val "1")); GT] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -926,7 +926,7 @@ let effect =
       );
 
     "-1 > 1 is 1 (unsigned GT)" >::(fun _ ->
-        let p = [PUSH (Val "1"); PUSH (Val "-1"); GT] in
+        let p = [PUSH (Word (Val "1")); PUSH (Word (Val "-1")); GT] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -938,7 +938,7 @@ let effect =
     (* slt *)
 
     "0 <_signed 0 is 0" >::(fun _ ->
-        let p = [PUSH (Val "0"); PUSH (Val "0"); SLT] in
+        let p = [PUSH (Word (Val "0")); PUSH (Word (Val "0")); SLT] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -948,7 +948,7 @@ let effect =
       );
 
     "1 <_signed 0 is 0" >::(fun _ ->
-        let p = [PUSH (Val "0"); PUSH (Val "1"); SLT] in
+        let p = [PUSH (Word (Val "0")); PUSH (Word (Val "1")); SLT] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -958,7 +958,7 @@ let effect =
       );
 
     "0 <_signed 1 is 1" >::(fun _ ->
-        let p = [PUSH (Val "1"); PUSH (Val "0"); SLT] in
+        let p = [PUSH (Word (Val "1")); PUSH (Word (Val "0")); SLT] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -968,7 +968,7 @@ let effect =
       );
 
     "1 <_signed -1 is 0" >::(fun _ ->
-        let p = [PUSH (Val "-1"); PUSH (Val "1"); SLT] in
+        let p = [PUSH (Word (Val "-1")); PUSH (Word (Val "1")); SLT] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -978,7 +978,7 @@ let effect =
       );
 
     "-1 <_signed 1 is 1" >::(fun _ ->
-        let p = [PUSH (Val "1"); PUSH (Val "-1"); SLT] in
+        let p = [PUSH (Word (Val "1")); PUSH (Word (Val "-1")); SLT] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -990,7 +990,7 @@ let effect =
     (* sgt *)
 
     "0 >_signed 0 is 0" >::(fun _ ->
-        let p = [PUSH (Val "0"); PUSH (Val "0"); SGT] in
+        let p = [PUSH (Word (Val "0")); PUSH (Word (Val "0")); SGT] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -1000,7 +1000,7 @@ let effect =
       );
 
     "1 >_signed 0 is 1" >::(fun _ ->
-        let p = [PUSH (Val "0"); PUSH (Val "1"); SGT] in
+        let p = [PUSH (Word (Val "0")); PUSH (Word (Val "1")); SGT] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -1010,7 +1010,7 @@ let effect =
       );
 
     "0 >_signed 1 is 0" >::(fun _ ->
-        let p = [PUSH (Val "1"); PUSH (Val "0"); SGT] in
+        let p = [PUSH (Word (Val "1")); PUSH (Word (Val "0")); SGT] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -1020,7 +1020,7 @@ let effect =
       );
 
     "1 >_signed -1 is 1" >::(fun _ ->
-        let p = [PUSH (Val "-1"); PUSH (Val "1"); SGT] in
+        let p = [PUSH (Word (Val "-1")); PUSH (Word (Val "1")); SGT] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -1030,7 +1030,7 @@ let effect =
       );
 
     "-1 >_signed 1 is 0" >::(fun _ ->
-        let p = [PUSH (Val "1"); PUSH (Val "-1"); SGT] in
+        let p = [PUSH (Word (Val "1")); PUSH (Word (Val "-1")); SGT] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -1042,7 +1042,7 @@ let effect =
     (* not *)
 
     "not 0b001 is 0b110" >::(fun _ ->
-        let p = [PUSH (Val "1"); NOT] in
+        let p = [PUSH (Word (Val "1")); NOT] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -1052,7 +1052,7 @@ let effect =
       );
 
     "not 0b000 is 0b111" >::(fun _ ->
-        let p = [PUSH (Val "0"); NOT] in
+        let p = [PUSH (Word (Val "0")); NOT] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -1062,7 +1062,7 @@ let effect =
       );
 
     "not 0b101 is 0b010" >::(fun _ ->
-        let p = [PUSH (Val "0b101"); NOT] in
+        let p = [PUSH (Word (Val "0b101")); NOT] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -1074,7 +1074,7 @@ let effect =
     (* push *)
 
     "top of the stack is the pushed word after a PUSH">:: (fun _ ->
-        let p = [PUSH (Val "5")] in
+        let p = [PUSH (Word (Val "5"))] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -1116,7 +1116,7 @@ let effect =
     (* SWAP *)
 
     "swap I two words on stack" >::(fun _ ->
-        let p = [PUSH (Val "1"); PUSH (Val "2"); SWAP I] in
+        let p = [PUSH (Word (Val "1")); PUSH (Word (Val "2")); SWAP I] in
         let ea = mk_enc_consts p `All in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -1129,7 +1129,7 @@ let effect =
       );
 
     "swap I with only one word" >::(fun _ ->
-        let p = [PUSH (Val "1"); SWAP I] in
+        let p = [PUSH (Word (Val "1")); SWAP I] in
         let ea = mk_enc_consts p `All in
         let st = mk_state ea "" in
         (* allow to instantiate variables when evaluating model *)
@@ -1159,7 +1159,7 @@ let effect =
       );
 
      "words after swap II" >::(fun _ ->
-        let p = [PUSH (Val "1"); PUSH (Val "2"); PUSH (Val "3"); SWAP II] in
+        let p = [PUSH (Word (Val "1")); PUSH (Word (Val "2")); PUSH (Word (Val "3")); SWAP II] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -1174,7 +1174,7 @@ let effect =
       );
 
      "preserve words between swap III" >::(fun _ ->
-        let p = [PUSH (Val "1"); PUSH (Val "2"); PUSH (Val "3"); PUSH (Val "4"); SWAP III] in
+        let p = [PUSH (Word (Val "1")); PUSH (Word (Val "2")); PUSH (Word (Val "3")); PUSH (Word (Val "4")); SWAP III] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -1190,7 +1190,7 @@ let effect =
     (* dup *)
 
     "duplicate top word" >:: (fun _ ->
-        let p = [PUSH (Val "1"); DUP I] in
+        let p = [PUSH (Word (Val "1")); DUP I] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -1260,7 +1260,7 @@ let stack_ctr =
                   >:: (fun _ -> test_stack_ctr [oc])) @
   [
     "test a program leading to an empty stack">:: (fun _ ->
-        test_stack_ctr [PUSH (Val "1"); PUSH (Val "1"); ADD; POP]
+        test_stack_ctr [PUSH (Word (Val "1")); PUSH (Word (Val "1")); ADD; POP]
       );
 
     "test stack counter for empty program">:: (fun _ ->
@@ -1284,7 +1284,7 @@ let exc_halt =
 
     "PUSHing too many words leads to a stack overflow">:: (fun _ ->
         let max = Int.pow 2 !SI.size in
-        let p = List.init max ~f:(fun _ -> PUSH (Val "1")) in
+        let p = List.init max ~f:(fun _ -> PUSH (Word (Val "1"))) in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -1297,7 +1297,7 @@ let exc_halt =
       );
 
     "exceptional halt persists for multiple instructions">:: (fun _ ->
-        test_exc_halt_pres [SUB; PUSH (Val "3")]
+        test_exc_halt_pres [SUB; PUSH (Word (Val "3"))]
       );
   ]
 
@@ -1305,7 +1305,7 @@ let forced_stack_underflow =
   (* test below use hack to erase xs to start from emtpy stack *)
   [
     "add with only one word">:: (fun _ ->
-        let p = [PUSH (Val "3"); ADD] in
+        let p = [PUSH (Word (Val "3")); ADD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state {ea with p = []} "" in
         let c =
@@ -1336,7 +1336,7 @@ let forced_stack_underflow =
       );
 
     "SUB with only one word">:: (fun _ ->
-        let p = [PUSH (Val "3"); SUB] in
+        let p = [PUSH (Word (Val "3")); SUB] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state {ea with p = []} "" in
         let c =
@@ -1398,7 +1398,7 @@ let gas_cost =
       );
 
     "after some instruction some gas has been used">::(fun _ ->
-        let p = [PUSH (Val "6"); PUSH (Val "2"); ADD] in
+        let p = [PUSH (Word (Val "6")); PUSH (Word (Val "2")); ADD] in
         let ea = mk_enc_consts p (`User []) in
         let st = mk_state ea "" in
         let c = enc_program ea st in
@@ -1429,7 +1429,7 @@ let misc =
     (* init balance *)
 
     "inital balance for arg in range">:: (fun _ ->
-        let ea = mk_enc_consts [PUSH (Val "2"); BALANCE] (`User []) in
+        let ea = mk_enc_consts [PUSH (Word (Val "2")); BALANCE] (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let i = Word.enc_int 3 in (* set for all quantified variable to 3 for test *)
@@ -1443,7 +1443,7 @@ let misc =
       );
 
     "initial balance for given args not in range">:: (fun _ ->
-        let ea = mk_enc_consts [PUSH (Val "2"); BALANCE] (`User []) in
+        let ea = mk_enc_consts [PUSH (Word (Val "2")); BALANCE] (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -1455,7 +1455,7 @@ let misc =
       );
 
     "inital balance for computed arg in range">:: (fun _ ->
-        let ea = mk_enc_consts [PUSH (Val "1"); PUSH (Val "1"); ADD; BALANCE] (`User []) in
+        let ea = mk_enc_consts [PUSH (Word (Val "1")); PUSH (Word (Val "1")); ADD; BALANCE] (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let i = Word.enc_int 3 in (* set for all quantified variable to 3 for test *)
@@ -1469,7 +1469,7 @@ let misc =
       );
 
     "initial balance for computed arg where given args are not in range">:: (fun _ ->
-        let ea = mk_enc_consts [PUSH (Val "1"); PUSH (Val "1"); ADD; BALANCE] (`User []) in
+        let ea = mk_enc_consts [PUSH (Word (Val "1")); PUSH (Word (Val "1")); ADD; BALANCE] (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -1592,14 +1592,14 @@ let misc =
       );
 
     "[SLOAD] generates one variable">:: (fun _ ->
-        let p = [PUSH (Val "1"); SLOAD;] in
+        let p = [PUSH (Word (Val "1")); SLOAD;] in
         let xs = mk_store_vars p in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
           [(Word.const "x_SLOAD_0")] xs
       );
 
     "Two SLOADs generate two variables">:: (fun _ ->
-        let p = [PUSH (Val "1"); SLOAD; PUSH (Val "2"); PUSH (Val "1"); SLOAD;] in
+        let p = [PUSH (Word (Val "1")); SLOAD; PUSH (Word (Val "2")); PUSH (Word (Val "1")); SLOAD;] in
         let xs = mk_store_vars p in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
           [(Word.const "x_SLOAD_0"); (Word.const "x_SLOAD_1")] xs

@@ -73,7 +73,7 @@ let suite =
     (* show result *)
 
     "Show a result" >:: (fun _ ->
-        let s = [PUSH (Val "1"); POP] in
+        let s = [PUSH (Word (Val "1")); POP] in
         let t = [] in
         let step = mk_step s t true None in
         assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
@@ -91,7 +91,7 @@ let suite =
       );
 
     "Show a result with a successful translation validation" >:: (fun _ ->
-        let s = [PUSH (Val "0"); ADD; POP] in
+        let s = [PUSH (Word (Val "0")); ADD; POP] in
         let t = [POP] in
         let step = mk_step s t true (Some true) in
         assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
@@ -100,7 +100,7 @@ let suite =
       );
 
     "Show a result with abstracted PUSH argument" >:: (fun _ ->
-        let s = [PUSH (Const "c5"); PUSH (Val "0"); ADD] in
+        let s = [PUSH (Const "c5"); PUSH (Word (Val "0")); ADD] in
         let t = [PUSH (Const "c5")] in
         let step = mk_step s t true (Some true) in
         assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
@@ -109,8 +109,8 @@ let suite =
       );
 
     "Show a result with SSTORE" >:: (fun _ ->
-        let s = [PUSH (Val "1"); DUP II; SWAP I; SSTORE; PUSH (Val "1"); DUP II; SWAP I; SSTORE; POP; POP] in
-        let t = [PUSH (Val "1"); SSTORE; POP] in
+        let s = [PUSH (Word (Val "1")); DUP II; SWAP I; SSTORE; PUSH (Word (Val "1")); DUP II; SWAP I; SSTORE; POP; POP] in
+        let t = [PUSH (Word (Val "1")); SSTORE; POP] in
         let step = mk_step s t false (Some true) in
         assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
           ["600181905560018190555050"; "60015550"; "PUSH 1 SSTORE POP"; "3"; "tbc"; "tbc"; "tbc"; "false"; "true"]

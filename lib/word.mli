@@ -13,6 +13,8 @@
    limitations under the License.
 *)
 
+type t = Val of string
+
 val size : int ref
 
 val sort : Z3.Sort.sort ref
@@ -24,3 +26,29 @@ val enc_int : int -> Z3.Expr.expr
 val enc_string : string -> Z3.Expr.expr
 
 val const : string -> Z3.Expr.expr
+
+val show : t -> string
+
+val show_hex : t -> string
+
+val pp : Format.formatter -> t -> unit
+
+val t_of_sexp : Sexplib.Sexp.t -> t
+
+val sexp_of_t : t -> Sexplib.Sexp.t
+
+val equal : t -> t -> bool
+
+val compare : t -> t -> int
+
+val to_dec : t -> string
+
+val const_to_val : string -> t
+
+val val_to_const : t -> string
+
+val from_string : string -> t
+
+val to_hex : t -> string
+
+val numbits : t -> int
