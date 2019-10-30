@@ -69,3 +69,9 @@ let val_to_const w = match w with
 let from_string x = Val x
 
 let numbits x = Z.numbits (Z.of_string (to_dec x))
+
+let fits_wsz wsz = function
+  | Const _ -> true
+  | w ->
+    let max_repr = Z.pow (Z.of_int 2) wsz in
+    Z.of_string (to_dec w) < max_repr

@@ -36,9 +36,8 @@ let show_stackarg_hex a =
   | Tmpl -> failwith "hex output not supported for template"
 
 let val_to_const wsz a =
-  let max_repr = Z.pow (Z.of_int 2) wsz in
   match a with
-  | Word (Val x) when Z.of_string (Word.to_dec (Val x)) >= max_repr -> Word (Word.val_to_const (Val x))
+  | Word (Val x) when not (Word.fits_wsz wsz (Val x)) -> Word (Word.val_to_const (Val x))
   | a -> a
 
 let const_to_val = function
