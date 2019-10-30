@@ -53,13 +53,13 @@ let total_gas_cost =
   List.fold ~init:zero ~f:(fun gc i -> gc + gas_cost i)
 
 let val_to_const wsz p =
-  let fit w = if Word.fits_wsz wsz w then w else Word.val_to_const w in
+  let fit w = if Word.fits_wsz wsz w then w else Word.to_const w in
   List.map p
     ~f:(function | PUSH (Word w) -> PUSH (Word (fit w)) | i -> i)
 
 let const_to_val p =
   List.map p
-    ~f:(function | PUSH (Word (Const c)) -> PUSH (Word (Word.const_to_val (Const c))) | i -> i)
+    ~f:(function | PUSH (Word w) -> PUSH (Word (Word.to_val w)) | i -> i)
 
 let consts p = List.stable_dedup
     (List.filter_map p ~f:(function | PUSH (Word (Const c)) -> Some c | _ -> None))

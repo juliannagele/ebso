@@ -25,19 +25,19 @@ let size = ref 3
 
 let sort = ref (bv_sort !size)
 
-let const_to_val w = match w with
+let to_val w = match w with
   | Const c -> Val c
-  | Val _ -> failwith "const_to_val: tried to convert a val to a val"
+  | w -> w
 
 let set_wsz n = size := n; sort := bv_sort !size
 
 let rec to_hex = function
   | Val x ->  Z.of_string x |> Z.format "x"
-  | Const c -> to_hex (const_to_val (Const c))
+  | Const c -> to_hex (to_val (Const c))
 
 let rec to_dec = function
   | Val x -> Z.of_string x |> Z.to_string
-  | Const c -> to_dec (const_to_val (Const c)) (* convention is that constarg is in dec *)
+  | Const c -> to_dec (to_val (Const c)) (* convention is that constarg is in dec *)
 
 let enc_int n = Z3.Expr.mk_numeral_int !ctxt n !sort
 
@@ -59,9 +59,9 @@ let show_hex x =
     let hx = to_hex x in
     if Int.rem (String.length hx) 2 = 1 then "0" ^ hx else hx
 
-let val_to_const w = match w with
+let to_const w = match w with
   | Val x -> Const (to_dec (Val x))
-  | Const _ -> failwith "val_to_const: tried to convert a const to a const"
+  | _ -> w
 
 let from_string x = Val x
 

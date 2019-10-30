@@ -45,8 +45,8 @@ val from_string : string -> t
 
 val numbits : t -> int
 
-val const_to_val : t -> t
+val to_val : t -> t
 
-val val_to_const : t -> t
+val to_const : t -> t
 
 val fits_wsz : int -> t -> bool
