@@ -181,9 +181,8 @@ let init ea st =
   && Map.fold ea.roms ~init:top ~f:(fun ~key:i ~data:f e -> e && init_rom ea st i f)
 
 let enc_stackarg ea j = function
-  | Stackarg.Word (Const c) -> Word.const c
-  | Stackarg.Word x -> Stackarg.enc x
-  | Tmpl -> ea.a <@@> [j]
+  | Stackarg.Word w -> Word.enc w
+  | Stackarg.Tmpl -> ea.a <@@> [j]
 
 let enc_push ea st j x =
   let open Z3Ops in

@@ -23,9 +23,9 @@ val set_wsz : int -> unit
 
 val enc_int : int -> Z3.Expr.expr
 
-val enc_string : string -> Z3.Expr.expr
-
 val const : string -> Z3.Expr.expr
+
+val enc : t -> Z3.Expr.expr
 
 val show : t -> string
 

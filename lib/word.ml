@@ -34,12 +34,6 @@ let const_to_val w = match w with
 
 let set_wsz n = size := n; sort := bv_sort !size
 
-let enc_int n = Z3.Expr.mk_numeral_int !ctxt n !sort
-
-let enc_string n = Z3.Expr.mk_numeral_string !ctxt n !sort
-
-let const s = Z3.Expr.mk_const_s !ctxt s !sort
-
 let rec to_hex = function
   | Val x ->  Z.of_string x |> Z.format "x"
   | Const c -> to_hex (const_to_val (Const c))
@@ -47,6 +41,17 @@ let rec to_hex = function
 let rec to_dec = function
   | Val x -> Z.of_string x |> Z.to_string
   | Const c -> to_dec (const_to_val (Const c)) (* convention is that constarg is in dec *)
+
+let enc_int n = Z3.Expr.mk_numeral_int !ctxt n !sort
+
+let const s = Z3.Expr.mk_const_s !ctxt s !sort
+
+let enc = function
+  | Const c -> const c
+  (* careful: if x is to large for Word.sort leftmost bits are truncated *)
+  | Val x ->
+    let enc_string n = Z3.Expr.mk_numeral_string !ctxt n !sort in
+    enc_string (to_dec (Val x))
 
 let equal w1 w2 = match w1, w2 with
   | Val x, Val y -> Z.equal (Z.of_string x) (Z.of_string y)

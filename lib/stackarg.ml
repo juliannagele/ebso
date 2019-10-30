@@ -13,7 +13,6 @@
    limitations under the License.
 *)
 open Core
-open Z3util
 
 type t =
   | Word of Word.t [@printer fun fmt x -> fprintf fmt "%s" (Word.to_dec x)]
@@ -45,7 +44,3 @@ let val_to_const wsz a =
 let const_to_val = function
   | Word (Const c) -> Word (Word.const_to_val (Const c))
   | a -> a
-
-(* careful: if x is to large for Word.sort leftmost bits are truncated *)
-let enc x =
-  Z3.Expr.mk_numeral_string !ctxt (Word.to_dec x) !Word.sort
