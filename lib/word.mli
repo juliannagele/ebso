@@ -41,11 +41,7 @@ val equal : t -> t -> bool
 
 val compare : t -> t -> int
 
-val to_dec : t -> string
-
 val from_string : string -> t
-
-val to_hex : t -> string
 
 val numbits : t -> int
 

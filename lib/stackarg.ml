@@ -15,7 +15,7 @@
 open Core
 
 type t =
-  | Word of Word.t [@printer fun fmt x -> fprintf fmt "%s" (Word.to_dec x)]
+  | Word of Word.t [@printer fun fmt x -> fprintf fmt "%s" (Word.show x)]
   | Tmpl
 [@@deriving show { with_path = false }, sexp, compare]
 

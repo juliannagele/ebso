@@ -17,8 +17,9 @@ open Z3util
 
 (* a value argument can be either decimal, e.g., "1", hex, e.g., "0x1"
    or binary, e.g. "0b1" *)
-type t = Val of string
-       | Const of string [@@deriving show { with_path = false }, sexp, compare]
+type t = Val of string [@printer fun fmt x -> fprintf fmt "%s" x]
+       | Const of string 
+[@@deriving show { with_path = false }, sexp, compare]
 
 let size = ref 3
 
