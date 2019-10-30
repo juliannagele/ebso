@@ -73,7 +73,7 @@ let mk_cis p uis = function
   | `Progr -> cis_of_progr p
   | `User cis -> List.stable_dedup cis
   | `All ->
-    let const_pushs = List.map (Program.consts p) ~f:(fun c -> PUSH (Const c)) in
+    let const_pushs = List.map (Program.consts p) ~f:(fun c -> PUSH (Word (Const c))) in
     Instruction.encodable @ const_pushs @ uis
 
 let mk_enc_consts p cis_mde =
@@ -181,9 +181,9 @@ let init ea st =
   && Map.fold ea.roms ~init:top ~f:(fun ~key:i ~data:f e -> e && init_rom ea st i f)
 
 let enc_stackarg ea j = function
+  | Stackarg.Word (Const c) -> Word.const c
   | Stackarg.Word x -> Stackarg.enc x
   | Tmpl -> ea.a <@@> [j]
-  | Const c -> Word.const c
 
 let enc_push ea st j x =
   let open Z3Ops in
@@ -321,7 +321,7 @@ let enc_dup ea st j idx =
 
 let enc_const_uninterpreted ea st j i =
   let name = Instruction.unint_name 0 i in
-  enc_push ea st j (Const name)
+  enc_push ea st j (Word (Const name))
 
 let enc_nonconst_uninterpreted ea st j i =
   let rom = Map.find_exn ea.roms i in

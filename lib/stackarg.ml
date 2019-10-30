@@ -15,22 +15,14 @@
 open Core
 open Z3util
 
-type constarg = string [@@deriving show { with_path = false }, sexp, compare]
-
-let equal_constarg = String.equal
-let constarg_to_dec = Word.const_to_val (* convention is that constarg is in dec *)
-let show_constarg_hex c = Word.show_hex (Word.const_to_val c)
-
 type t =
   | Word of Word.t [@printer fun fmt x -> fprintf fmt "%s" (Word.to_dec x)]
   | Tmpl
-  | Const of constarg [@printer fun fmt x -> fprintf fmt "%s" x]
 [@@deriving show { with_path = false }, sexp, compare]
 
 let equal x y = match (x, y) with
   | Word w1, Word w2 -> Word.equal w1 w2
   | Tmpl, Tmpl -> true
-  | Const c, Const d -> equal_constarg c d
   | _, _ -> false
 
 let of_sexp s = match s with
@@ -42,17 +34,16 @@ let all = [Tmpl]
 let show_stackarg_hex a =
   match a with
   | Word x -> Word.show_hex x
-  | Const c -> show_constarg_hex c
   | Tmpl -> failwith "hex output not supported for template"
 
 let val_to_const wsz a =
   let max_repr = Z.pow (Z.of_int 2) wsz in
   match a with
-  | Word (Val x) when Z.of_string (Word.to_dec (Val x)) >= max_repr -> Const (Word.val_to_const (Val x))
+  | Word (Val x) when Z.of_string (Word.to_dec (Val x)) >= max_repr -> Word (Word.val_to_const (Val x))
   | a -> a
 
 let const_to_val = function
-  | Const c -> Word (Word.const_to_val c)
+  | Word (Const c) -> Word (Word.const_to_val (Const c))
   | a -> a
 
 (* careful: if x is to large for Word.sort leftmost bits are truncated *)

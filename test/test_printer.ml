@@ -100,8 +100,8 @@ let suite =
       );
 
     "Show a result with abstracted PUSH argument" >:: (fun _ ->
-        let s = [PUSH (Const "c5"); PUSH (Word (Val "0")); ADD] in
-        let t = [PUSH (Const "c5")] in
+        let s = [PUSH (Word (Const "c5")); PUSH (Word (Val "0")); ADD] in
+        let t = [PUSH (Word (Const "c5"))] in
         let step = mk_step s t true (Some true) in
         assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
           ["6005600001"; "6005"; "PUSH 5"; "1"; "9"; "3"; "6"; "true"; "true"]

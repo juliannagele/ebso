@@ -13,7 +13,7 @@
    limitations under the License.
 *)
 
-type t = Val of string
+type t = Val of string | Const of string
 
 val size : int ref
 
@@ -43,12 +43,12 @@ val compare : t -> t -> int
 
 val to_dec : t -> string
 
-val const_to_val : string -> t
-
-val val_to_const : t -> string
-
 val from_string : string -> t
 
 val to_hex : t -> string
 
 val numbits : t -> int
+
+val const_to_val : t -> t
+
+val val_to_const : t -> t

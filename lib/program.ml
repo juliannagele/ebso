@@ -61,7 +61,7 @@ let const_to_val p =
     ~f:(function | PUSH x -> PUSH (Stackarg.const_to_val x) | i -> i)
 
 let consts p = List.stable_dedup
-    (List.filter_map p ~f:(function | PUSH (Const c) -> Some c | _ -> None))
+    (List.filter_map p ~f:(function | PUSH (Word (Const c)) -> Some c | _ -> None))
 
 let compute_word_size p max_ws =
   let uc =
