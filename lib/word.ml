@@ -18,7 +18,7 @@ open Z3util
 (* a value argument can be either decimal, e.g., "1", hex, e.g., "0x1"
    or binary, e.g. "0b1" *)
 type t = Val of string [@printer fun fmt x -> fprintf fmt "%s" x]
-       | Const of string 
+       | Const of string [@printer fun fmt x -> fprintf fmt "c%s" x]
 [@@deriving show { with_path = false }, sexp, compare]
 
 let size = ref 3
@@ -26,11 +26,7 @@ let size = ref 3
 let sort = ref (bv_sort !size)
 
 let const_to_val w = match w with
-  | Const c ->
-    let x =
-      try String.chop_prefix_exn c ~prefix:"c"
-      with _ -> failwith "Cannot convert " ^ c ^ " into value"
-    in Val x
+  | Const c -> Val c
   | Val _ -> failwith "const_to_val: tried to convert a val to a val"
 
 let set_wsz n = size := n; sort := bv_sort !size
@@ -64,7 +60,7 @@ let show_hex x =
     if Int.rem (String.length hx) 2 = 1 then "0" ^ hx else hx
 
 let val_to_const w = match w with
-  | Val x -> Const ("c" ^ (to_dec (Val x)))
+  | Val x -> Const (to_dec (Val x))
   | Const _ -> failwith "val_to_const: tried to convert a const to a const"
 
 let from_string x = Val x

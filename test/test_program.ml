@@ -137,7 +137,7 @@ let suite =
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
-          [PUSH (Word (Const ("c" ^ v)))]
+          [PUSH (Word (Const v))]
           (val_to_const wsz p)
       );
 
@@ -169,7 +169,7 @@ let suite =
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
-          [PUSH (Word (Val "2")); PUSH (Word (Const "c17")); PUSH (Word (Const "c9")); ADD; PUSH (Word (Const "c100"))]
+          [PUSH (Word (Val "2")); PUSH (Word (Const "17")); PUSH (Word (Const "9")); ADD; PUSH (Word (Const "100"))]
           (val_to_const wsz p)
       );
 
@@ -180,7 +180,7 @@ let suite =
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
-          [PUSH (Word (Const ("c" ^ v))); PUSH (Word (Const ("c" ^ v)))]
+          [PUSH (Word (Const v)); PUSH (Word (Const v))]
           (val_to_const wsz p)
       );
 
@@ -192,7 +192,7 @@ let suite =
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
-          [PUSH (Word (Val max)); PUSH (Word (Const ("c" ^ max_1)))]
+          [PUSH (Word (Val max)); PUSH (Word (Const max_1))]
           (val_to_const wsz p)
       );
 
@@ -203,7 +203,7 @@ let suite =
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
-          [PUSH (Word (Const ("c9")))]
+          [PUSH (Word (Const ("9")))]
           (val_to_const wsz p)
       );
 
@@ -211,7 +211,7 @@ let suite =
 
     "redeem val from const" >:: (fun _ ->
         let v = "42" in
-        let p = [PUSH (Word (Const ("c" ^ v)))] in
+        let p = [PUSH (Word (Const v))] in
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
@@ -221,7 +221,7 @@ let suite =
 
     "redeem large binary val from const" >:: (fun _ ->
         let v = "0b1001" in
-        let p = [PUSH (Word (Const ("c" ^ v)))] in
+        let p = [PUSH (Word (Const v))] in
         assert_equal
           ~cmp:[%eq: Program.t]
           ~printer:[%show: Program.t]
@@ -264,7 +264,7 @@ let suite =
     (* consts *)
 
     "get constants from program" >:: (fun _ ->
-        let c1 = "c123" and c2 = "c321" in
+        let c1 = "123" and c2 = "321" in
         let p = [PUSH (Word (Val "2")); PUSH (Word (Const c1)); PUSH (Word (Const c1)); PUSH (Word (Const c2))] in
         assert_equal
           ~cmp:[%eq: string list]
@@ -282,7 +282,7 @@ let suite =
         assert_equal
           ~cmp:[%eq: string list]
           ~printer:[%show: string list]
-          ["c" ^ vd]
+          [vd]
           (consts p')
       );
 
