@@ -81,6 +81,15 @@ let suite =
           (show_result step)
       );
 
+    "Show a result with Const" >:: (fun _ ->
+        let s = [PUSH (Word (Const "1"))] in
+        let t = [PUSH (Word (Const "1"))] in
+        let step = mk_step s t true None in
+        assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
+          ["6001"; "6001"; "PUSH 1"; "1"; "3"; "3"; "0"; "true";]
+          (show_result step)
+      );
+
     "Show a result with failed translation validation" >:: (fun _ ->
         let s = [NOT; ADD] in
         let t = [EQ] in
