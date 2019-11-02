@@ -28,6 +28,7 @@ let of_sexp s = match s with
   | Sexp.Atom i -> if String.equal i "Tmpl" then Tmpl else Word (Word.from_string i)
   | Sexp.List _ -> failwith "could not parse argument of PUSH"
 
+(* required for deriving enumerate *)
 let all = [Tmpl]
 
 let show_stackarg_hex a =
