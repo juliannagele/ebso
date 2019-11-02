@@ -18,7 +18,7 @@ open Ebso
 open Z3util
 open Instruction
 open Evmenc
-open Stackarg
+open Pusharg
 
 let gas_cost =
   [
@@ -243,7 +243,7 @@ let effect =
         let xsload0 = Word.enc_int 3 in (* set for all quantified variable to 3 for test *)
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
           xsload0
-          (eval_storage ~xs:[xsload0] st m (PC.of_int 0) (enc_stackarg ea (num 0) k))
+          (eval_storage ~xs:[xsload0] st m (PC.of_int 0) (Pusharg.enc ea.a (num 0) k))
       );
 
     "SLOAD a key not in range" >:: (fun _ ->
@@ -257,7 +257,7 @@ let effect =
         let xsload0 = Word.enc_int 3 in (* set for all quantified variable to 3 for test *)
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
           (Word.enc_int 0)
-          (eval_storage ~xs:[xsload0] st m (PC.of_int 0) (enc_stackarg ea (num 0) k2))
+          (eval_storage ~xs:[xsload0] st m (PC.of_int 0) (Pusharg.enc ea.a (num 0) k2))
       );
 
     "SLOAD twice from same key" >:: (fun _ ->
@@ -270,7 +270,7 @@ let effect =
         let xsload0 = Word.enc_int 3 and xsload1 = Word.enc_int 2 in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
           xsload0
-          (eval_storage ~xs:[xsload0; xsload1] st m (PC.of_int 0) (enc_stackarg ea (num 0) k))
+          (eval_storage ~xs:[xsload0; xsload1] st m (PC.of_int 0) (Pusharg.enc ea.a (num 0) k))
       );
 
     "SLOAD twice from different key" >:: (fun _ ->
@@ -284,8 +284,8 @@ let effect =
         assert_equal ~cmp:[%eq: Z3.Expr.t list]
           ~printer:(List.to_string ~f:Z3.Expr.to_string)
           [xsload0; xsload1]
-          [(eval_storage ~xs:[xsload0; xsload1] st m (PC.of_int 0) (enc_stackarg ea (num 0) k1));
-           (eval_storage ~xs:[xsload0; xsload1] st m (PC.of_int 0) (enc_stackarg ea (num 0) k2))]
+          [(eval_storage ~xs:[xsload0; xsload1] st m (PC.of_int 0) (Pusharg.enc ea.a (num 0) k1));
+           (eval_storage ~xs:[xsload0; xsload1] st m (PC.of_int 0) (Pusharg.enc ea.a (num 0) k2))]
       );
 
     "SLOAD from key after SSTORE" >:: (fun _ ->
@@ -301,7 +301,7 @@ let effect =
            are ordered before SSTORE variables *)
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
           xsload0
-          (eval_storage ~xs:[xsload0; xsstore0] st m (PC.of_int 0) (enc_stackarg ea (num 0) k))
+          (eval_storage ~xs:[xsload0; xsstore0] st m (PC.of_int 0) (Pusharg.enc ea.a (num 0) k))
       );
 
     "SLOAD twice from same key with SSTORE in between" >:: (fun _ ->
@@ -315,7 +315,7 @@ let effect =
         let xsload0 = Word.enc_int 3 and xsload1 = Word.enc_int 2 and xsstore0 = Word.enc_int 4 in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
           xsload0
-          (eval_storage ~xs:[xsload0; xsload1; xsstore0] st m (PC.of_int 0) (enc_stackarg ea (num 0) k))
+          (eval_storage ~xs:[xsload0; xsload1; xsstore0] st m (PC.of_int 0) (Pusharg.enc ea.a (num 0) k))
       );
 
     "SLOAD SSTOREd value" >:: (fun _ ->
@@ -329,7 +329,7 @@ let effect =
         let xsload0 = Word.enc_int 3 and xsload1 = Word.enc_int 2 and xsstore0 = Word.enc_int 4 in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
           (Word.enc_int 2)
-          (eval_storage ~xs:[xsload0; xsload1; xsstore0] st m (Program.length p) (enc_stackarg ea (num 0) k))
+          (eval_storage ~xs:[xsload0; xsload1; xsstore0] st m (Program.length p) (Pusharg.enc ea.a (num 0) k))
       );
 
     "SSTORE to SLOADed key" >: test_case ~length:Long (fun _ ->
@@ -343,8 +343,8 @@ let effect =
         let xsload0 = Word.enc_int 3 and xsload1 = Word.enc_int 2 and xsstore0 = Word.enc_int 5 in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
           [(Word.enc_int 4); (Word.enc_int 2)]
-          [(eval_storage ~xs:[xsload0; xsload1; xsstore0] st m (Program.length p) (enc_stackarg ea (num 0) k1));
-           (eval_storage ~xs:[xsload0; xsload1; xsstore0] st m (Program.length p) (enc_stackarg ea (num 0) k2))]
+          [(eval_storage ~xs:[xsload0; xsload1; xsstore0] st m (Program.length p) (Pusharg.enc ea.a (num 0) k1));
+           (eval_storage ~xs:[xsload0; xsload1; xsstore0] st m (Program.length p) (Pusharg.enc ea.a (num 0) k2))]
       );
 
     "SSTORE twice to same key" >:: (fun _ ->
@@ -359,8 +359,8 @@ let effect =
         let xsstore0 = Word.enc_int 1 and xsstore1 = Word.enc_int 4 in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
           [(Word.enc_int 2); (Word.enc_int 3)]
-          [(eval_storage ~xs:[xsstore0; xsstore1] st m (Program.length p1) (enc_stackarg ea (num 0) k));
-           (eval_storage ~xs:[xsstore0; xsstore1] st m (Program.length p) (enc_stackarg ea (num 0) k))]
+          [(eval_storage ~xs:[xsstore0; xsstore1] st m (Program.length p1) (Pusharg.enc ea.a (num 0) k));
+           (eval_storage ~xs:[xsstore0; xsstore1] st m (Program.length p) (Pusharg.enc ea.a (num 0) k))]
       );
 
     "SSTORE input from stack" >:: (fun _ ->
@@ -373,8 +373,8 @@ let effect =
         let xsstore0 = Word.enc_int 2 and x0 = Word.enc_int 3 in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
           [xsstore0; x0]
-          [(eval_storage ~xs:[x0; xsstore0] st m (PC.of_int 0) (enc_stackarg ea (num 0) k));
-           (eval_storage ~xs:[x0; xsstore0] st m (Program.length p) (enc_stackarg ea (num 0) k))]
+          [(eval_storage ~xs:[x0; xsstore0] st m (PC.of_int 0) (Pusharg.enc ea.a (num 0) k));
+           (eval_storage ~xs:[x0; xsstore0] st m (Program.length p) (Pusharg.enc ea.a (num 0) k))]
       );
 
     "SSTORE NUMBER" >:: (fun _ ->
@@ -387,8 +387,8 @@ let effect =
         let xsstore0 = Word.enc_int 2 and number0 = Word.enc_int 3 in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
           [xsstore0; number0]
-          [(eval_storage ~xs:[xsstore0; number0] st m (PC.of_int 0) (enc_stackarg ea (num 0) k));
-           (eval_storage ~xs:[xsstore0; number0] st m (Program.length p) (enc_stackarg ea (num 0) k))]
+          [(eval_storage ~xs:[xsstore0; number0] st m (PC.of_int 0) (Pusharg.enc ea.a (num 0) k));
+           (eval_storage ~xs:[xsstore0; number0] st m (Program.length p) (Pusharg.enc ea.a (num 0) k))]
       );
   ]
 

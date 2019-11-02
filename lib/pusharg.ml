@@ -31,7 +31,11 @@ let of_sexp s = match s with
 (* required for deriving enumerate *)
 let all = [Tmpl]
 
-let show_stackarg_hex a =
+let show_hex a =
   match a with
   | Word x -> Word.show_hex x
   | Tmpl -> failwith "hex output not supported for template"
+
+let enc a j = function
+  | Word w -> Word.enc w
+  | Tmpl -> let open Z3util in a <@@> [j]

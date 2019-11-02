@@ -45,7 +45,7 @@ module T = struct
     | POP | MLOAD | MSTORE | MSTORE8 | SLOAD | SSTORE | JUMP | JUMPI | PC | MSIZE
     | GAS | JUMPDEST
     (* 60s & 70s:  Push Operations *)
-    | PUSH of Stackarg.t [@printer fun fmt x -> fprintf fmt "PUSH %s" (Stackarg.show x)]
+    | PUSH of Pusharg.t [@printer fun fmt x -> fprintf fmt "PUSH %s" (Pusharg.show x)]
     (* 80s:  Duplication Operations *)
     | DUP of idx [@printer fun fmt i -> fprintf fmt "DUP%i" (idx_to_enum i)]
     (* 90s:  Exchange Operations *)
@@ -234,7 +234,7 @@ let encodable = [
   ; POP
   ; SLOAD
   ; SSTORE
-] @ List.map Stackarg.all ~f:(fun a -> PUSH a)
+] @ List.map Pusharg.all ~f:(fun a -> PUSH a)
   @ List.map all_of_idx ~f:(fun i -> SWAP i)
   @ List.map all_of_idx ~f:(fun i -> DUP i)
 
@@ -362,7 +362,7 @@ let show_hex = function
   | GAS -> "5a"
   | JUMPDEST -> "5b"
   | PUSH x ->
-    let hx = Stackarg.show_stackarg_hex x in
+    let hx = Pusharg.show_hex x in
     (* 96 = 0x60, so 95 + number of bytes is the bytecode we need *)
     Z.format "x" (Z.of_int (95 + (String.length hx / 2))) ^ hx
   | DUP idx -> "8" ^ show_idx_hex idx

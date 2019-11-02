@@ -14,7 +14,7 @@
 *)
 open Core
 open Sedlexing
-open Stackarg
+open Pusharg
 open Instruction
 
 exception SyntaxError of int

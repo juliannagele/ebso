@@ -21,7 +21,7 @@ open Program
 open Evmenc
 
 (* returns value within bounds of word size *)
-let val_of_int_safe i = Stackarg.Word (Val (Int.to_string (i mod !Word.size)))
+let val_of_int_safe i = Pusharg.Word (Val (Int.to_string (i mod !Word.size)))
 
 let test_stack_pres oc =
   let (d, _) = delta_alpha oc in

@@ -180,10 +180,6 @@ let init ea st =
   && init_storage ea st
   && Map.fold ea.roms ~init:top ~f:(fun ~key:i ~data:f e -> e && init_rom ea st i f)
 
-let enc_stackarg ea j = function
-  | Stackarg.Word w -> Word.enc w
-  | Stackarg.Tmpl -> ea.a <@@> [j]
-
 let enc_push ea st j x =
   let open Z3Ops in
   (* the stack after the PUSH *)
@@ -191,7 +187,7 @@ let enc_push ea st j x =
   (* the stack counter before the PUSH *)
   let sc = st.stack_ctr @@ [j] in
   (* the new top word will be x *)
-  sk' sc == enc_stackarg ea j x
+  sk' sc == Pusharg.enc ea.a j x
 
 (* the only effect of POP is to change the stack counter *)
 let enc_pop _ _ _ = top
@@ -320,7 +316,7 @@ let enc_dup ea st j idx =
 
 let enc_const_uninterpreted ea st j i =
   let name = Instruction.unint_name 0 i in
-  enc_push ea st j (Word (Const name))
+  enc_push ea st j (Pusharg.Word (Const name))
 
 let enc_nonconst_uninterpreted ea st j i =
   let rom = Map.find_exn ea.roms i in
