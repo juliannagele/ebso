@@ -20,6 +20,7 @@ open Instruction
 open Program
 open Evmenc
 open Enc_consts
+open Evm_state
 
 (* returns value within bounds of word size *)
 let val_of_int_safe i = Pusharg.Word (Val (Int.to_string (i mod !Word.size)))

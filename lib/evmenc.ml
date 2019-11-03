@@ -261,21 +261,6 @@ let enc_classic_so_test ea cp js =
      (* and their final state is the same *)
      (enc_equivalence_at ea sts stc ks kt))
 
-let eval_state_func_decl  m j ?(n = []) ?(xs = []) f =
-  eval_func_decl m f (xs @ [PC.enc j] @ n)
-
-let eval_stack ?(xs = []) st m i n =
-  eval_state_func_decl m i ~n:[SI.enc n] ~xs:xs st.stack.decl
-
-let eval_stack_ctr st m i = eval_state_func_decl m i st.stack.ctr
-
-let eval_storage ?(xs = []) st m j k =
-  eval_state_func_decl m j ~n:[k] ~xs:xs st.storage
-
-let eval_exc_halt st m i = eval_state_func_decl m i st.exc_halt
-
-let eval_gas ?(xs = []) st m i =
-  eval_state_func_decl ~xs:xs m i st.used_gas |> GC.dec
 
 let eval_fis ea m j = eval_state_func_decl m j ea.fis |> Opcode.dec
 

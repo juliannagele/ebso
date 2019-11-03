@@ -20,6 +20,7 @@ open Instruction
 open Evmenc
 open Pusharg
 open Enc_consts
+open Evm_state
 
 let gas_cost =
   [

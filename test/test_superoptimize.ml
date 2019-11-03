@@ -19,6 +19,7 @@ open Z3util
 open Instruction
 open Evmenc
 open Enc_consts
+open Evm_state
 
 let suite =
   (* set low for fast testing *)
