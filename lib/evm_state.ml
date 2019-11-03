@@ -20,9 +20,7 @@ module GC = Gas_cost
 module SI = Stack_index
 
 type t = {
-  stack_decl : Z3.FuncDecl.func_decl;
-  stack : Z3.Expr.expr -> Z3.Expr.expr -> Z3.Expr.expr;
-  stack_ctr : Z3.FuncDecl.func_decl;
+  stack : Evm_stack.t;
   storage : Z3.FuncDecl.func_decl;
   exc_halt : Z3.FuncDecl.func_decl;
   used_gas : Z3.FuncDecl.func_decl;
@@ -31,13 +29,7 @@ type t = {
 let mk ea idx =
   let mk_vars_sorts vs = List.map vs ~f:(fun _ -> !Word.sort) in
   let vars_sorts = mk_vars_sorts (Enc_consts.forall_vars ea) in
-  let sk = func_decl ("stack" ^ idx) (vars_sorts @ [PC.sort; !SI.sort]) !Word.sort in
-  { (* stack(x0 ... x(sd-1), j, n) = nth word on stack after j instructions
-       starting from a stack that contained words x0 ... x(sd-1) *)
-    stack_decl = sk;
-    stack = (fun j n -> sk <@@> (Enc_consts.forall_vars ea @ [j; n]));
-    (* sc(j) = index of the next free slot on the stack after j instructions *)
-    stack_ctr = func_decl ("sc" ^ idx) [PC.sort] !SI.sort;
+  { stack = Evm_stack.mk ea idx;
     (* storage(_, j, k) = v if storage after j instructions contains word v for key k *)
     storage = func_decl ("storage" ^ idx) (vars_sorts @ [PC.sort; !Word.sort]) !Word.sort;
     (* exc_halt(j) is true if exceptional halting occurs after j instructions *)
