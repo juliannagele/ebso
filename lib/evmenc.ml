@@ -37,24 +37,13 @@ let init_rom ea st i rom =
         ~f:(fun (aj, uj) enc -> ite (conj (List.map2_exn aj ws ~f:(==))) uj enc)
   )
 
-let init_storage ea st =
-  let open Z3Ops in
-  let js = poss_of_instr ea.p SLOAD @ poss_of_instr ea.p SSTORE in
-  let ks = List.concat_map js ~f:(fun j -> Evm_stack.enc_top_d st.stack (PC.enc j) 1) in
-  let w_dflt = Word.enc_int 0 in
-  let w = Word.const "w" in
-  forall w (
-    (st.storage @@ (forall_vars ea @ [PC.init; w]) ==
-     List.fold_right (List.zip_exn ks ea.ss) ~init:w_dflt
-       ~f:(fun (k, s) enc -> ite (w == k) s enc)))
-
 let init ea st =
   let open Z3Ops in
   (* careful: if stack_depth is larger than 2^sas, no checks *)
   Evm_stack.init st.stack (stack_depth ea.p) ea.xs
   && (st.exc_halt @@ [PC.init] == btm)
   && (st.used_gas @@ (forall_vars ea @ [PC.init]) == GC.enc GC.zero)
-  && init_storage ea st
+  && Evm_storage.init st.storage st.stack (poss_of_instr ea.p SLOAD @ poss_of_instr ea.p SSTORE) ea.ss
   && Map.fold ea.roms ~init:top ~f:(fun ~key:i ~data:f e -> e && init_rom ea st i f)
 
 let enc_const_uninterpreted ea st j i =
@@ -67,17 +56,6 @@ let enc_nonconst_uninterpreted ea sk j i =
   let sc'= sk.ctr @@ [j + one] in
   let ajs = Evm_stack.enc_top_d sk j (arity i) in
   (sk.el (j + one) (sc' - SI.enc 1)) == (rom @@ ((forall_vars ea) @ ajs))
-
-let enc_sload ea st j =
-  Evm_stack.enc_unaryop st.stack j (fun w -> (st.storage <@@> (forall_vars ea) @ [j; w]))
-
-let enc_sstore ea sk str j =
-  let open Z3Ops in let open Evm_stack in
-  let sc = sk.ctr @@ [j] in
-  let strg w = str @@ (forall_vars ea @ [j; w]) in
-  let strg' w = str @@ (forall_vars ea @ [j + one; w]) in
-  let w = Word.const "w" in
-  forall w (strg' w == (ite (w == sk.el j (sc - SI.enc 1)) (sk.el j (sc - SI.enc 2)) (strg w)))
 
 (* effect of instruction on state st after j steps *)
 let enc_instruction ea st j is =
@@ -107,8 +85,8 @@ let enc_instruction ea st j is =
     | NOT -> enc_unaryop st.stack j Word.enc_not
     | SWAP idx -> enc_swap st.stack j (idx_to_enum idx)
     | DUP idx -> enc_dup st.stack j (idx_to_enum idx)
-    | SLOAD -> enc_sload ea st j
-    | SSTORE -> enc_sstore ea st.stack st.storage j
+    | SLOAD -> Evm_storage.enc_sload st.storage st.stack j
+    | SSTORE -> Evm_storage.enc_sstore st.storage st.stack j
     | _ when List.mem uninterpreted is ~equal:Instruction.equal ->
       if is_const is then enc_const_uninterpreted ea st.stack j is
       else enc_nonconst_uninterpreted ea st.stack j is
@@ -119,8 +97,8 @@ let enc_instruction ea st j is =
   let sc = st.stack.ctr @@ [j] in
   let sk n = st.stack.el j n
   and sk' n = st.stack.el (j + one) n in
-  let strg w = st.storage @@ (forall_vars ea @ [j; w])
-  and strg' w = st.storage @@ (forall_vars ea @ [j + one; w]) in
+  let strg w = st.storage.el j w
+  and strg' w = st.storage.el (j + one) w in
   let ug = st.used_gas @@ (forall_vars ea @ [j])
   and ug' = st.used_gas @@ (forall_vars ea @ [j + one]) in
   let enc_used_gas =
@@ -182,27 +160,24 @@ let enc_search_space ea st =
   forall j (((j < ea.kt) && (j >= PC.init)) ==> conj enc_cis && disj in_cis) &&
   ea.kt >= PC.init
 
-let enc_equivalence_at ea sts stt js jt =
+let enc_equivalence_at sts stt js jt =
   let open Z3Ops in
-  let w = Word.const "w" in
   Evm_stack.enc_equiv_at sts.stack stt.stack js jt &&
   (* source and target exceptional halting are equal *)
   sts.exc_halt @@ [js] == stt.exc_halt @@ [jt] &&
-  (* source and target storage are equal *)
-  (forall w ((sts.storage @@ (forall_vars ea @ [js; w]))
-              == (stt.storage @@ (forall_vars ea @ [jt; w]))))
+  Evm_storage.enc_equiv_at sts.storage stt.storage js jt
 
 (* we only demand equivalence at kt *)
 let enc_equivalence ea sts stt =
   let ks = PC.enc (Program.length ea.p) and kt = ea.kt in
   let open Z3Ops in
   (* intially source and target states equal *)
-  enc_equivalence_at ea sts stt PC.init PC.init &&
+  enc_equivalence_at sts stt PC.init PC.init &&
   (* initally source and target gas are equal *)
   sts.used_gas @@ (forall_vars ea @ [PC.init]) ==
   stt.used_gas @@ (forall_vars ea @ [PC.init]) &&
   (* after the programs have run source and target states equal *)
-  enc_equivalence_at ea sts stt ks kt
+  enc_equivalence_at sts stt ks kt
 
 let enc_program ea st =
   List.foldi ~init:(init ea st)
@@ -234,11 +209,11 @@ let enc_trans_val ea tp =
     ((List.foldi tp ~init:(enc_program ea sts)
         ~f:(fun j enc oc -> enc <&> enc_instruction ea stt (PC.enc (PC.of_int j)) oc)) &&
      (* they start in the same state *)
-     (enc_equivalence_at ea sts stt PC.init PC.init) &&
+     (enc_equivalence_at sts stt PC.init PC.init) &&
      sts.used_gas @@ (forall_vars ea @ [PC.init]) ==
      stt.used_gas @@ (forall_vars ea @ [PC.init]) &&
      (* but their final state is different *)
-     ~! (enc_equivalence_at ea sts stt ks kt))
+     ~! (enc_equivalence_at sts stt ks kt))
 
 (* classic superoptimzation: generate & test *)
 let enc_classic_so_test ea cp js =
@@ -255,11 +230,11 @@ let enc_classic_so_test ea cp js =
      (* encode instructions from candidate program *)
      conj (List.map2_exn cp js ~f:(fun i j -> enc_instruction ea stc j i)) &&
      (* they start in the same state *)
-     (enc_equivalence_at ea sts stc PC.init PC.init) &&
+     (enc_equivalence_at sts stc PC.init PC.init) &&
      sts.used_gas @@ (forall_vars ea @ [PC.init]) ==
      stc.used_gas @@ (forall_vars ea @ [PC.init]) &&
      (* and their final state is the same *)
-     (enc_equivalence_at ea sts stc ks kt))
+     (enc_equivalence_at sts stc ks kt))
 
 
 let eval_fis ea m j = eval_state_func_decl m j ea.fis |> Opcode.dec
