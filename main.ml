@@ -55,7 +55,7 @@ let add_step step = function
 
 let is_translation_valid s t =
   let s' = Program.const_to_val s and t' = Program.const_to_val t in
-  let c = enc_trans_val (mk_enc_consts s' (`User [])) t' in
+  let c = enc_trans_val (Enc_consts.mk s' (`User [])) t' in
   match solve_model [c] with
     | None -> true
     | Some _ -> false
@@ -67,7 +67,7 @@ let tvalidate s t sz =
   Word.set_wsz oldwsz; tv
 
 let uso_step p cis tval =
-  let ea = mk_enc_consts p cis in
+  let ea = Enc_consts.mk p cis in
   let c = enc_super_opt ea in
   let m = solve_model [c] in
   let step = match m with
@@ -121,6 +121,7 @@ let bso_step p ea cp tval =
 let rec bso p ea g gm cps cis tval hist_bbs =
   match cps with
   | [] ->
+    let open Enc_consts in
     let (cps, m') = Program.enumerate g ea.cis gm in
     bso p ea (g + 1) m' cps cis tval hist_bbs
   | cp :: cps ->
@@ -135,7 +136,7 @@ let bso_encbl p ea tval hist_bbs =
 
 let bso_bb cis tval hist_bbs bb = match ebso_snippet bb with
   | Some p ->
-    let ea = mk_enc_consts p cis in
+    let ea = Enc_consts.mk p cis in
     bso_encbl p ea tval hist_bbs
   | None -> hist_bbs
 

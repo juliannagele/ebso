@@ -28,7 +28,7 @@ let mk_step input opt optimal tval =
   }
 
 let show_ebso_snippet s =
-  let ea = mk_enc_consts s `All in
+  let ea = Enc_consts.mk s `All in
   [ Program.show_hex s
   ; Program.show_h s
   ; [%show: int] (List.length s)

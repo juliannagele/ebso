@@ -18,6 +18,7 @@ open Ebso
 open Z3util
 open Instruction
 open Evmenc
+open Enc_consts
 
 let suite =
   (* set low for fast testing *)
@@ -29,7 +30,7 @@ let suite =
     "search for 1 instruction program">::(fun _ ->
         let p = [PUSH (Word (Val "1"))] in
         let cis = `User [PUSH (Word (Val "1"))] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let st = mk_state ea "" in
         let c =
           enc_program ea st <&>
@@ -47,7 +48,7 @@ let suite =
     "search for 3 instruction program">::(fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "1")); ADD] in
         let cis = `User [PUSH (Word (Val "1")); ADD] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let st = mk_state ea "" in
         let c =
           enc_program ea st <&>
@@ -68,7 +69,7 @@ let suite =
     "cis contains unused instructions ">::(fun _ ->
         let p = [PUSH (Word (Val "1"))] in
         let cis = `User [PUSH (Word (Val "1")); PUSH (Word (Val "2")); ADD; SUB] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let st = mk_state ea "" in
         let c =
           enc_program ea st <&>
@@ -86,7 +87,7 @@ let suite =
     "cis does not contain required instruction">::(fun _ ->
         let p = [PUSH (Word (Val "1"))] in
         let cis = `User [ADD; SUB] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let st = mk_state ea "" in
         let c =
           enc_program ea st <&>
@@ -101,7 +102,7 @@ let suite =
     "search for 1 instruction program with equivalence constraint">::(fun _ ->
         let p = [PUSH (Word (Val "1"))] in
         let cis = `User [PUSH (Word (Val "1"))] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let st = mk_state ea "" in
         let c =
           enc_program ea st <&>
@@ -119,7 +120,7 @@ let suite =
     "search for 3 instruction program with equivalence constraint">::(fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "1")); ADD] in
         let cis = `User [PUSH (Word (Val "1")); ADD] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let st = mk_state ea "" in
         let c =
           enc_program ea st <&>
@@ -140,7 +141,7 @@ let suite =
       );
 
     "equivalence constraint forces inital stack for target program">:: (fun _ ->
-        let ea = mk_enc_consts [] (`User []) in
+        let ea = Enc_consts.mk [] (`User []) in
         let sts = mk_state ea "_s" in
         let stt = mk_state ea "_t" in
         let c = init ea sts <&> enc_equivalence ea sts stt in
@@ -158,7 +159,7 @@ let suite =
     "search for 1 instruction program with template (fis)">::(fun _ ->
         let p = [PUSH (Word (Val "1"))] in
         let cis = `User [PUSH Tmpl] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let st = mk_state ea "" in
         let c =
           enc_program ea st <&>
@@ -176,7 +177,7 @@ let suite =
     "search for 1 instruction program with template (a)">::(fun _ ->
         let p = [PUSH (Word (Val "1"))] in
         let cis = `User [PUSH Tmpl] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let st = mk_state ea "" in
         let c =
           enc_program ea st <&>
@@ -191,7 +192,7 @@ let suite =
     "search for 3 instruction program with template (fis)">::(fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "1")); ADD] in
         let cis = `User [PUSH Tmpl; ADD] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let st = mk_state ea "" in
         let c =
           enc_program ea st <&>
@@ -214,7 +215,7 @@ let suite =
     "search for 3 instruction program with template (a)">::(fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "1")); ADD] in
         let cis = `User [PUSH Tmpl; ADD] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let st = mk_state ea "" in
         let c =
           enc_program ea st <&>
@@ -232,7 +233,7 @@ let suite =
     "super optimize PUSH PUSH ADD to PUSH" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "1")); ADD] in
         let cis = `User [PUSH (Word (Val "2")); PUSH (Word (Val "1")); ADD; SUB] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -242,7 +243,7 @@ let suite =
     "super optimize PUSH and POP" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); POP;] in
         let cis = `User [PUSH Tmpl; POP;] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -252,7 +253,7 @@ let suite =
     "super optimize x * 0 to POP; PUSH 0" >::(fun _ ->
         let p = [PUSH (Word (Val "0")); MUL] in
         let cis = `User [PUSH Tmpl; POP; MUL; ADD] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -262,7 +263,7 @@ let suite =
     "super optimize x * 1 to x" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); MUL] in
         let cis = `User [PUSH Tmpl; POP; MUL; ADD] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -272,7 +273,7 @@ let suite =
     "super optimize PUSH PUSH ADD to PUSH with template" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "1")); ADD] in
         let cis = `User [PUSH Tmpl; ADD; SUB] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -284,7 +285,7 @@ let suite =
     "super optimize x + 0 with one initial word on stack" >::(fun _ ->
         let p = [PUSH (Word (Val "0")); ADD] in
         let cis = `User [PUSH Tmpl; ADD] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -294,7 +295,7 @@ let suite =
     "super optimize with two initial words on stack" >: test_case ~length:Long (fun _ ->
         let p = [ADD; PUSH (Word (Val "0")); ADD] in
         let cis = `User [ADD] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -304,7 +305,7 @@ let suite =
     "super optimize 3 + (0 - x) to (3 - x) " >::(fun _ ->
         let p = [PUSH (Word (Val "0")); SUB; PUSH (Word (Val "3")); ADD;] in
         let cis = `User [PUSH Tmpl; ADD; SUB;] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -316,7 +317,7 @@ let suite =
     "super optimize NUMBER POP" >:: (fun _ ->
         let p = [NUMBER; POP] in
         let cis = `Progr in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -326,7 +327,7 @@ let suite =
     "super optimize NUMBER PUSH 0 ADD" >:: (fun _ ->
         let p = [NUMBER; PUSH (Word (Val "0")); ADD] in
         let cis = `Progr in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -336,7 +337,7 @@ let suite =
     "super optimize NUMBER NUMBER NUMBER POP" >:: (fun _ ->
         let p = [NUMBER; NUMBER; NUMBER; POP] in
         let cis = `Progr in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -346,7 +347,7 @@ let suite =
     "super optimize NUMBER DUP1" >:: (fun _ ->
         let p = [NUMBER; DUP I] in
         let cis = `Progr in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -358,7 +359,7 @@ let suite =
     "basic, already optimal test" >: test_case ~length:Long (fun _ ->
         let p = [PUSH (Word (Val "1")); BALANCE] in
         let cis = `Progr in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         assert_bool "not unsat" (is_unsat [c])
       );
@@ -366,7 +367,7 @@ let suite =
     "twice BALANCE for same address optimizes to DUP" >: test_case ~length:Long (fun _ ->
         let p = [PUSH (Word (Val "1")); BALANCE; PUSH (Word (Val "1")); BALANCE] in
         let cis = `User [PUSH Tmpl; BALANCE; DUP I] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -376,7 +377,7 @@ let suite =
     "twice BALANCE for different address does not optimize" >:: (fun _ ->
         let p = [PUSH (Word (Val "1")); BALANCE; PUSH (Word (Val "2")); BALANCE] in
         let cis = `Progr in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         assert_bool "not unsat" (is_unsat [c])
       );
@@ -384,7 +385,7 @@ let suite =
     "twice BALANCE for same address to be computed optimizes to DUP" >:: (fun _ ->
         let p = [PUSH (Word (Val "2")); BALANCE; PUSH (Word (Val "1")); PUSH (Word (Val "1")); ADD; BALANCE] in
         let cis = `User [PUSH Tmpl; BALANCE; DUP I] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -394,7 +395,7 @@ let suite =
    "POPing BALANCE optimizes to POP to pop argument of BALANCE" >:: (fun _ ->
         let p = [BALANCE; POP] in
         let cis = `Progr in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -404,7 +405,7 @@ let suite =
     "twice BALANCE for same address given as initial stack arg">: test_case ~length:Long (fun _ ->
         let p = [DUP I; BALANCE; SWAP I; BALANCE] in
         let cis = `Progr in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -414,7 +415,7 @@ let suite =
     "twice EXP for same arguments optimizes to DUP" >: test_case ~length:Long (fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "2")); EXP; PUSH (Word (Val "1")); PUSH (Word (Val "2")); EXP] in
         let cis = `User [PUSH Tmpl; EXP; DUP I] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]

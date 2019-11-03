@@ -15,13 +15,13 @@
 open OUnit2
 open Ebso
 open Instruction
-open Evmenc
+open Enc_consts
 
 let suite =
   "suite" >:::
   [
     "convert between opcode and instruction">:: (fun _ ->
-        let ea = mk_enc_consts [] (`User [SUB; ADD; POP]) in assert_equal ~cmp:[%eq: Instruction.t] ~printer:[%show: Instruction.t]
+        let ea = Enc_consts.mk [] (`User [SUB; ADD; POP]) in assert_equal ~cmp:[%eq: Instruction.t] ~printer:[%show: Instruction.t]
           ADD (Opcode.to_instr ea.opcodes (Opcode.from_instr ea.opcodes ADD))
       );
 ]

@@ -19,13 +19,14 @@ open Z3util
 open Instruction
 open Evmenc
 open Pusharg
+open Enc_consts
 
 let gas_cost =
   [
     "cost of a single SSTORE with value 0, no refund" >:: (fun _ ->
         let k = Word (Val "1") in
         let p = [PUSH (Word (Val "0")); PUSH k; SSTORE] in
-        let ea = mk_enc_consts p (`User []) in
+        let ea = Enc_consts.mk p (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -38,7 +39,7 @@ let gas_cost =
     "cost of a single SSTORE with value 0, with refund" >:: (fun _ ->
         let k = Word (Val "1") in
         let p = [PUSH (Word (Val "0")); PUSH k; SSTORE] in
-        let ea = mk_enc_consts p (`User []) in
+        let ea = Enc_consts.mk p (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -51,7 +52,7 @@ let gas_cost =
     "cost of a single SSTORE with non-zero value, overwriting zero" >:: (fun _ ->
         let k = Word (Val "1") in
         let p = [PUSH (Word (Val "2")); PUSH k; SSTORE] in
-        let ea = mk_enc_consts p (`User []) in
+        let ea = Enc_consts.mk p (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -64,7 +65,7 @@ let gas_cost =
     "cost of a single SSTORE with non-zero value, overwriting non-zero" >:: (fun _ ->
         let k = Word (Val "1") in
         let p = [PUSH (Word (Val "3")); PUSH k; SSTORE] in
-        let ea = mk_enc_consts p (`User []) in
+        let ea = Enc_consts.mk p (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -77,7 +78,7 @@ let gas_cost =
     "cost of SSTORing 0 to same key twice, no refund" >:: (fun _ ->
         let k = Word (Val "1") in
         let p = [PUSH (Word (Val "0")); PUSH k; SSTORE; PUSH (Word (Val "0")); PUSH k; SSTORE] in
-        let ea = mk_enc_consts p (`User []) in
+        let ea = Enc_consts.mk p (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -90,7 +91,7 @@ let gas_cost =
     "cost of SSTORing 0 to same key twice, with refund" >:: (fun _ ->
         let k = Word (Val "1") in
         let p = [PUSH (Word (Val "0")); PUSH k; SSTORE; PUSH (Word (Val "0")); PUSH k; SSTORE] in
-        let ea = mk_enc_consts p (`User []) in
+        let ea = Enc_consts.mk p (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -103,7 +104,7 @@ let gas_cost =
     "cost of SSTORing 0 then non-zero to same key, no refund" >:: (fun _ ->
         let k = Word (Val "1") in
         let p = [PUSH (Word (Val "0")); PUSH k; SSTORE; PUSH (Word (Val "2")); PUSH k; SSTORE] in
-        let ea = mk_enc_consts p (`User []) in
+        let ea = Enc_consts.mk p (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -116,7 +117,7 @@ let gas_cost =
     "cost of SSTORing 0 then non-zero to same key, with refund" >:: (fun _ ->
         let k = Word (Val "1") in
         let p = [PUSH (Word (Val "0")); PUSH k; SSTORE; PUSH (Word (Val "2")); PUSH k; SSTORE] in
-        let ea = mk_enc_consts p (`User []) in
+        let ea = Enc_consts.mk p (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -129,7 +130,7 @@ let gas_cost =
     "cost of SSTORing non-zero then zero to same key, overwriting zero" >:: (fun _ ->
         let k = Word (Val "1") in
         let p = [PUSH (Word (Val "2")); PUSH k; SSTORE; PUSH (Word (Val "0")); PUSH k; SSTORE] in
-        let ea = mk_enc_consts p (`User []) in
+        let ea = Enc_consts.mk p (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -142,7 +143,7 @@ let gas_cost =
     "cost of SSTORing non-zero then zero to same key, overwriting non-zero" >:: (fun _ ->
         let k = Word (Val "1") in
         let p = [PUSH (Word (Val "2")); PUSH k; SSTORE; PUSH (Word (Val "0")); PUSH k; SSTORE] in
-        let ea = mk_enc_consts p (`User []) in
+        let ea = Enc_consts.mk p (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -155,7 +156,7 @@ let gas_cost =
     "cost of SSTORing non-zero to same key twice, overwriting zero" >:: (fun _ ->
         let k = Word (Val "1") in
         let p = [PUSH (Word (Val "2")); PUSH k; SSTORE; PUSH (Word (Val "3")); PUSH k; SSTORE] in
-        let ea = mk_enc_consts p (`User []) in
+        let ea = Enc_consts.mk p (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -168,7 +169,7 @@ let gas_cost =
     "cost of SSTORing non-zero to same key twice, overwriting non-zero" >:: (fun _ ->
         let k = Word (Val "1") in
         let p = [PUSH (Word (Val "2")); PUSH k; SSTORE; PUSH (Word (Val "3")); PUSH k; SSTORE] in
-        let ea = mk_enc_consts p (`User []) in
+        let ea = Enc_consts.mk p (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -180,7 +181,7 @@ let gas_cost =
 
     "cost of SSTOREing an input value" >:: (fun _ ->
         let p = [PUSH (Word (Val "9")); SSTORE] in
-        let ea = mk_enc_consts p (`User []) in
+        let ea = Enc_consts.mk p (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -192,7 +193,7 @@ let gas_cost =
 
     "cost of SSTOREing an input value with stack operations between" >:: (fun _ ->
         let p = [PUSH (Word (Val "9")); DUP II; SWAP I; SSTORE; POP] in
-        let ea = mk_enc_consts p (`User []) in
+        let ea = Enc_consts.mk p (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -208,7 +209,7 @@ let effect =
   [
     "Non-accessed keys evaluate to default value" >:: (fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "2")); SSTORE] in
-        let ea = mk_enc_consts p (`User []) in
+        let ea = Enc_consts.mk p (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -222,7 +223,7 @@ let effect =
 
     "No SLOAD, return variable for key of SSTORE" >:: (fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "2")); SSTORE] in
-        let ea = mk_enc_consts p (`User []) in
+        let ea = Enc_consts.mk p (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -236,7 +237,7 @@ let effect =
     "SLOAD a key" >:: (fun _ ->
         let k = Word (Val "1") in
         let p = [PUSH k; SLOAD] in
-        let ea = mk_enc_consts p (`User []) in
+        let ea = Enc_consts.mk p (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -250,7 +251,7 @@ let effect =
         let k1 = Word (Val "1") in
         let k2 = Word (Val "2") in
         let p = [PUSH k1; SLOAD] in
-        let ea = mk_enc_consts p (`User []) in
+        let ea = Enc_consts.mk p (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -263,7 +264,7 @@ let effect =
     "SLOAD twice from same key" >:: (fun _ ->
         let k = Word (Val "1") in
         let p = [PUSH k; SLOAD; PUSH k; SLOAD] in
-        let ea = mk_enc_consts p (`User []) in
+        let ea = Enc_consts.mk p (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -276,7 +277,7 @@ let effect =
     "SLOAD twice from different key" >:: (fun _ ->
         let k1 = Word (Val "1") and k2 = Word (Val "2") in
         let p = [PUSH k1; SLOAD; PUSH k2; SLOAD] in
-        let ea = mk_enc_consts p (`User []) in
+        let ea = Enc_consts.mk p (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -292,7 +293,7 @@ let effect =
         let k = Word (Val "1") in
         let v = Word (Val "2") in
         let p = [PUSH v; PUSH k; SSTORE; PUSH k; SLOAD] in
-        let ea = mk_enc_consts p (`User []) in
+        let ea = Enc_consts.mk p (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -308,7 +309,7 @@ let effect =
         let k = Word (Val "1") in
         let v = Word (Val "2") in
         let p = [PUSH k; SLOAD; PUSH v; PUSH k; SSTORE; PUSH k; SLOAD] in
-        let ea = mk_enc_consts p (`User []) in
+        let ea = Enc_consts.mk p (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -322,7 +323,7 @@ let effect =
         let k = Word (Val "1") in
         let v = Word (Val "2") in
         let p = [PUSH k; SLOAD; PUSH v; PUSH k; SSTORE; PUSH k; SLOAD] in
-        let ea = mk_enc_consts p (`User []) in
+        let ea = Enc_consts.mk p (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -336,7 +337,7 @@ let effect =
         let k1 = Word (Val "1") and k2 = Word (Val "3") in
         let v = Word (Val "4") in
         let p = [PUSH k1; SLOAD; PUSH v; PUSH k1; SSTORE; PUSH k2; SLOAD] in
-        let ea = mk_enc_consts p (`User []) in
+        let ea = Enc_consts.mk p (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -352,7 +353,7 @@ let effect =
         let v1 = Word (Val "2") and v2 = Word (Val "3") in
         let p1 = [PUSH v1; PUSH k; SSTORE] and p2 = [PUSH v2; PUSH k; SSTORE] in
         let p = p1 @ p2 in
-        let ea = mk_enc_consts p (`User []) in
+        let ea = Enc_consts.mk p (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -366,7 +367,7 @@ let effect =
     "SSTORE input from stack" >:: (fun _ ->
         let k = Word (Val "1") in
         let p = [PUSH k; SSTORE] in
-        let ea = mk_enc_consts p (`User []) in
+        let ea = Enc_consts.mk p (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -380,7 +381,7 @@ let effect =
     "SSTORE NUMBER" >:: (fun _ ->
         let k = Word (Val "1") in
         let p = [NUMBER; PUSH k; SSTORE] in
-        let ea = mk_enc_consts p (`User []) in
+        let ea = Enc_consts.mk p (`User []) in
         let st = mk_state ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -398,7 +399,7 @@ let superoptimize =
         let key = Word (Val "1") in
         let p = [PUSH key; SLOAD; PUSH key; SLOAD] in
         let cis = `User [PUSH Tmpl; SLOAD; DUP I] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -409,7 +410,7 @@ let superoptimize =
         let key = Word (Val "2") in
         let p = [PUSH key; SLOAD; PUSH (Word (Val "1")); PUSH (Word (Val "1")); ADD; SLOAD] in
         let cis = `User [PUSH Tmpl; SLOAD; DUP I] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -421,7 +422,7 @@ let superoptimize =
         let key2 = Word (Val "2") in
         let p = [PUSH key1; SLOAD; PUSH key2; SLOAD] in
         let cis = `User [PUSH Tmpl; SLOAD; DUP I] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         assert_bool "not unsat" (is_unsat [c])
       );
@@ -431,7 +432,7 @@ let superoptimize =
         let key2 = Word (Val "2") in
         let p = [PUSH key1; SLOAD; PUSH (Word (Val "1")); PUSH (Word (Val "1")); ADD; SLOAD] in
         let cis = `User [PUSH Tmpl; SLOAD; ADD] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -443,7 +444,7 @@ let superoptimize =
         let key = Word (Val "2") in
         let p = [PUSH value; PUSH key; SSTORE; PUSH key; SLOAD] in
         let cis = `User [PUSH Tmpl; SSTORE; SLOAD] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -454,7 +455,7 @@ let superoptimize =
         let key = Word (Val "2") in
         let p = [PUSH key; SLOAD; PUSH key; SSTORE] in
         let cis = `User [PUSH Tmpl; SSTORE; SLOAD] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -466,7 +467,7 @@ let superoptimize =
         let key = Word (Val "3") in
         let p = [PUSH value1; PUSH key; SSTORE; PUSH value2; PUSH key; SSTORE] in
         let cis = `User [PUSH Tmpl; SSTORE] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -479,7 +480,7 @@ let superoptimize =
         let value = Word (Val "3") in
         let p = [PUSH value; PUSH key1; SSTORE; PUSH value; PUSH key2; SSTORE] in
         let cis = `User [PUSH Tmpl; SSTORE; DUP I] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         assert_bool "not unsat" (is_unsat [c])
       );
@@ -488,7 +489,7 @@ let superoptimize =
         let key = Word (Val "3") in
         let p = [PUSH key; SSTORE; PUSH (Word (Val "2")); POP] in
         let cis = `User [PUSH Tmpl; SSTORE] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -499,7 +500,7 @@ let superoptimize =
         let key = Word (Val "3") in
         let p = [PUSH (Word (Val "1")); POP; NUMBER; PUSH key; SSTORE] in
         let cis = `User [PUSH Tmpl; SSTORE; NUMBER] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -510,7 +511,7 @@ let superoptimize =
         let key = Word (Val "3") in
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "1")); ADD; BLOCKHASH; PUSH key; SSTORE] in
         let cis = `User [PUSH Tmpl; SSTORE; BLOCKHASH] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
@@ -521,7 +522,7 @@ let superoptimize =
         let key = Word (Val "3") in
         let p = [PUSH key; SLOAD; BLOCKHASH; PUSH key; POP] in
         let cis = `User [PUSH Tmpl; SLOAD; BLOCKHASH] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let c = enc_super_opt ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
