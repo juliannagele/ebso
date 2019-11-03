@@ -50,3 +50,41 @@ val to_val : t -> t
 val to_const : t -> t
 
 val fits_wsz : int -> t -> bool
+
+val enc_add : Z3.Expr.expr -> Z3.Expr.expr -> Z3.Expr.expr
+
+val enc_sub : Z3.Expr.expr -> Z3.Expr.expr -> Z3.Expr.expr
+
+val enc_mul : Z3.Expr.expr -> Z3.Expr.expr -> Z3.Expr.expr
+
+val enc_div : Z3.Expr.expr -> Z3.Expr.expr -> Z3.Expr.expr
+
+val enc_sdiv : Z3.Expr.expr -> Z3.Expr.expr -> Z3.Expr.expr
+
+val enc_mod : Z3.Expr.expr -> Z3.Expr.expr -> Z3.Expr.expr
+
+val enc_smod : Z3.Expr.expr -> Z3.Expr.expr -> Z3.Expr.expr
+
+val enc_lt : Z3.Expr.expr -> Z3.Expr.expr -> Z3.Expr.expr
+
+val enc_gt : Z3.Expr.expr -> Z3.Expr.expr -> Z3.Expr.expr
+
+val enc_slt : Z3.Expr.expr -> Z3.Expr.expr -> Z3.Expr.expr
+
+val enc_sgt : Z3.Expr.expr -> Z3.Expr.expr -> Z3.Expr.expr
+
+val enc_eq : Z3.Expr.expr -> Z3.Expr.expr -> Z3.Expr.expr
+
+val enc_and : Z3.Expr.expr -> Z3.Expr.expr -> Z3.Expr.expr
+
+val enc_or : Z3.Expr.expr -> Z3.Expr.expr -> Z3.Expr.expr
+
+val enc_xor : Z3.Expr.expr -> Z3.Expr.expr -> Z3.Expr.expr
+
+val enc_addmod : Z3.Expr.expr -> Z3.Expr.expr -> Z3.Expr.expr -> Z3.Expr.expr
+
+val enc_mulmod : Z3.Expr.expr -> Z3.Expr.expr -> Z3.Expr.expr -> Z3.Expr.expr
+
+val enc_not : Z3.Expr.expr -> Z3.Expr.expr
+
+val enc_iszero : Z3.Expr.expr -> Z3.Expr.expr

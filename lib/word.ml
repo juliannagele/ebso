@@ -72,3 +72,63 @@ let fits_wsz wsz = function
   | w ->
     let max_repr = Z.pow (Z.of_int 2) wsz in
     Z.of_string (to_dec w) < max_repr
+
+let enc_add = (<+>)
+let enc_sub = (<->)
+let enc_mul = (<*>)
+
+let enc_div num denom =
+  (* EVM defines x / 0 = 0, Z3 says it's undefined *)
+  ite (denom <==> enc_int 0) (enc_int 0) (udiv num denom)
+
+let enc_sdiv num denom =
+  (* EVM defines x / 0 = 0, Z3 says it's undefined *)
+  ite (denom <==> enc_int 0) (enc_int 0) (sdiv num denom)
+
+let enc_mod num denom =
+  (* EVM defines x mod 0 = 0, Z3 says it's undefined *)
+  ite (denom <==> enc_int 0) (enc_int 0) (urem num denom)
+
+let enc_smod num denom =
+  (* Z3 has srem and smod; srem takes sign from dividend (= num),
+     smod from divisor (= denom); EVM takes the latter *)
+  (* EVM defines x smod 0 = 0, Z3 says it's undefined *)
+  ite (denom <==> enc_int 0) (enc_int 0) (srem num denom)
+
+let enc_lt x y = ite (Z3.BitVector.mk_ult !ctxt x y) (enc_int 1) (enc_int 0)
+
+let enc_gt x y = ite (Z3.BitVector.mk_ugt !ctxt x y) (enc_int 1) (enc_int 0)
+
+let enc_slt x y = ite (x <<> y) (enc_int 1) (enc_int 0)
+
+let enc_sgt x y = ite (x <>> y) (enc_int 1) (enc_int 0)
+
+let enc_eq x y = ite (x <==> y) (enc_int 1) (enc_int 0)
+
+let enc_and = Z3.BitVector.mk_and !ctxt
+let enc_or = Z3.BitVector.mk_or !ctxt
+let enc_xor = Z3.BitVector.mk_xor !ctxt
+
+let enc_addmod x y denom =
+  let open Z3Ops in
+  (* EVM defines (x + y) mod 0 = 0 as 0, Z3 says it's undefined *)
+  ite (denom == enc_int 0) (enc_int 0) (
+    (* truncate back to word size, safe because mod denom brings us back to range *)
+    extract (Int.pred !size) 0
+      (* requires non overflowing add, pad with 0s to avoid overflow *)
+      (urem ((zeroext 1 x) + (zeroext 1 y)) (zeroext 1 denom)))
+
+let enc_mulmod x y denom =
+  let open Z3Ops in
+  (* EVM defines (x + y) mod 0 = 0 as 0, Z3 says it's undefined *)
+  ite (denom == enc_int 0) (enc_int 0) (
+    (* truncate back to word size, safe because mod denom brings us back to range *)
+    extract (Int.pred !size) 0
+      (* requires non overflowing mul, pad with 0s to avoid overflow *)
+      (urem ((zeroext !size x) * (zeroext !size y)) (zeroext !size denom)))
+
+let enc_not = Z3.BitVector.mk_not !ctxt
+
+let enc_iszero w =
+  let open Z3Ops in
+  ite (w == (enc_int 0)) (enc_int 1) (enc_int 0)

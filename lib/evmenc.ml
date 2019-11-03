@@ -103,76 +103,6 @@ let enc_ternaryop ea st j op =
   let w3 = sk (sc - SI.enc 3) and w2 = sk (sc - SI.enc 2) and w1 = sk (sc - SI.enc 1) in
   sk' (sc' - SI.enc 1) == op w1 w2 w3
 
-let enc_add ea st j = enc_binop ea st j (<+>)
-let enc_sub ea st j = enc_binop ea st j (<->)
-let enc_mul ea st j = enc_binop ea st j (<*>)
-let enc_div ea st j =
-  (* EVM defines x / 0 = 0, Z3 says it's undefined *)
-  let div num denom = ite (denom <==> Word.enc_int 0) (Word.enc_int 0) (udiv num denom) in
-  enc_binop ea st j div
-let enc_sdiv ea st j =
-  (* EVM defines x / 0 = 0, Z3 says it's undefined *)
-  let sdiv num denom = ite (denom <==> Word.enc_int 0) (Word.enc_int 0) (sdiv num denom) in
-  enc_binop ea st j sdiv
-let enc_mod ea st j =
-  (* EVM defines x mod 0 = 0, Z3 says it's undefined *)
-  let evmmod num denom = ite (denom <==> Word.enc_int 0) (Word.enc_int 0) (urem num denom) in
-  enc_binop ea st j evmmod
-let enc_smod ea st j =
-  (* Z3 has srem and smod; srem takes sign from dividend (= num),
-     smod from divisor (= denom); EVM takes the latter *)
-  (* EVM defines x smod 0 = 0, Z3 says it's undefined *)
-  let evmsmod num denom = ite (denom <==> Word.enc_int 0) (Word.enc_int 0) (srem num denom) in
-  enc_binop ea st j evmsmod
-
-let enc_lt ea st j =
-  let bvlt x y = ite (Z3.BitVector.mk_ult !ctxt x y) (Word.enc_int 1) (Word.enc_int 0) in
-  enc_binop ea st j bvlt
-let enc_gt ea st j =
-  let bvgt x y = ite (Z3.BitVector.mk_ugt !ctxt x y) (Word.enc_int 1) (Word.enc_int 0) in
-  enc_binop ea st j bvgt
-let enc_slt ea st j =
-  let bvslt x y = ite (x <<> y) (Word.enc_int 1) (Word.enc_int 0) in
-  enc_binop ea st j bvslt
-let enc_sgt ea st j =
-  let bvsgt x y = ite (x <>> y) (Word.enc_int 1) (Word.enc_int 0) in
-  enc_binop ea st j bvsgt
-let enc_eq ea st j =
-  let bveq x y = ite (x <==> y) (Word.enc_int 1) (Word.enc_int 0) in
-  enc_binop ea st j bveq
-
-let enc_and ea st j = enc_binop ea st j (Z3.BitVector.mk_and !ctxt)
-let enc_or ea st j = enc_binop ea st j (Z3.BitVector.mk_or !ctxt)
-let enc_xor ea st j = enc_binop ea st j (Z3.BitVector.mk_xor !ctxt)
-
-let enc_addmod ea st j =
-  let open Z3Ops in
-  enc_ternaryop ea st j (fun x y denom ->
-  (* EVM defines (x + y) mod 0 = 0 as 0, Z3 says it's undefined *)
-      ite (denom == Word.enc_int 0) (Word.enc_int 0) (
-        (* truncate back to word size, safe because mod denom brings us back to range *)
-        extract (Int.pred !Word.size) 0
-          (* requires non overflowing add, pad with 0s to avoid overflow *)
-          (urem ((zeroext 1 x) + (zeroext 1 y)) (zeroext 1 denom))))
-
-let enc_mulmod ea st j =
-  let open Z3Ops in
-  enc_ternaryop ea st j (fun x y denom ->
-      (* EVM defines (x + y) mod 0 = 0 as 0, Z3 says it's undefined *)
-      ite (denom == Word.enc_int 0) (Word.enc_int 0) (
-        (* truncate back to word size, safe because mod denom brings us back to range *)
-        extract (Int.pred !Word.size) 0
-          (* requires non overflowing mul, pad with 0s to avoid overflow *)
-          (urem ((zeroext !Word.size x) * (zeroext !Word.size y)) (zeroext !Word.size denom))))
-
-let enc_not ea st j =
-  (* the new top word is the bitwise negation of the old top word *)
-  enc_unaryop ea st j (Z3.BitVector.mk_not !ctxt)
-
-let enc_iszero ea st j =
-  let open Z3Ops in
-  enc_unaryop ea st j (fun w -> ite (w == (Word.enc_int 0)) (Word.enc_int 1) (Word.enc_int 0))
-
 let enc_swap ea st j idx =
   let sc_idx = SI.enc (idx + 1) in
   let open Z3Ops in
@@ -235,25 +165,25 @@ let enc_instruction ea st j is =
     match is with
     | PUSH x -> enc_push ea st j x
     | POP -> enc_pop ea st j
-    | ADD -> enc_add ea st j
-    | SUB -> enc_sub ea st j
-    | MUL -> enc_mul ea st j
-    | DIV -> enc_div ea st j
-    | SDIV -> enc_sdiv ea st j
-    | MOD -> enc_mod ea st j
-    | SMOD -> enc_smod ea st j
-    | ADDMOD -> enc_addmod ea st j
-    | MULMOD -> enc_mulmod ea st j
-    | LT -> enc_lt ea st j
-    | GT -> enc_gt ea st j
-    | SLT -> enc_slt ea st j
-    | SGT -> enc_sgt ea st j
-    | EQ -> enc_eq ea st j
-    | ISZERO -> enc_iszero ea st j
-    | AND -> enc_and ea st j
-    | OR -> enc_or ea st j
-    | XOR -> enc_xor ea st j
-    | NOT -> enc_not ea st j
+    | ADD -> enc_binop ea st j Word.enc_add
+    | SUB -> enc_binop ea st j Word.enc_sub
+    | MUL -> enc_binop ea st j Word.enc_mul
+    | DIV -> enc_binop ea st j Word.enc_div
+    | SDIV -> enc_binop ea st j Word.enc_sdiv
+    | MOD -> enc_binop ea st j Word.enc_mod
+    | SMOD -> enc_binop ea st j Word.enc_smod
+    | ADDMOD -> enc_ternaryop ea st j Word.enc_addmod
+    | MULMOD -> enc_ternaryop ea st j Word.enc_mulmod
+    | LT -> enc_binop ea st j Word.enc_lt
+    | GT -> enc_binop ea st  j Word.enc_gt
+    | SLT -> enc_binop ea st j Word.enc_slt
+    | SGT -> enc_binop ea st j Word.enc_sgt
+    | EQ -> enc_binop ea st j Word.enc_eq
+    | ISZERO -> enc_unaryop ea st j Word.enc_iszero
+    | AND -> enc_binop ea st j Word.enc_and
+    | OR -> enc_binop ea st j Word.enc_or
+    | XOR -> enc_binop ea st j Word.enc_xor
+    | NOT -> enc_unaryop ea st j Word.enc_not
     | SWAP idx -> enc_swap ea st j (idx_to_enum idx)
     | DUP idx -> enc_dup ea st j (idx_to_enum idx)
     | SLOAD -> enc_sload ea st j
