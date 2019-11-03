@@ -91,9 +91,9 @@ let enc_binop ea st j op =
   let open Z3Ops in
   let sk n = st.stack @@ (forall_vars ea @ [j; n])
   and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
-  let sc = st.stack_ctr @@ [j] in
+  let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   (* the new top word is the result of applying op to the previous two *)
-  (sk' (sc - SI.enc 2) == op (sk (sc - SI.enc 1)) (sk (sc - SI.enc 2)))
+  (sk' (sc' - SI.enc 1) == op (sk (sc - SI.enc 1)) (sk (sc - SI.enc 2)))
 
 let enc_ternaryop ea st j op =
   let open Z3Ops in
