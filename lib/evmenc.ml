@@ -24,17 +24,17 @@ module GC = Gas_cost
 module SI = Stack_index
 
 (* get the top d elements of the stack *)
-let enc_top_d_of_sk ea st j d =
+let enc_top_d_of_sk st j d =
   let open Z3Ops in
   let pos l = (st.stack_ctr @@ [j]) - SI.enc (Int.succ l) in
-  List.init d ~f:(fun l -> st.stack @@ (forall_vars ea @ [j; pos l]))
+  List.init d ~f:(fun l -> st.stack j (pos l))
 
 let init_rom ea st i rom =
   let open Z3Ops in
   let d = arity i in
   let js = poss_of_instr ea.p i in
   let us = Map.find_exn ea.uis i in
-  let ajs = List.map js ~f:(fun j -> enc_top_d_of_sk ea st (PC.enc j) d) in
+  let ajs = List.map js ~f:(fun j -> enc_top_d_of_sk st (PC.enc j) d) in
   let w_dflt = Word.enc_int 0 in
   let ws = List.init d ~f:(fun l -> Word.const ("w" ^ [%show: int] l)) in
   foralls ws (
@@ -46,7 +46,7 @@ let init_rom ea st i rom =
 let init_storage ea st =
   let open Z3Ops in
   let js = poss_of_instr ea.p SLOAD @ poss_of_instr ea.p SSTORE in
-  let ks = List.concat_map js ~f:(fun j -> enc_top_d_of_sk ea st (PC.enc j) 1) in
+  let ks = List.concat_map js ~f:(fun j -> enc_top_d_of_sk st (PC.enc j) 1) in
   let w_dflt = Word.enc_int 0 in
   let w = Word.const "w" in
   forall w (
@@ -61,8 +61,7 @@ let init ea st =
   (* set stack counter to skd *)
   (st.stack_ctr @@ [PC.init] == SI.enc skd)
   (* set inital words on stack *)
-  && conj (List.mapi ea.xs ~f:(fun i x ->
-      st.stack @@ (forall_vars ea @ [PC.init; SI.enc i]) == x))
+  && conj (List.mapi ea.xs ~f:(fun i x -> st.stack PC.init (SI.enc i) == x))
   && (st.exc_halt @@ [PC.init] == btm)
   && (st.used_gas @@ (forall_vars ea @ [PC.init]) == GC.enc GC.zero)
   && init_storage ea st
@@ -71,7 +70,7 @@ let init ea st =
 let enc_push ea st j x =
   let open Z3Ops in
   (* the stack after the PUSH *)
-  let sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
+  let sk' n = st.stack (j + one) n in
   (* the stack counter before the PUSH *)
   let sc = st.stack_ctr @@ [j] in
   (* the new top word will be x *)
@@ -80,34 +79,34 @@ let enc_push ea st j x =
 (* the only effect of POP is to change the stack counter *)
 let enc_pop _ _ _ = top
 
-let enc_unaryop ea st j op =
+let enc_unaryop st j op =
   let open Z3Ops in
-  let sk n = st.stack @@ (forall_vars ea @ [j; n])
-  and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
+  let sk n = st.stack j n
+  and sk' n = st.stack (j + one) n in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   (sk' (sc' - SI.enc 1) == op (sk (sc - SI.enc 1)))
 
-let enc_binop ea st j op =
+let enc_binop st j op =
   let open Z3Ops in
-  let sk n = st.stack @@ (forall_vars ea @ [j; n])
-  and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
+  let sk n = st.stack j n
+  and sk' n = st.stack (j + one) n in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   (* the new top word is the result of applying op to the previous two *)
   (sk' (sc' - SI.enc 1) == op (sk (sc - SI.enc 1)) (sk (sc - SI.enc 2)))
 
-let enc_ternaryop ea st j op =
+let enc_ternaryop st j op =
   let open Z3Ops in
-  let sk n = st.stack @@ (forall_vars ea @ [j; n])
-  and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
+  let sk n = st.stack j n
+  and sk' n = st.stack (j + one) n in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   let w3 = sk (sc - SI.enc 3) and w2 = sk (sc - SI.enc 2) and w1 = sk (sc - SI.enc 1) in
   sk' (sc' - SI.enc 1) == op w1 w2 w3
 
-let enc_swap ea st j idx =
+let enc_swap st j idx =
   let sc_idx = SI.enc (idx + 1) in
   let open Z3Ops in
-  let sk n = st.stack @@ (forall_vars ea @ [j; n])
-  and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
+  let sk n = st.stack j n
+  and sk' n = st.stack (j + one) n in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   (* the new top word is the 1+idx'th from the old stack *)
   (sk' (sc' - SI.enc 1) == sk (sc - sc_idx)) &&
@@ -118,11 +117,11 @@ let enc_swap ea st j idx =
       let sc_iidx = SI.enc (Int.(-) idx i) in
       (sk' (sc' - sc_iidx) == sk (sc - sc_iidx))))
 
-let enc_dup ea st j idx =
+let enc_dup st j idx =
   let sc_idx = SI.enc idx in
   let open Z3Ops in
-  let sk n = st.stack @@ (forall_vars ea @ [j; n])
-  and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
+  let sk n = st.stack j n
+  and sk' n = st.stack (j + one) n in
   let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   (* the new top word is the idx'th from the old stack *)
   (sk' (sc' - SI.enc 1) == sk (sc - sc_idx)) &&
@@ -138,17 +137,17 @@ let enc_const_uninterpreted ea st j i =
 let enc_nonconst_uninterpreted ea st j i =
   let rom = Map.find_exn ea.roms i in
   let open Z3Ops in
-  let sk' n = st.stack @@ (forall_vars ea @ [j + one; n])
+  let sk' n = st.stack (j + one) n
   and sc'= st.stack_ctr @@ [j + one] in
-  let ajs = enc_top_d_of_sk ea st j (arity i) in
+  let ajs = enc_top_d_of_sk st j (arity i) in
   (sk' (sc' - SI.enc 1)) == (rom @@ ((forall_vars ea) @ ajs))
 
 let enc_sload ea st j =
-  enc_unaryop ea st j (fun w -> (st.storage <@@> (forall_vars ea) @ [j; w]))
+  enc_unaryop st j (fun w -> (st.storage <@@> (forall_vars ea) @ [j; w]))
 
 let enc_sstore ea st j =
   let open Z3Ops in
-  let sk n = st.stack @@ (forall_vars ea @ [j; n]) and sc = st.stack_ctr @@ [j] in
+  let sk n = st.stack j n and sc = st.stack_ctr @@ [j] in
   let strg w = st.storage @@ (forall_vars ea @ [j; w]) in
   let strg' w = st.storage @@ (forall_vars ea @ [j + one; w]) in
   let w = Word.const "w" in
@@ -160,27 +159,27 @@ let enc_instruction ea st j is =
     match is with
     | PUSH x -> enc_push ea st j x
     | POP -> enc_pop ea st j
-    | ADD -> enc_binop ea st j Word.enc_add
-    | SUB -> enc_binop ea st j Word.enc_sub
-    | MUL -> enc_binop ea st j Word.enc_mul
-    | DIV -> enc_binop ea st j Word.enc_div
-    | SDIV -> enc_binop ea st j Word.enc_sdiv
-    | MOD -> enc_binop ea st j Word.enc_mod
-    | SMOD -> enc_binop ea st j Word.enc_smod
-    | ADDMOD -> enc_ternaryop ea st j Word.enc_addmod
-    | MULMOD -> enc_ternaryop ea st j Word.enc_mulmod
-    | LT -> enc_binop ea st j Word.enc_lt
-    | GT -> enc_binop ea st  j Word.enc_gt
-    | SLT -> enc_binop ea st j Word.enc_slt
-    | SGT -> enc_binop ea st j Word.enc_sgt
-    | EQ -> enc_binop ea st j Word.enc_eq
-    | ISZERO -> enc_unaryop ea st j Word.enc_iszero
-    | AND -> enc_binop ea st j Word.enc_and
-    | OR -> enc_binop ea st j Word.enc_or
-    | XOR -> enc_binop ea st j Word.enc_xor
-    | NOT -> enc_unaryop ea st j Word.enc_not
-    | SWAP idx -> enc_swap ea st j (idx_to_enum idx)
-    | DUP idx -> enc_dup ea st j (idx_to_enum idx)
+    | ADD -> enc_binop st j Word.enc_add
+    | SUB -> enc_binop st j Word.enc_sub
+    | MUL -> enc_binop st j Word.enc_mul
+    | DIV -> enc_binop st j Word.enc_div
+    | SDIV -> enc_binop st j Word.enc_sdiv
+    | MOD -> enc_binop st j Word.enc_mod
+    | SMOD -> enc_binop st j Word.enc_smod
+    | ADDMOD -> enc_ternaryop st j Word.enc_addmod
+    | MULMOD -> enc_ternaryop st j Word.enc_mulmod
+    | LT -> enc_binop st j Word.enc_lt
+    | GT -> enc_binop st  j Word.enc_gt
+    | SLT -> enc_binop st j Word.enc_slt
+    | SGT -> enc_binop st j Word.enc_sgt
+    | EQ -> enc_binop st j Word.enc_eq
+    | ISZERO -> enc_unaryop st j Word.enc_iszero
+    | AND -> enc_binop st j Word.enc_and
+    | OR -> enc_binop st j Word.enc_or
+    | XOR -> enc_binop st j Word.enc_xor
+    | NOT -> enc_unaryop st j Word.enc_not
+    | SWAP idx -> enc_swap st j (idx_to_enum idx)
+    | DUP idx -> enc_dup st j (idx_to_enum idx)
     | SLOAD -> enc_sload ea st j
     | SSTORE -> enc_sstore ea st j
     | _ when List.mem uninterpreted is ~equal:Instruction.equal ->
@@ -191,8 +190,8 @@ let enc_instruction ea st j is =
   let (d, a) = delta_alpha is in let diff = (a - d) in
   let open Z3Ops in
   let sc = st.stack_ctr @@ [j] in
-  let sk n = st.stack @@ (forall_vars ea @ [j; n])
-  and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
+  let sk n = st.stack j n
+  and sk' n = st.stack (j + one) n in
   let strg w = st.storage @@ (forall_vars ea @ [j; w])
   and strg' w = st.storage @@ (forall_vars ea @ [j + one; w]) in
   let ug = st.used_gas @@ (forall_vars ea @ [j])
@@ -267,8 +266,8 @@ let enc_equivalence_at ea sts stt js jt =
   (* source and target stack are equal below the stack counter;
      note that it doesn't matter which stack counter is used, they are equal *)
   (forall n ((n < stt.stack_ctr @@ [jt]) ==>
-             ((sts.stack @@ (forall_vars ea @ [js; n]))
-              == (stt.stack @@ (forall_vars ea @ [jt; n]))))) &&
+             ((sts.stack js n)
+              == (stt.stack jt n)))) &&
   (* source and target storage are equal *)
   (forall w ((sts.storage @@ (forall_vars ea @ [js; w]))
               == (stt.storage @@ (forall_vars ea @ [jt; w]))))
@@ -346,7 +345,7 @@ let eval_state_func_decl  m j ?(n = []) ?(xs = []) f =
   eval_func_decl m f (xs @ [PC.enc j] @ n)
 
 let eval_stack ?(xs = []) st m i n =
-  eval_state_func_decl m i ~n:[SI.enc n] ~xs:xs st.stack
+  eval_state_func_decl m i ~n:[SI.enc n] ~xs:xs st.stack_decl
 
 let eval_stack_ctr st m i = eval_state_func_decl m i st.stack_ctr
 
