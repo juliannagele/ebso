@@ -95,6 +95,14 @@ let enc_binop ea st j op =
   (* the new top word is the result of applying op to the previous two *)
   (sk' (sc - SI.enc 2) == op (sk (sc - SI.enc 1)) (sk (sc - SI.enc 2)))
 
+let enc_ternaryop ea st j op =
+  let open Z3Ops in
+  let sk n = st.stack @@ (forall_vars ea @ [j; n])
+  and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
+  let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
+  let w3 = sk (sc - SI.enc 3) and w2 = sk (sc - SI.enc 2) and w1 = sk (sc - SI.enc 1) in
+  sk' (sc' - SI.enc 1) == op w1 w2 w3
+
 let enc_add ea st j = enc_binop ea st j (<+>)
 let enc_sub ea st j = enc_binop ea st j (<->)
 let enc_mul ea st j = enc_binop ea st j (<*>)
@@ -139,31 +147,23 @@ let enc_xor ea st j = enc_binop ea st j (Z3.BitVector.mk_xor !ctxt)
 
 let enc_addmod ea st j =
   let open Z3Ops in
-  let sk n = st.stack @@ (forall_vars ea @ [j; n])
-  and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
-  let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
-  let denom = sk (sc - SI.enc 3) and x =  sk (sc - SI.enc 2) and y =  sk (sc - SI.enc 1) in
-  sk' (sc' - SI.enc 1) ==
+  enc_ternaryop ea st j (fun x y denom ->
   (* EVM defines (x + y) mod 0 = 0 as 0, Z3 says it's undefined *)
-  ite (denom == Word.enc_int 0) (Word.enc_int 0) (
-    (* truncate back to word size, safe because mod denom brings us back to range *)
-    extract (Int.pred !Word.size) 0
-      (* requires non overflowing add, pad with 0s to avoid overflow *)
-      (urem ((zeroext 1 y) + (zeroext 1 x)) (zeroext 1 denom)))
+      ite (denom == Word.enc_int 0) (Word.enc_int 0) (
+        (* truncate back to word size, safe because mod denom brings us back to range *)
+        extract (Int.pred !Word.size) 0
+          (* requires non overflowing add, pad with 0s to avoid overflow *)
+          (urem ((zeroext 1 x) + (zeroext 1 y)) (zeroext 1 denom))))
 
 let enc_mulmod ea st j =
   let open Z3Ops in
-  let sk n = st.stack @@ (forall_vars ea @ [j; n])
-  and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
-  let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
-  let denom = sk (sc - SI.enc 3) and x =  sk (sc - SI.enc 2) and y =  sk (sc - SI.enc 1) in
-  sk' (sc' - SI.enc 1) ==
-  (* EVM defines (x + y) mod 0 = 0 as 0, Z3 says it's undefined *)
-  ite (denom == Word.enc_int 0) (Word.enc_int 0) (
-    (* truncate back to word size, safe because mod denom brings us back to range *)
-    extract (Int.pred !Word.size) 0
-      (* requires non overflowing mul, pad with 0s to avoid overflow *)
-      (urem ((zeroext !Word.size y) * (zeroext !Word.size x)) (zeroext !Word.size denom)))
+  enc_ternaryop ea st j (fun x y denom ->
+      (* EVM defines (x + y) mod 0 = 0 as 0, Z3 says it's undefined *)
+      ite (denom == Word.enc_int 0) (Word.enc_int 0) (
+        (* truncate back to word size, safe because mod denom brings us back to range *)
+        extract (Int.pred !Word.size) 0
+          (* requires non overflowing mul, pad with 0s to avoid overflow *)
+          (urem ((zeroext !Word.size x) * (zeroext !Word.size y)) (zeroext !Word.size denom))))
 
 let enc_not ea st j =
   (* the new top word is the bitwise negation of the old top word *)
