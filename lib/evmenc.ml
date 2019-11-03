@@ -80,6 +80,13 @@ let enc_push ea st j x =
 (* the only effect of POP is to change the stack counter *)
 let enc_pop _ _ _ = top
 
+let enc_unaryop ea st j op =
+  let open Z3Ops in
+  let sk n = st.stack @@ (forall_vars ea @ [j; n])
+  and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
+  let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
+  (sk' (sc' - SI.enc 1) == op (sk (sc - SI.enc 1)))
+
 let enc_binop ea st j op =
   let open Z3Ops in
   let sk n = st.stack @@ (forall_vars ea @ [j; n])
@@ -159,20 +166,12 @@ let enc_mulmod ea st j =
       (urem ((zeroext !Word.size y) * (zeroext !Word.size x)) (zeroext !Word.size denom)))
 
 let enc_not ea st j =
-  let open Z3Ops in
-  let sk n = st.stack @@ (forall_vars ea @ [j; n])
-  and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
-  let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
   (* the new top word is the bitwise negation of the old top word *)
-  (sk' (sc' - SI.enc 1) == Z3.BitVector.mk_not !ctxt (sk (sc - SI.enc 1)))
+  enc_unaryop ea st j (Z3.BitVector.mk_not !ctxt)
 
 let enc_iszero ea st j =
   let open Z3Ops in
-  let sk n = st.stack @@ (forall_vars ea @ [j; n])
-  and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
-  let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
-  (* if the old top word is 0 then the new top word is 1 and 0 otherwise *)
-  (sk' (sc' - SI.enc 1) == ite (sk (sc - SI.enc 1) == (Word.enc_int 0)) (Word.enc_int 1) (Word.enc_int 0))
+  enc_unaryop ea st j (fun w -> ite (w == (Word.enc_int 0)) (Word.enc_int 1) (Word.enc_int 0))
 
 let enc_swap ea st j idx =
   let sc_idx = SI.enc (idx + 1) in
