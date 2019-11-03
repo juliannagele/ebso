@@ -31,7 +31,7 @@ let suite =
         let p = [PUSH (Word (Val "1"))] in
         let cis = `User [PUSH (Word (Val "1"))] in
         let ea = Enc_consts.mk p cis in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c =
           enc_program ea st <&>
           enc_search_space ea st <&>
@@ -49,7 +49,7 @@ let suite =
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "1")); ADD] in
         let cis = `User [PUSH (Word (Val "1")); ADD] in
         let ea = Enc_consts.mk p cis in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c =
           enc_program ea st <&>
           enc_search_space ea st <&>
@@ -70,7 +70,7 @@ let suite =
         let p = [PUSH (Word (Val "1"))] in
         let cis = `User [PUSH (Word (Val "1")); PUSH (Word (Val "2")); ADD; SUB] in
         let ea = Enc_consts.mk p cis in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c =
           enc_program ea st <&>
           enc_search_space ea st <&>
@@ -88,7 +88,7 @@ let suite =
         let p = [PUSH (Word (Val "1"))] in
         let cis = `User [ADD; SUB] in
         let ea = Enc_consts.mk p cis in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c =
           enc_program ea st <&>
           enc_search_space ea st <&>
@@ -103,7 +103,7 @@ let suite =
         let p = [PUSH (Word (Val "1"))] in
         let cis = `User [PUSH (Word (Val "1"))] in
         let ea = Enc_consts.mk p cis in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c =
           enc_program ea st <&>
           enc_search_space ea st <&>
@@ -121,7 +121,7 @@ let suite =
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "1")); ADD] in
         let cis = `User [PUSH (Word (Val "1")); ADD] in
         let ea = Enc_consts.mk p cis in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c =
           enc_program ea st <&>
           enc_search_space ea st <&>
@@ -142,8 +142,8 @@ let suite =
 
     "equivalence constraint forces inital stack for target program">:: (fun _ ->
         let ea = Enc_consts.mk [] (`User []) in
-        let sts = mk_state ea "_s" in
-        let stt = mk_state ea "_t" in
+        let sts = Evm_state.mk ea "_s" in
+        let stt = Evm_state.mk ea "_t" in
         let c = init ea sts <&> enc_equivalence ea sts stt in
         let m = solve_model_exn [c] in
         let sk_size = (Int.pow 2 !SI.size) - 1 in
@@ -160,7 +160,7 @@ let suite =
         let p = [PUSH (Word (Val "1"))] in
         let cis = `User [PUSH Tmpl] in
         let ea = Enc_consts.mk p cis in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c =
           enc_program ea st <&>
           enc_search_space ea st <&>
@@ -178,7 +178,7 @@ let suite =
         let p = [PUSH (Word (Val "1"))] in
         let cis = `User [PUSH Tmpl] in
         let ea = Enc_consts.mk p cis in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c =
           enc_program ea st <&>
           enc_search_space ea st <&>
@@ -193,7 +193,7 @@ let suite =
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "1")); ADD] in
         let cis = `User [PUSH Tmpl; ADD] in
         let ea = Enc_consts.mk p cis in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c =
           enc_program ea st <&>
           enc_search_space ea st <&>
@@ -216,7 +216,7 @@ let suite =
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "1")); ADD] in
         let cis = `User [PUSH Tmpl; ADD] in
         let ea = Enc_consts.mk p cis in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c =
           enc_program ea st <&>
           enc_search_space ea st <&>

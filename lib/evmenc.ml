@@ -17,38 +17,11 @@ open Z3util
 open Instruction
 open Program
 open Enc_consts
+open Evm_state
 
 module PC = Program_counter
 module GC = Gas_cost
 module SI = Stack_index
-
-(* list of Word.sorts for every variable in vs *)
-let mk_vars_sorts vs = List.map vs ~f:(fun _ -> !Word.sort)
-
-type state = {
-  stack : Z3.FuncDecl.func_decl;
-  stack_ctr : Z3.FuncDecl.func_decl;
-  storage : Z3.FuncDecl.func_decl;
-  exc_halt : Z3.FuncDecl.func_decl;
-  used_gas : Z3.FuncDecl.func_decl;
-}
-
-let mk_state ea idx =
-  { (* stack(x0 ... x(sd-1), j, n) = nth word on stack after j instructions
-       starting from a stack that contained words x0 ... x(sd-1) *)
-    stack = func_decl ("stack" ^ idx)
-        (mk_vars_sorts (forall_vars ea) @ [PC.sort; !SI.sort]) !Word.sort;
-    (* sc(j) = index of the next free slot on the stack after j instructions *)
-    stack_ctr = func_decl ("sc" ^ idx) [PC.sort] !SI.sort;
-    (* storage(_, j, k) = v if storage after j instructions contains word v for key k *)
-    storage = func_decl ("storage" ^ idx)
-        (mk_vars_sorts (forall_vars ea) @ [PC.sort; !Word.sort]) !Word.sort;
-    (* exc_halt(j) is true if exceptional halting occurs after j instructions *)
-    exc_halt = func_decl ("exc_halt" ^ idx) [PC.sort] bool_sort;
-    (* gas(j) = amount of gas used to execute the first j instructions *)
-    used_gas = func_decl ("used_gas" ^ idx)
-        (mk_vars_sorts (forall_vars ea) @ [PC.sort]) GC.sort;
-  }
 
 (* get the top d elements of the stack *)
 let enc_top_d_of_sk ea st j d =
@@ -394,8 +367,8 @@ let enc_program ea st =
 
 let enc_super_opt ea =
   let open Z3Ops in
-  let sts = mk_state ea "_s" in
-  let stt = mk_state ea "_t" in
+  let sts = Evm_state.mk ea "_s" in
+  let stt = Evm_state.mk ea "_t" in
   let ks = PC.enc (Program.length ea.p) in
   foralls (forall_vars ea)
     (enc_program ea sts &&
@@ -409,8 +382,8 @@ let enc_super_opt ea =
 
 let enc_trans_val ea tp =
   let open Z3Ops in
-  let sts = mk_state ea "_s" in
-  let stt = mk_state ea "_t" in
+  let sts = Evm_state.mk ea "_s" in
+  let stt = Evm_state.mk ea "_t" in
   let kt = PC.enc (Program.length tp) and ks = PC.enc (Program.length ea.p) in
   (* we're asking for inputs that distinguish the programs *)
   existss (ea.xs @ List.concat (Map.data ea.uis))
@@ -427,8 +400,8 @@ let enc_trans_val ea tp =
 (* classic superoptimzation: generate & test *)
 let enc_classic_so_test ea cp js =
   let open Z3Ops in
-  let sts = mk_state ea "_s" in
-  let stc = mk_state ea "_c" in
+  let sts = Evm_state.mk ea "_s" in
+  let stc = Evm_state.mk ea "_c" in
   let kt = PC.enc (Program.length cp) and ks = PC.enc (Program.length ea.p) in
   foralls (forall_vars ea)
     (* encode source program*)

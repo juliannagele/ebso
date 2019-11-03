@@ -30,7 +30,7 @@ let test_stack_pres oc =
   let ip = List.init (d + 2) ~f:(fun i -> PUSH (val_of_int_safe i)) in
   let p = ip @ [oc] in
   let ea = Enc_consts.mk p (`User []) in
-  let st = mk_state ea "" in
+  let st = Evm_state.mk ea "" in
   let c = foralls (forall_vars ea) (enc_program ea st) in
   let m = solve_model_exn [c] in
   (* check all words below delta *)
@@ -46,7 +46,7 @@ let test_stack_ctr p =
   let ip = List.init d ~f:(fun i -> PUSH (val_of_int_safe i)) in
   let p = ip @ p in
   let ea = Enc_consts.mk p (`User []) in
-  let st = mk_state ea "" in
+  let st = Evm_state.mk ea "" in
   let c = enc_program ea st in
   let m = solve_model_exn [c] in
   let upd_sc sc oc = let (d, a) = delta_alpha oc in sc - d + a in
@@ -61,7 +61,7 @@ let test_no_exc_halt p =
   let ip = List.init d ~f:(fun i -> PUSH (val_of_int_safe i)) in
   let p = ip @ p in
   let ea = Enc_consts.mk p (`User []) in
-  let st = mk_state ea "" in
+  let st = Evm_state.mk ea "" in
   let c = enc_program ea st in
   let m = solve_model_exn [c] in
   (* check no exceptional halting occured *)
@@ -74,7 +74,7 @@ let test_exc_halt_pres p =
   let ip = List.init max ~f:(fun _ -> PUSH (Word (Val "1"))) in
   let p = ip @ p in
   let ea = Enc_consts.mk p (`User []) in
-  let st = mk_state ea "" in
+  let st = Evm_state.mk ea "" in
   let c = enc_program ea st in
   let m = solve_model_exn [c] in
   assert_equal
@@ -90,7 +90,7 @@ let effect =
     "add two words on the stack">:: (fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "2")); ADD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
@@ -105,7 +105,7 @@ let effect =
     "subtract two words on the stack">:: (fun _ ->
         let p = [PUSH (Word (Val "3")); PUSH (Word (Val "4")); SUB] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
@@ -118,7 +118,7 @@ let effect =
     "subtract two words on the stack with negative result">:: (fun _ ->
         let p = [PUSH (Word (Val "4")); PUSH (Word (Val "3")); SUB] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
@@ -133,7 +133,7 @@ let effect =
     "combine add and sub">:: (fun _ ->
         let p = [PUSH (Word (Val "3")); PUSH (Word (Val "2")); PUSH (Word (Val "2")); ADD; SUB] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -145,7 +145,7 @@ let effect =
     "divide 1 by 1" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "1")); DIV] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -155,7 +155,7 @@ let effect =
     "divide 4 by 2" >::(fun _ ->
         let p = [PUSH (Word (Val "2")); PUSH (Word (Val "4")); DIV] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -165,7 +165,7 @@ let effect =
     "divide 5 by 2" >::(fun _ ->
         let p = [PUSH (Word (Val "2")); PUSH (Word (Val "5")); DIV] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -175,7 +175,7 @@ let effect =
     "divide 2 by 4" >::(fun _ ->
         let p = [PUSH (Word (Val "4")); PUSH (Word (Val "2")); DIV] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -185,7 +185,7 @@ let effect =
     "divide 2 by 0" >::(fun _ ->
         let p = [PUSH (Word (Val "0")); PUSH (Word (Val "2")); DIV] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -195,7 +195,7 @@ let effect =
     "divide 0 by 0" >::(fun _ ->
         let p = [PUSH (Word (Val "0")); PUSH (Word (Val "0")); DIV] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -207,7 +207,7 @@ let effect =
     "1 sdiv 0 = 0" >::(fun _ ->
         let p = [PUSH (Word (Val "0")); PUSH (Word (Val "1")); SDIV] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -217,7 +217,7 @@ let effect =
     "3 sdiv 2 = 1" >::(fun _ ->
         let p = [PUSH (Word (Val "2")); PUSH (Word (Val "3")); SDIV] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -227,7 +227,7 @@ let effect =
     "-3 sdiv 2 = -1" >::(fun _ ->
         let p = [PUSH (Word (Val "2")); PUSH (Word (Val "-3")); SDIV] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -237,7 +237,7 @@ let effect =
     "3 sdiv -2 = -1" >::(fun _ ->
         let p = [PUSH (Word (Val "-2")); PUSH (Word (Val "3")); SDIV] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -247,7 +247,7 @@ let effect =
     "-3 sdiv -2 = 1" >::(fun _ ->
         let p = [PUSH (Word (Val "-2")); PUSH (Word (Val "-3")); SDIV] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -257,7 +257,7 @@ let effect =
     "-1 sdiv -1 = 1" >::(fun _ ->
         let p = [PUSH (Word (Val "-1")); PUSH (Word (Val "-1")); SDIV] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -267,7 +267,7 @@ let effect =
     "-1 sdiv 2 = 0" >::(fun _ ->
         let p = [PUSH (Word (Val "2")); PUSH (Word (Val "-1")); SDIV] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -277,7 +277,7 @@ let effect =
     "-2^(wsz - 1) sdiv -1 = -2^(wsz - 1), wraps to negative" >::(fun _ ->
         let p = [PUSH (Word (Val "-1")); PUSH (Word (Val "0b100")); SDIV] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -289,7 +289,7 @@ let effect =
     "2 modulo 1" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "2")); MOD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -299,7 +299,7 @@ let effect =
     "4 modulo 2" >::(fun _ ->
         let p = [PUSH (Word (Val "2")); PUSH (Word (Val "4")); MOD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -309,7 +309,7 @@ let effect =
     "5 modulo 2" >::(fun _ ->
         let p = [PUSH (Word (Val "2")); PUSH (Word (Val "5")); MOD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -319,7 +319,7 @@ let effect =
     "2 modulo 4" >::(fun _ ->
         let p = [PUSH (Word (Val "4")); PUSH (Word (Val "2")); MOD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -329,7 +329,7 @@ let effect =
     "2 modulo 0" >::(fun _ ->
         let p = [PUSH (Word (Val "0")); PUSH (Word (Val "2")); MOD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -339,7 +339,7 @@ let effect =
     "0 modulo 0" >::(fun _ ->
         let p = [PUSH (Word (Val "0")); PUSH (Word (Val "0")); MOD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -351,7 +351,7 @@ let effect =
     "3 smodulo 2 is 1" >::(fun _ ->
         let p = [PUSH (Word (Val "2")); PUSH (Word (Val "3")); SMOD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -361,7 +361,7 @@ let effect =
     "-2 smodulo 3 is -2" >::(fun _ ->
         let p = [PUSH (Word (Val "3")); PUSH (Word (Val "-2")); SMOD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -371,7 +371,7 @@ let effect =
     "-2 smodulo 1 is 0" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "-2")); SMOD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -381,7 +381,7 @@ let effect =
     "2 smodulo -1 is 0" >::(fun _ ->
         let p = [PUSH (Word (Val "-1")); PUSH (Word (Val "2")); SMOD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -391,7 +391,7 @@ let effect =
     "-3 smodulo 2 is -1" >::(fun _ ->
         let p = [PUSH (Word (Val "2")); PUSH (Word (Val "-3")); SMOD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -401,7 +401,7 @@ let effect =
     "3 smodulo -2 is 1" >::(fun _ ->
         let p = [PUSH (Word (Val "-2")); PUSH (Word (Val "3")); SMOD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -411,7 +411,7 @@ let effect =
     "-4 smodulo 2 is 0 (largest negative number)" >::(fun _ ->
         let p = [PUSH (Word (Val "2")); PUSH (Word (Val "-4")); SMOD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -421,7 +421,7 @@ let effect =
     "-3 smodulo 0 is 0" >::(fun _ ->
         let p = [PUSH (Word (Val "0")); PUSH (Word (Val "-3")); SMOD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -431,7 +431,7 @@ let effect =
     "3 smodulo 0 is 0" >::(fun _ ->
         let p = [PUSH (Word (Val "0")); PUSH (Word (Val "3")); SMOD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -443,7 +443,7 @@ let effect =
     "(2 + 1) mod 2 = 1" >::(fun _ ->
         let p = [PUSH (Word (Val "2")); PUSH (Word (Val "1")); PUSH (Word (Val "2")); ADDMOD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -453,7 +453,7 @@ let effect =
     "(7 + 1) mod 3 = 2 (overflow which should be ignored)" >::(fun _ ->
         let p = [PUSH (Word (Val "3")); PUSH (Word (Val "1")); PUSH (Word (Val "7")); ADDMOD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -463,7 +463,7 @@ let effect =
     "(1 + 1) mod 3 = 2" >::(fun _ ->
         let p = [PUSH (Word (Val "3")); PUSH (Word (Val "1")); PUSH (Word (Val "1")); ADDMOD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -473,7 +473,7 @@ let effect =
     "(1 + 1) mod 2 = 0" >::(fun _ ->
         let p = [PUSH (Word (Val "2")); PUSH (Word (Val "1")); PUSH (Word (Val "1")); ADDMOD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -483,7 +483,7 @@ let effect =
     "(0 + 1) mod 0 = 0" >::(fun _ ->
         let p = [PUSH (Word (Val "0")); PUSH (Word (Val "1")); PUSH (Word (Val "0")); ADDMOD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -493,7 +493,7 @@ let effect =
     "(7 + 1) mod 2 = 0 (overflow which should be ignored)" >::(fun _ ->
         let p = [PUSH (Word (Val "2")); PUSH (Word (Val "1")); PUSH (Word (Val "7")); ADDMOD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -503,7 +503,7 @@ let effect =
     "(-1 + 1) mod 2 = 0" >::(fun _ ->
         let p = [PUSH (Word (Val "2")); PUSH (Word (Val "1")); PUSH (Word (Val "-1")); ADDMOD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -515,7 +515,7 @@ let effect =
     "(2 * 1) mod 2 = 0" >::(fun _ ->
         let p = [PUSH (Word (Val "2")); PUSH (Word (Val "1")); PUSH (Word (Val "2")); MULMOD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -525,7 +525,7 @@ let effect =
     "(7 * 7) mod 2 = 1 (overflow happens)" >::(fun _ ->
         let p = [PUSH (Word (Val "2")); PUSH (Word (Val "7")); PUSH (Word (Val "7")); MULMOD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -535,7 +535,7 @@ let effect =
     "(7 * 6) mod 7 = 0 (overflow happens)" >::(fun _ ->
         let p = [PUSH (Word (Val "7")); PUSH (Word (Val "6")); PUSH (Word (Val "7")); MULMOD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -545,7 +545,7 @@ let effect =
     "(2 * 1) mod 0 = 0" >::(fun _ ->
         let p = [PUSH (Word (Val "0")); PUSH (Word (Val "1")); PUSH (Word (Val "2")); MULMOD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -555,7 +555,7 @@ let effect =
     "(0 * 5) mod 2 = 0" >::(fun _ ->
         let p = [PUSH (Word (Val "2")); PUSH (Word (Val "5")); PUSH (Word (Val "0")); MULMOD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -567,7 +567,7 @@ let effect =
     "0 iszero is true" >::(fun _ ->
         let p = [PUSH (Word (Val "0")); ISZERO] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -577,7 +577,7 @@ let effect =
     "1 iszero is false" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); ISZERO] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -587,7 +587,7 @@ let effect =
     "0 - 5 iszero is false" >::(fun _ ->
         let p = [PUSH (Word (Val "5")); PUSH (Word (Val "0")); SUB; ISZERO] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -599,7 +599,7 @@ let effect =
     "0 & 1 is 0" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "0")); AND] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -609,7 +609,7 @@ let effect =
     "1 & 1 is 1" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "1")); AND] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -619,7 +619,7 @@ let effect =
     "0 & 0 is 0" >::(fun _ ->
         let p = [PUSH (Word (Val "0")); PUSH (Word (Val "0")); AND] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -629,7 +629,7 @@ let effect =
     "1 & 0 is 0" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "0")); AND] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -639,7 +639,7 @@ let effect =
     "AND is idempotent (0b101)" >::(fun _ ->
         let p = [PUSH (Word (Val "0b101")); PUSH (Word (Val "0b101")); AND] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -649,7 +649,7 @@ let effect =
     "0b111 & 0b100 is 0b100" >::(fun _ ->
         let p = [PUSH (Word (Val "0b111")); PUSH (Word (Val "0b100")); AND] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -661,7 +661,7 @@ let effect =
     "0 | 1 is 1" >::(fun _ ->
         let p = [PUSH (Word (Val "0")); PUSH (Word (Val "1")); OR] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -671,7 +671,7 @@ let effect =
     "1 | 1 is 1" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "1")); OR] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -681,7 +681,7 @@ let effect =
     "0 | 0 is 0" >::(fun _ ->
         let p = [PUSH (Word (Val "0")); PUSH (Word (Val "0")); OR] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -691,7 +691,7 @@ let effect =
     "1 | 0 is 1" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "0")); OR] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -701,7 +701,7 @@ let effect =
     "OR is idempotent (0b101)" >::(fun _ ->
         let p = [PUSH (Word (Val "0b101")); PUSH (Word (Val "0b101")); OR] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -711,7 +711,7 @@ let effect =
     "0b001 | 0b100 is 0b101" >::(fun _ ->
         let p = [PUSH (Word (Val "0b001")); PUSH (Word (Val "0b100")); OR] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -723,7 +723,7 @@ let effect =
     "0 ^ 1 is 1" >::(fun _ ->
         let p = [PUSH (Word (Val "0")); PUSH (Word (Val "1")); XOR] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -733,7 +733,7 @@ let effect =
     "1 ^ 1 is 0" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "1")); XOR] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -743,7 +743,7 @@ let effect =
     "0 ^ 0 is 0" >::(fun _ ->
         let p = [PUSH (Word (Val "0")); PUSH (Word (Val "0")); XOR] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -753,7 +753,7 @@ let effect =
     "1 ^ 0 is 1" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "0")); XOR] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -763,7 +763,7 @@ let effect =
     "XOR is cancellative (0b101)" >::(fun _ ->
         let p = [PUSH (Word (Val "0b101")); PUSH (Word (Val "0b101")); XOR] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -773,7 +773,7 @@ let effect =
     "0b101 ^ 0b100 is 0b001" >::(fun _ ->
         let p = [PUSH (Word (Val "0b101")); PUSH (Word (Val "0b100")); XOR] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -785,7 +785,7 @@ let effect =
     "0 = 0 is 1" >::(fun _ ->
         let p = [PUSH (Word (Val "0")); PUSH (Word (Val "0")); EQ] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -795,7 +795,7 @@ let effect =
     "1 = 0 is 0" >::(fun _ ->
         let p = [PUSH (Word (Val "0")); PUSH (Word (Val "1")); EQ] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -805,7 +805,7 @@ let effect =
     "0 = 1 is 0" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "0")); EQ] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -815,7 +815,7 @@ let effect =
     "1 = 1 is 1" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "1")); EQ] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -825,7 +825,7 @@ let effect =
     "-1 = 1 is 0" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "-1")); EQ] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -837,7 +837,7 @@ let effect =
     "0 < 0 is 0" >::(fun _ ->
         let p = [PUSH (Word (Val "0")); PUSH (Word (Val "0")); LT] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -847,7 +847,7 @@ let effect =
     "1 < 0 is 0" >::(fun _ ->
         let p = [PUSH (Word (Val "0")); PUSH (Word (Val "1")); LT] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -857,7 +857,7 @@ let effect =
     "0 < 1 is 1" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "0")); LT] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -867,7 +867,7 @@ let effect =
     "1 < -1 is 1 (unsigned LT)" >::(fun _ ->
         let p = [PUSH (Word (Val "-1")); PUSH (Word (Val "1")); LT] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -877,7 +877,7 @@ let effect =
     "-1 < 1 is 0 (unsigned LT)" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "-1")); LT] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -889,7 +889,7 @@ let effect =
     "0 > 0 is 0" >::(fun _ ->
         let p = [PUSH (Word (Val "0")); PUSH (Word (Val "0")); GT] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -899,7 +899,7 @@ let effect =
     "1 > 0 is 1" >::(fun _ ->
         let p = [PUSH (Word (Val "0")); PUSH (Word (Val "1")); GT] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -909,7 +909,7 @@ let effect =
     "0 > 1 is 0" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "0")); GT] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -919,7 +919,7 @@ let effect =
     "1 > -1 is 0 (unsigned GT)" >::(fun _ ->
         let p = [PUSH (Word (Val "-1")); PUSH (Word (Val "1")); GT] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -929,7 +929,7 @@ let effect =
     "-1 > 1 is 1 (unsigned GT)" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "-1")); GT] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -941,7 +941,7 @@ let effect =
     "0 <_signed 0 is 0" >::(fun _ ->
         let p = [PUSH (Word (Val "0")); PUSH (Word (Val "0")); SLT] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -951,7 +951,7 @@ let effect =
     "1 <_signed 0 is 0" >::(fun _ ->
         let p = [PUSH (Word (Val "0")); PUSH (Word (Val "1")); SLT] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -961,7 +961,7 @@ let effect =
     "0 <_signed 1 is 1" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "0")); SLT] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -971,7 +971,7 @@ let effect =
     "1 <_signed -1 is 0" >::(fun _ ->
         let p = [PUSH (Word (Val "-1")); PUSH (Word (Val "1")); SLT] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -981,7 +981,7 @@ let effect =
     "-1 <_signed 1 is 1" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "-1")); SLT] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -993,7 +993,7 @@ let effect =
     "0 >_signed 0 is 0" >::(fun _ ->
         let p = [PUSH (Word (Val "0")); PUSH (Word (Val "0")); SGT] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -1003,7 +1003,7 @@ let effect =
     "1 >_signed 0 is 1" >::(fun _ ->
         let p = [PUSH (Word (Val "0")); PUSH (Word (Val "1")); SGT] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -1013,7 +1013,7 @@ let effect =
     "0 >_signed 1 is 0" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "0")); SGT] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -1023,7 +1023,7 @@ let effect =
     "1 >_signed -1 is 1" >::(fun _ ->
         let p = [PUSH (Word (Val "-1")); PUSH (Word (Val "1")); SGT] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -1033,7 +1033,7 @@ let effect =
     "-1 >_signed 1 is 0" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "-1")); SGT] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -1045,7 +1045,7 @@ let effect =
     "not 0b001 is 0b110" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); NOT] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -1055,7 +1055,7 @@ let effect =
     "not 0b000 is 0b111" >::(fun _ ->
         let p = [PUSH (Word (Val "0")); NOT] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -1065,7 +1065,7 @@ let effect =
     "not 0b101 is 0b010" >::(fun _ ->
         let p = [PUSH (Word (Val "0b101")); NOT] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -1077,7 +1077,7 @@ let effect =
     "top of the stack is the pushed word after a PUSH">:: (fun _ ->
         let p = [PUSH (Word (Val "5"))] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
@@ -1092,7 +1092,7 @@ let effect =
     "top of the stack is some word after NUMBER" >:: (fun _ ->
         let p = [NUMBER] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -1103,7 +1103,7 @@ let effect =
     "stack after NUMBER NUMBER" >:: (fun _ ->
         let p = [NUMBER; NUMBER] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         assert_equal
@@ -1119,7 +1119,7 @@ let effect =
     "swap I two words on stack" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "2")); SWAP I] in
         let ea = Enc_consts.mk p `All in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
@@ -1132,7 +1132,7 @@ let effect =
     "swap I with only one word" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); SWAP I] in
         let ea = Enc_consts.mk p `All in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         (* allow to instantiate variables when evaluating model *)
         let c = foralls ea.xs (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -1147,7 +1147,7 @@ let effect =
     "swap I with no words" >::(fun _ ->
         let p = [SWAP I] in
         let ea = Enc_consts.mk p `All in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         (* allow to instantiate variables when evaluating model *)
         let c = foralls ea.xs (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -1162,7 +1162,7 @@ let effect =
      "words after swap II" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "2")); PUSH (Word (Val "3")); SWAP II] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
@@ -1177,7 +1177,7 @@ let effect =
      "preserve words between swap III" >::(fun _ ->
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "2")); PUSH (Word (Val "3")); PUSH (Word (Val "4")); SWAP III] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
@@ -1193,7 +1193,7 @@ let effect =
     "duplicate top word" >:: (fun _ ->
         let p = [PUSH (Word (Val "1")); DUP I] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
@@ -1207,7 +1207,7 @@ let effect =
     "DUP I with no words" >::(fun _ ->
         let p = [DUP I] in
         let ea = Enc_consts.mk p `All in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         (* allow to instantiate variables when evaluating model *)
         let c = foralls ea.xs (enc_program ea st) in
         let m = solve_model_exn [c] in
@@ -1225,7 +1225,7 @@ let effect =
            let ip = List.init i ~f:(fun n -> PUSH (val_of_int_safe n)) in
            let p = ip @ [DUP idx] in
            let ea = Enc_consts.mk p (`User []) in
-           let st = mk_state ea "" in
+           let st = Evm_state.mk ea "" in
            let c = enc_program ea st in
            let m = solve_model_exn [c] in
            assert_equal ~cmp:[%eq: Z3.Expr.t] ~printer:Z3.Expr.to_string
@@ -1238,7 +1238,7 @@ let effect =
            let ip = List.init i ~f:(fun n -> PUSH (val_of_int_safe n)) in
            let p = ip @ [DUP idx] in
            let ea = Enc_consts.mk p (`User []) in
-           let st = mk_state ea "" in
+           let st = Evm_state.mk ea "" in
            let c = enc_program ea st in
            let m = solve_model_exn [c] in
            assert_equal
@@ -1287,7 +1287,7 @@ let exc_halt =
         let max = Int.pow 2 !SI.size in
         let p = List.init max ~f:(fun _ -> PUSH (Word (Val "1"))) in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal
@@ -1308,7 +1308,7 @@ let forced_stack_underflow =
     "add with only one word">:: (fun _ ->
         let p = [PUSH (Word (Val "3")); ADD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state {ea with p = []} "" in
+        let st = Evm_state.mk {ea with p = []} "" in
         let c =
           init {ea with p = []} st <&>
           enc_instruction ea st (num 0) (List.nth_exn p 0) <&>
@@ -1325,7 +1325,7 @@ let forced_stack_underflow =
     "add with empty stack">:: (fun _ ->
         let p = [ADD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state {ea with p = []} "" in
+        let st = Evm_state.mk {ea with p = []} "" in
         let c = init {ea with p = []} st <&>
                 enc_instruction ea st (num 0) ADD in
         let m = solve_model_exn [c] in
@@ -1339,7 +1339,7 @@ let forced_stack_underflow =
     "SUB with only one word">:: (fun _ ->
         let p = [PUSH (Word (Val "3")); SUB] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state {ea with p = []} "" in
+        let st = Evm_state.mk {ea with p = []} "" in
         let c =
           init {ea with p = []} st <&>
           enc_instruction ea st (num 0) (List.nth_exn p 0) <&>
@@ -1356,7 +1356,7 @@ let forced_stack_underflow =
     "sub with empty stack">:: (fun _ ->
         let p = [SUB] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state {ea with p = []} "" in
+        let st = Evm_state.mk {ea with p = []} "" in
         let c =
           init {ea with p = []} st <&>
           enc_instruction ea st (num 0) (List.nth_exn p 0)
@@ -1372,7 +1372,7 @@ let forced_stack_underflow =
     "pop on empty stack leads to stack underflow" >:: (fun _ ->
         let p = [POP] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state {ea with p = []} "" in
+        let st = Evm_state.mk {ea with p = []} "" in
         let c =
           init {ea with p = []} st <&>
           enc_instruction ea st (num 0) (List.nth_exn p 0)
@@ -1390,7 +1390,7 @@ let gas_cost =
   [
     "after 0 instruction no gas has been used">::(fun _ ->
         let ea = Enc_consts.mk [] (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = init ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
@@ -1401,7 +1401,7 @@ let gas_cost =
     "after some instruction some gas has been used">::(fun _ ->
         let p = [PUSH (Word (Val "6")); PUSH (Word (Val "2")); ADD] in
         let ea = Enc_consts.mk p (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = enc_program ea st in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: GC.t] ~printer:[%show: GC.t]
@@ -1416,7 +1416,7 @@ let misc =
 
     "model of the initial stack holds 0 for every stack address">:: (fun _ ->
         let ea = Enc_consts.mk [] (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = init ea st in
         let m = solve_model_exn [c] in
         let sk_size = (Int.pow 2 !SI.size) - 1 in
@@ -1431,7 +1431,7 @@ let misc =
 
     "inital balance for arg in range">:: (fun _ ->
         let ea = Enc_consts.mk [PUSH (Word (Val "2")); BALANCE] (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let i = Word.enc_int 3 in (* set for all quantified variable to 3 for test *)
         let m = solve_model_exn [c] in
@@ -1445,7 +1445,7 @@ let misc =
 
     "initial balance for given args not in range">:: (fun _ ->
         let ea = Enc_consts.mk [PUSH (Word (Val "2")); BALANCE] (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         let brom = Map.find_exn ea.roms BALANCE in
@@ -1457,7 +1457,7 @@ let misc =
 
     "inital balance for computed arg in range">:: (fun _ ->
         let ea = Enc_consts.mk [PUSH (Word (Val "1")); PUSH (Word (Val "1")); ADD; BALANCE] (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let i = Word.enc_int 3 in (* set for all quantified variable to 3 for test *)
         let m = solve_model_exn [c] in
@@ -1471,7 +1471,7 @@ let misc =
 
     "initial balance for computed arg where given args are not in range">:: (fun _ ->
         let ea = Enc_consts.mk [PUSH (Word (Val "1")); PUSH (Word (Val "1")); ADD; BALANCE] (`User []) in
-        let st = mk_state ea "" in
+        let st = Evm_state.mk ea "" in
         let c = foralls (forall_vars ea) (enc_program ea st) in
         let m = solve_model_exn [c] in
         let ias = [0; 1; 3] in (* not 2, as this is the argument of BALANCE *)
