@@ -144,12 +144,7 @@ let enc_nonconst_uninterpreted ea st j i =
   (sk' (sc' - SI.enc 1)) == (rom @@ ((forall_vars ea) @ ajs))
 
 let enc_sload ea st j =
-  let open Z3Ops in
-  let sk n = st.stack @@ (forall_vars ea @ [j; n])
-  and sk' n = st.stack @@ (forall_vars ea @ [j + one; n]) in
-  let sc = st.stack_ctr @@ [j] and sc'= st.stack_ctr @@ [j + one] in
-  (sk' (sc' - SI.enc 1)) ==
-  (st.storage @@ ((forall_vars ea) @ [j; sk (sc - SI.enc 1)]))
+  enc_unaryop ea st j (fun w -> (st.storage <@@> (forall_vars ea) @ [j; w]))
 
 let enc_sstore ea st j =
   let open Z3Ops in
