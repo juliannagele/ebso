@@ -58,3 +58,9 @@ let enc_sstore str sk j =
   let w = Word.const "w" in
   forall w (str.el (j + one) w ==
             (ite (w == sk j (sc - SI.enc 1)) (sk j (sc - SI.enc 2)) (str.el j w)))
+
+let pres is str j =
+  let open Z3Ops in
+  match is with
+  | Instruction.SSTORE -> top
+  | _ -> let w = Word.const "w" in forall w (str.el (j + one) w == str.el j w)

@@ -88,12 +88,7 @@ let enc_instruction ea st j is =
     st.exc_halt @@ [j + one] == (st.exc_halt @@ [j] || underflow || overflow)
   in
   let enc_pres =
-    let pres_storage = match is with
-      | SSTORE -> top
-      | _ ->
-        let w = Word.const "w" in
-        forall w (st.storage.el (j + one) w == st.storage.el j w)
-    in
+    let pres_storage = Evm_storage.pres is st.storage j in
     let n = SI.const "n" in
     (* all words below d stay the same *)
     (forall n ((n < sc - SI.enc d) ==> (st.stack.el (j + one) n == st.stack.el j n))) && pres_storage
