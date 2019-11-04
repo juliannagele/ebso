@@ -69,16 +69,14 @@ let enc_instruction ea st j is =
   let (d, a) = delta_alpha is in let diff = (a - d) in
   let open Z3Ops in
   let sc = st.stack.ctr @@ [j] in
-  let sk n = st.stack.el j n
-  and sk' n = st.stack.el (j + one) n in
   let strg w = st.storage.el j w
   and strg' w = st.storage.el (j + one) w in
   let ug = st.used_gas @@ (forall_vars ea @ [j])
   and ug' = st.used_gas @@ (forall_vars ea @ [j + one]) in
   let enc_used_gas =
     let cost =
-      let k = sk (sc - SI.enc 1) in
-      let v' = sk (sc - SI.enc 2) in
+      let k = st.stack.el j (sc - SI.enc 1) in
+      let v' = st.stack.el j (sc - SI.enc 2) in
       let refund = GC.enc (GC.of_int 15000)
       and set = GC.enc (GC.of_int 20000)
       and reset = GC.enc (GC.of_int 5000) in
@@ -115,7 +113,7 @@ let enc_instruction ea st j is =
     in
     let n = SI.const "n" in
     (* all words below d stay the same *)
-    (forall n ((n < sc - SI.enc d) ==> (sk' n == sk n))) && pres_storage
+    (forall n ((n < sc - SI.enc d) ==> (st.stack.el (j + one) n == st.stack.el j n))) && pres_storage
   in
   enc_effect && enc_used_gas && enc_stack_ctr && enc_pres && enc_exc_halt
 
