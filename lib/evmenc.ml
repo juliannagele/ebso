@@ -69,8 +69,6 @@ let enc_instruction ea st j is =
   let (d, a) = delta_alpha is in let diff = (a - d) in
   let open Z3Ops in
   let sc = st.stack.ctr @@ [j] in
-  let strg w = st.storage.el j w
-  and strg' w = st.storage.el (j + one) w in
   let ug = st.used_gas @@ (forall_vars ea @ [j])
   and ug' = st.used_gas @@ (forall_vars ea @ [j + one]) in
   let enc_used_gas =
@@ -82,7 +80,7 @@ let enc_instruction ea st j is =
       and reset = GC.enc (GC.of_int 5000) in
       match is with
       | SSTORE ->
-        ite (strg k == Word.enc_int 0)
+        ite (st.storage.el j k == Word.enc_int 0)
           (ite (v' == Word.enc_int 0) reset set)
           (ite (v' == Word.enc_int 0) (reset - refund) reset)
       | _ -> GC.enc (gas_cost is)
@@ -109,7 +107,7 @@ let enc_instruction ea st j is =
       | SSTORE -> top
       | _ ->
         let w = Word.const "w" in
-        forall w (strg' w == strg w)
+        forall w (st.storage.el (j + one) w == st.storage.el j w)
     in
     let n = SI.const "n" in
     (* all words below d stay the same *)
