@@ -87,12 +87,7 @@ let enc_instruction ea st j is =
     in
     st.exc_halt @@ [j + one] == (st.exc_halt @@ [j] || underflow || overflow)
   in
-  let enc_pres =
-    let pres_storage = Evm_storage.pres is st.storage j in
-    let n = SI.const "n" in
-    (* all words below d stay the same *)
-    (forall n ((n < sc - SI.enc d) ==> (st.stack.el (j + one) n == st.stack.el j n))) && pres_storage
-  in
+  let enc_pres = Evm_stack.pres is st.stack j &&  Evm_storage.pres is st.storage j in
   enc_effect && enc_used_gas && enc_stack_ctr && enc_pres && enc_exc_halt
 
 let enc_search_space ea st =

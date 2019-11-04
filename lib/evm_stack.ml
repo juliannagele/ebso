@@ -113,3 +113,11 @@ let enc_dup sk j idx =
   conj (List.init idx ~f:(fun i ->
       let sc_iidx = SI.enc (Int.(-) idx i) in
       (sk.el (j + one) (sc - sc_iidx) == sk.el j (sc - sc_iidx))))
+
+let pres is sk j =
+  let open Z3Ops in
+  let (d, _) = Instruction.delta_alpha is in
+  let n = SI.const "n" in
+  let sc = sk.ctr @@ [j] in
+  (* all words below d stay the same *)
+  (forall n ((n < sc - SI.enc d) ==> (sk.el (j + one) n == sk.el j n)))
