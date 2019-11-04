@@ -28,7 +28,7 @@ let init ea st =
   (* careful: if stack_depth is larger than 2^sas, no checks *)
   Evm_stack.init st.stack (stack_depth ea.p) ea.xs
   && (st.exc_halt @@ [PC.init] == btm)
-  && (st.used_gas @@ (forall_vars ea @ [PC.init]) == GC.enc GC.zero)
+  && Used_gas.init st.used_gas
   && Evm_storage.init st.storage st.stack (poss_of_instr ea.p SLOAD @ poss_of_instr ea.p SSTORE) ea.ss
   && Map.fold ea.roms ~init:top ~f:(fun ~key:i ~data:f e -> e && Uninterpreted_instruction.init_rom ea st i f)
 
@@ -69,26 +69,11 @@ let enc_instruction ea st j is =
   let (d, a) = delta_alpha is in let diff = (a - d) in
   let open Z3Ops in
   let sc = st.stack.ctr @@ [j] in
-  let ug = st.used_gas @@ (forall_vars ea @ [j])
-  and ug' = st.used_gas @@ (forall_vars ea @ [j + one]) in
-  let enc_used_gas =
-    let cost =
-      let k = st.stack.el j (sc - SI.enc 1) in
-      let v' = st.stack.el j (sc - SI.enc 2) in
-      let refund = GC.enc (GC.of_int 15000)
-      and set = GC.enc (GC.of_int 20000)
-      and reset = GC.enc (GC.of_int 5000) in
-      match is with
-      | SSTORE ->
-        ite (st.storage.el j k == Word.enc_int 0)
-          (ite (v' == Word.enc_int 0) reset set)
-          (ite (v' == Word.enc_int 0) (reset - refund) reset)
-      | _ -> GC.enc (gas_cost is)
-    in
-    ug' == (ug + cost)
-  in
-  let enc_stack_ctr =
-    st.stack.ctr @@ [j + one] == (sc + SI.enc diff)
+  let k = st.stack.el j (sc - SI.enc 1) in
+  let v = st.storage.el j k in
+  let v' = st.stack.el j (sc - SI.enc 2) in
+  let enc_used_gas = Used_gas.enc v v' is st.used_gas j in
+  let enc_stack_ctr = st.stack.ctr @@ [j + one] == (sc + SI.enc diff)
   in
   let enc_exc_halt =
     let underflow = if Int.is_positive d then (sc - (SI.enc d)) < (SI.enc 0) else btm in
@@ -144,8 +129,7 @@ let enc_equivalence ea sts stt =
   (* intially source and target states equal *)
   enc_equivalence_at sts stt PC.init PC.init &&
   (* initally source and target gas are equal *)
-  sts.used_gas @@ (forall_vars ea @ [PC.init]) ==
-  stt.used_gas @@ (forall_vars ea @ [PC.init]) &&
+  (Used_gas.enc_equvivalence_at sts.used_gas stt.used_gas PC.init) &&
   (* after the programs have run source and target states equal *)
   enc_equivalence_at sts stt ks kt
 
@@ -162,8 +146,7 @@ let enc_super_opt ea =
     (enc_program ea sts &&
      enc_search_space ea stt &&
      enc_equivalence ea sts stt &&
-     sts.used_gas @@ (forall_vars ea @ [ks]) >
-     stt.used_gas @@ (forall_vars ea @ [ea.kt]) &&
+     Used_gas.enc_used_more sts.used_gas ks stt.used_gas ea.kt &&
      (* bound the number of instructions in the target; aids solver in showing
         unsat, i.e., that program is optimal *)
      ea.kt <= PC.enc (PC.of_int (GC.to_int (total_gas_cost ea.p))))
@@ -180,8 +163,7 @@ let enc_trans_val ea tp =
         ~f:(fun j enc oc -> enc <&> enc_instruction ea stt (PC.enc (PC.of_int j)) oc)) &&
      (* they start in the same state *)
      (enc_equivalence_at sts stt PC.init PC.init) &&
-     sts.used_gas @@ (forall_vars ea @ [PC.init]) ==
-     stt.used_gas @@ (forall_vars ea @ [PC.init]) &&
+     (Used_gas.enc_equvivalence_at sts.used_gas stt.used_gas PC.init) &&
      (* but their final state is different *)
      ~! (enc_equivalence_at sts stt ks kt))
 
@@ -201,8 +183,7 @@ let enc_classic_so_test ea cp js =
      conj (List.map2_exn cp js ~f:(fun i j -> enc_instruction ea stc j i)) &&
      (* they start in the same state *)
      (enc_equivalence_at sts stc PC.init PC.init) &&
-     sts.used_gas @@ (forall_vars ea @ [PC.init]) ==
-     stc.used_gas @@ (forall_vars ea @ [PC.init]) &&
+     (Used_gas.enc_equvivalence_at sts.used_gas stc.used_gas PC.init) &&
      (* and their final state is the same *)
      (enc_equivalence_at sts stc ks kt))
 
