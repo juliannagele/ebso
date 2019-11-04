@@ -23,20 +23,6 @@ module PC = Program_counter
 module GC = Gas_cost
 module SI = Stack_index
 
-let init_rom ea st i rom =
-  let open Z3Ops in
-  let d = arity i in
-  let js = poss_of_instr ea.p i in
-  let us = Map.find_exn ea.uis i in
-  let ajs = List.map js ~f:(fun j -> Evm_stack.enc_top_d st.stack (PC.enc j) d) in
-  let w_dflt = Word.enc_int 0 in
-  let ws = List.init d ~f:(fun l -> Word.const ("w" ^ [%show: int] l)) in
-  foralls ws (
-    (rom @@ (forall_vars ea @ ws)) ==
-      List.fold_right (List.zip_exn ajs us) ~init:w_dflt
-        ~f:(fun (aj, uj) enc -> ite (conj (List.map2_exn aj ws ~f:(==))) uj enc)
-  )
-
 let init ea st =
   let open Z3Ops in
   (* careful: if stack_depth is larger than 2^sas, no checks *)
@@ -44,18 +30,7 @@ let init ea st =
   && (st.exc_halt @@ [PC.init] == btm)
   && (st.used_gas @@ (forall_vars ea @ [PC.init]) == GC.enc GC.zero)
   && Evm_storage.init st.storage st.stack (poss_of_instr ea.p SLOAD @ poss_of_instr ea.p SSTORE) ea.ss
-  && Map.fold ea.roms ~init:top ~f:(fun ~key:i ~data:f e -> e && init_rom ea st i f)
-
-let enc_const_uninterpreted ea st j i =
-  let name = Instruction.unint_name 0 i in
-  Evm_stack.enc_push ea.a st j (Pusharg.Word (Const name))
-
-let enc_nonconst_uninterpreted ea sk j i =
-  let rom = Map.find_exn ea.roms i in
-  let open Z3Ops in let open Evm_stack in
-  let sc'= sk.ctr @@ [j + one] in
-  let ajs = Evm_stack.enc_top_d sk j (arity i) in
-  (sk.el (j + one) (sc' - SI.enc 1)) == (rom @@ ((forall_vars ea) @ ajs))
+  && Map.fold ea.roms ~init:top ~f:(fun ~key:i ~data:f e -> e && Uninterpreted_instruction.init_rom ea st i f)
 
 (* effect of instruction on state st after j steps *)
 let enc_instruction ea st j is =
@@ -88,8 +63,7 @@ let enc_instruction ea st j is =
     | SLOAD -> Evm_storage.enc_sload st.storage st.stack j
     | SSTORE -> Evm_storage.enc_sstore st.storage st.stack j
     | _ when List.mem uninterpreted is ~equal:Instruction.equal ->
-      if is_const is then enc_const_uninterpreted ea st.stack j is
-      else enc_nonconst_uninterpreted ea st.stack j is
+      Uninterpreted_instruction.enc ea st j is
     | i -> failwith ("Encoding for " ^ [%show: Instruction.t] i ^ " not implemented.")
   in
   let (d, a) = delta_alpha is in let diff = (a - d) in
