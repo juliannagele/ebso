@@ -143,6 +143,7 @@ let delta_alpha = function
   | STATICCALL -> (6, 1)
   | REVERT -> (2, 0)
   | SELFDESTRUCT -> (1, 0)
+  | INVALID -> (-1, -1) (* hacky quick fix *)
   | i -> failwith ("delta_alpha not implemented for " ^ show i)
 
 let arity i = delta_alpha i |> Tuple.T2.get1
