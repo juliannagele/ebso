@@ -17,9 +17,9 @@ open OUnit2
 open Ebso
 open Z3util
 open Instruction
-open Evmenc
 open Enc_consts
 open Evm_state
+open Superoptimization
 
 let suite =
   (* set low for fast testing *)

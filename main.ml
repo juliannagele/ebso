@@ -16,7 +16,7 @@ open Core
 open Ebso
 open Z3util
 open Program
-open Evmenc
+open Superoptimization
 open Printer
 
 type output_options =

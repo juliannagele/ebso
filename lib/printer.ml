@@ -15,8 +15,9 @@
 
 open Core
 open Program
-open Evmenc
 open Z3util
+
+module GC = Gas_cost
 
 type step = {input: Program.t; opt: Program.t; optimal: bool; tval: bool option}
 
