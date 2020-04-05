@@ -83,23 +83,6 @@ let enc_search_space ea st =
   forall j (((j < ea.kt) && (j >= PC.init)) ==> conj enc_cis && disj in_cis) &&
   ea.kt >= PC.init
 
-let enc_equivalence_at sts stt js jt =
-  let open Z3Ops in
-  Evm_stack.enc_equiv_at sts.stack stt.stack js jt &&
-  Exc_halt.enc_equiv_at sts.exc_halt stt.exc_halt js jt &&
-  Evm_storage.enc_equiv_at sts.storage stt.storage js jt
-
-(* we only demand equivalence at kt *)
-let enc_equivalence ea sts stt =
-  let ks = PC.enc (Program.length ea.p) and kt = ea.kt in
-  let open Z3Ops in
-  (* intially source and target states equal *)
-  enc_equivalence_at sts stt PC.init PC.init &&
-  (* initally source and target gas are equal *)
-  (Used_gas.enc_equvivalence_at sts.used_gas stt.used_gas PC.init) &&
-  (* after the programs have run source and target states equal *)
-  enc_equivalence_at sts stt ks kt
-
 let enc_program ea st =
   let open Z3Ops in
   List.foldi ~init:(Evm_state.init ea st && Uninterpreted_instruction.init ea st)
@@ -113,7 +96,7 @@ let enc_super_opt ea =
   foralls (forall_vars ea)
     (enc_program ea sts &&
      enc_search_space ea stt &&
-     enc_equivalence ea sts stt &&
+     Evm_state.enc_equiv ea sts stt &&
      Used_gas.enc_used_more sts.used_gas ks stt.used_gas ea.kt &&
      (* bound the number of instructions in the target; aids solver in showing
         unsat, i.e., that program is optimal *)
@@ -130,10 +113,10 @@ let enc_trans_val ea tp =
     ((List.foldi tp ~init:(enc_program ea sts)
         ~f:(fun j enc oc -> enc <&> enc_instruction ea stt (PC.enc (PC.of_int j)) oc)) &&
      (* they start in the same state *)
-     (enc_equivalence_at sts stt PC.init PC.init) &&
+     (Evm_state.enc_equiv_at sts stt PC.init PC.init) &&
      (Used_gas.enc_equvivalence_at sts.used_gas stt.used_gas PC.init) &&
      (* but their final state is different *)
-     ~! (enc_equivalence_at sts stt ks kt))
+     ~! (Evm_state.enc_equiv_at sts stt ks kt))
 
 (* classic superoptimzation: generate & test *)
 let enc_classic_so_test ea cp js =
@@ -150,10 +133,10 @@ let enc_classic_so_test ea cp js =
      (* encode instructions from candidate program *)
      conj (List.map2_exn cp js ~f:(fun i j -> enc_instruction ea stc j i)) &&
      (* they start in the same state *)
-     (enc_equivalence_at sts stc PC.init PC.init) &&
+     (Evm_state.enc_equiv_at sts stc PC.init PC.init) &&
      (Used_gas.enc_equvivalence_at sts.used_gas stc.used_gas PC.init) &&
      (* and their final state is the same *)
-     (enc_equivalence_at sts stc ks kt))
+     (Evm_state.enc_equiv_at sts stc ks kt))
 
 
 let eval_fis ea m j = eval_state_func_decl m j ea.fis |> Opcode.dec

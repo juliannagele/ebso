@@ -34,6 +34,7 @@ let mk ea idx =
     (* gas(j) = amount of gas used to execute the first j instructions *)
     used_gas = Used_gas.mk ea idx;
   }
+
 let init (ea : Enc_consts.t) st =
   let open Z3Ops in
   (* careful: if stack_depth is larger than 2^sas, no checks *)
@@ -41,6 +42,23 @@ let init (ea : Enc_consts.t) st =
   && Exc_halt.init st.exc_halt
   && Used_gas.init st.used_gas
   && Evm_storage.init st.storage st.stack (Program.poss_of_instr ea.p SLOAD @ Program.poss_of_instr ea.p SSTORE) ea.ss
+
+let enc_equiv_at sts stt js jt =
+  let open Z3Ops in
+  Evm_stack.enc_equiv_at sts.stack stt.stack js jt &&
+  Exc_halt.enc_equiv_at sts.exc_halt stt.exc_halt js jt &&
+  Evm_storage.enc_equiv_at sts.storage stt.storage js jt
+
+(* we only demand equivalence at kt *)
+let enc_equiv (ea : Enc_consts.t) sts stt =
+  let ks = PC.enc (Program.length ea.p) and kt = ea.kt in
+  let open Z3Ops in
+  (* intially source and target states equal *)
+  enc_equiv_at sts stt PC.init PC.init &&
+  (* initally source and target gas are equal *)
+  (Used_gas.enc_equvivalence_at sts.used_gas stt.used_gas PC.init) &&
+  (* after the programs have run source and target states equal *)
+  enc_equiv_at sts stt ks kt
 
 let eval_state_func_decl  m j ?(n = []) ?(xs = []) f =
   eval_func_decl m f (xs @ [PC.enc j] @ n)

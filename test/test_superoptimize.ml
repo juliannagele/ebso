@@ -108,7 +108,7 @@ let suite =
         let c =
           enc_program ea st <&>
           enc_search_space ea st <&>
-          enc_equivalence ea st st
+          Evm_state.enc_equiv ea st st
         in
         let m = solve_model_exn [c] in
         assert_equal
@@ -126,7 +126,7 @@ let suite =
         let c =
           enc_program ea st <&>
           enc_search_space ea st <&>
-          enc_equivalence ea st st
+          Evm_state.enc_equiv ea st st
         in
         let m = solve_model_exn [c] in
         assert_equal
@@ -145,7 +145,7 @@ let suite =
         let ea = Enc_consts.mk [] (`User []) in
         let sts = Evm_state.mk ea "_s" in
         let stt = Evm_state.mk ea "_t" in
-        let c = init ea sts <&> enc_equivalence ea sts stt in
+        let c = init ea sts <&> Evm_state.enc_equiv ea sts stt in
         let m = solve_model_exn [c] in
         let sk_size = (Int.pow 2 !SI.size) - 1 in
         assert_equal
