@@ -15,14 +15,13 @@
 open Core
 open Z3util
 open Enc_consts
-open Evm_state
 
-let init_rom ea st i rom =
+let init_rom ea sk i rom =
   let open Z3Ops in
   let d = Instruction.arity i in
   let js = Program.poss_of_instr ea.p i in
   let us = Map.find_exn ea.uis i in
-  let ajs = List.map js ~f:(fun j -> Evm_stack.enc_top_d st.stack (PC.enc j) d) in
+  let ajs = List.map js ~f:(fun j -> Evm_stack.enc_top_d sk (PC.enc j) d) in
   let w_dflt = Word.enc_int 0 in
   let ws = List.init d ~f:(fun l -> Word.const ("w" ^ [%show: int] l)) in
   foralls ws (
@@ -46,7 +45,7 @@ let enc_nonconst_uninterpreted ea sk j i =
   let ajs = Evm_stack.enc_top_d sk j (Instruction.arity i) in
   (sk.el (j + one) (sc' - SI.enc 1)) == (rom @@ ((forall_vars ea) @ ajs))
 
-let enc ea st j is =
+let enc ea sk j is =
   if Instruction.is_const is
-  then enc_const_uninterpreted ea st.stack j is
-  else enc_nonconst_uninterpreted ea st.stack j is
+  then enc_const_uninterpreted ea sk j is
+  else enc_nonconst_uninterpreted ea sk j is

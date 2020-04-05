@@ -14,66 +14,21 @@
 *)
 open Core
 open Z3util
-open Instruction
 open Program
 open Enc_consts
-open Evm_state
 
 module PC = Program_counter
 module GC = Gas_cost
 module SI = Stack_index
 
-(* effect of instruction on state st after j steps *)
-let enc_instruction ea st j is =
-  let enc_effect =
-    let open Evm_stack in
-    match is with
-    | PUSH x -> enc_push ea.a st.stack j x
-    | POP -> enc_pop st.stack j
-    | ADD -> enc_binop st.stack j Word.enc_add
-    | SUB -> enc_binop st.stack j Word.enc_sub
-    | MUL -> enc_binop st.stack j Word.enc_mul
-    | DIV -> enc_binop st.stack j Word.enc_div
-    | SDIV -> enc_binop st.stack j Word.enc_sdiv
-    | MOD -> enc_binop st.stack j Word.enc_mod
-    | SMOD -> enc_binop st.stack j Word.enc_smod
-    | ADDMOD -> enc_ternaryop st.stack j Word.enc_addmod
-    | MULMOD -> enc_ternaryop st.stack j Word.enc_mulmod
-    | LT -> enc_binop st.stack j Word.enc_lt
-    | GT -> enc_binop st.stack  j Word.enc_gt
-    | SLT -> enc_binop st.stack j Word.enc_slt
-    | SGT -> enc_binop st.stack j Word.enc_sgt
-    | EQ -> enc_binop st.stack j Word.enc_eq
-    | ISZERO -> enc_unaryop st.stack j Word.enc_iszero
-    | AND -> enc_binop st.stack j Word.enc_and
-    | OR -> enc_binop st.stack j Word.enc_or
-    | XOR -> enc_binop st.stack j Word.enc_xor
-    | NOT -> enc_unaryop st.stack j Word.enc_not
-    | SWAP idx -> enc_swap st.stack j (idx_to_enum idx)
-    | DUP idx -> enc_dup st.stack j (idx_to_enum idx)
-    | SLOAD -> Evm_storage.enc_sload st.storage st.stack j
-    | SSTORE -> Evm_storage.enc_sstore st.storage st.stack j
-    | _ when List.mem uninterpreted is ~equal:Instruction.equal ->
-      Uninterpreted_instruction.enc ea st j is
-    | i -> failwith ("Encoding for " ^ [%show: Instruction.t] i ^ " not implemented.")
-  in
-  let open Z3Ops in
-  let sc = st.stack.ctr j in
-  let k = st.stack.el j (sc - SI.enc 1) in
-  let v = st.storage.el j k in
-  let v' = st.stack.el j (sc - SI.enc 2) in
-  let enc_used_gas = Used_gas.enc v v' is st.used_gas j in
-  let enc_stack_ctr = Evm_stack.enc_stack_ctr is st.stack j in
-  let enc_exc_halt = Exc_halt.enc sc is st.exc_halt j in
-  let enc_pres = Evm_stack.pres is st.stack j &&  Evm_storage.pres is st.storage j in
-  enc_effect && enc_used_gas && enc_stack_ctr && enc_pres && enc_exc_halt
-
+(* TODO move uso *)
 let enc_search_space ea st =
   let open Z3Ops in
   let j = PC.const "j" in
   let enc_cis =
     List.map ea.cis ~f:(fun is ->
-        (ea.fis @@ [j] == Opcode.enc (Opcode.from_instr ea.opcodes is)) ==> (enc_instruction ea st j is))
+        (ea.fis @@ [j] == Opcode.enc (Opcode.from_instr ea.opcodes is))
+           ==> (Evm_state.enc_instruction ea st j is))
   in
   (* optimization potential:
      choose opcodes = 1 .. |cis| and demand fis (j) < |cis| *)
@@ -83,18 +38,14 @@ let enc_search_space ea st =
   forall j (((j < ea.kt) && (j >= PC.init)) ==> conj enc_cis && disj in_cis) &&
   ea.kt >= PC.init
 
-let enc_program ea st =
-  let open Z3Ops in
-  List.foldi ~init:(Evm_state.init ea st && Uninterpreted_instruction.init ea st)
-    ~f:(fun j enc oc -> enc && enc_instruction ea st (PC.enc (PC.of_int j)) oc) ea.p
-
+(* TODO move uso *)
 let enc_super_opt ea =
   let open Z3Ops in
   let sts = Evm_state.mk ea "_s" in
   let stt = Evm_state.mk ea "_t" in
   let ks = PC.enc (Program.length ea.p) in
   foralls (forall_vars ea)
-    (enc_program ea sts &&
+    (Evm_state.enc_program ea sts &&
      enc_search_space ea stt &&
      Evm_state.enc_equiv ea sts stt &&
      Used_gas.enc_used_more sts.used_gas ks stt.used_gas ea.kt &&
@@ -102,6 +53,7 @@ let enc_super_opt ea =
         unsat, i.e., that program is optimal *)
      ea.kt <= PC.enc (PC.of_int (GC.to_int (total_gas_cost ea.p))))
 
+(* TODO move transl_val *)
 let enc_trans_val ea tp =
   let open Z3Ops in
   let sts = Evm_state.mk ea "_s" in
@@ -110,14 +62,15 @@ let enc_trans_val ea tp =
   (* we're asking for inputs that distinguish the programs *)
   existss (ea.xs @ List.concat (Map.data ea.uis))
     (* encode source and target program *)
-    ((List.foldi tp ~init:(enc_program ea sts)
-        ~f:(fun j enc oc -> enc <&> enc_instruction ea stt (PC.enc (PC.of_int j)) oc)) &&
+    ((List.foldi tp ~init:(Evm_state.enc_program ea sts)
+        ~f:(fun j enc oc -> enc <&> Evm_state.enc_instruction ea stt (PC.enc (PC.of_int j)) oc)) &&
      (* they start in the same state *)
      (Evm_state.enc_equiv_at sts stt PC.init PC.init) &&
      (Used_gas.enc_equvivalence_at sts.used_gas stt.used_gas PC.init) &&
      (* but their final state is different *)
      ~! (Evm_state.enc_equiv_at sts stt ks kt))
 
+(* TODO move bso *)
 (* classic superoptimzation: generate & test *)
 let enc_classic_so_test ea cp js =
   let open Z3Ops in
@@ -126,35 +79,23 @@ let enc_classic_so_test ea cp js =
   let kt = PC.enc (Program.length cp) and ks = PC.enc (Program.length ea.p) in
   foralls (forall_vars ea)
     (* encode source program*)
-    ((enc_program ea sts) &&
+    ((Evm_state.enc_program ea sts) &&
      (* all instructions from candidate program are used in some order *)
      distinct js &&
      (conj (List.map js ~f:(fun j -> (j < kt) && (j >= PC.init)))) &&
      (* encode instructions from candidate program *)
-     conj (List.map2_exn cp js ~f:(fun i j -> enc_instruction ea stc j i)) &&
+     conj (List.map2_exn cp js ~f:(fun i j -> Evm_state.enc_instruction ea stc j i)) &&
      (* they start in the same state *)
      (Evm_state.enc_equiv_at sts stc PC.init PC.init) &&
      (Used_gas.enc_equvivalence_at sts.used_gas stc.used_gas PC.init) &&
      (* and their final state is the same *)
      (Evm_state.enc_equiv_at sts stc ks kt))
 
-
-let eval_fis ea m j = eval_state_func_decl m j ea.fis |> Opcode.dec
-
-let eval_a ea m j = eval_state_func_decl m j ea.a |> Z3.Arithmetic.Integer.numeral_to_string
-
-let dec_push ea m j = function
-  | PUSH Tmpl -> PUSH (Word (Word.from_string (eval_a ea m j)))
-  | i -> i
-
-let dec_instr ea m j =
-  eval_fis ea m j |> Opcode.to_instr ea.opcodes |> dec_push ea m j
-
 let dec_super_opt ea m =
   let k = PC.dec @@ eval_const m ea.kt in
-  Program.init k ~f:(dec_instr ea m)
+  Program.init k ~f:(Evm_state.dec_instr ea m)
 
 let dec_classic_super_opt ea m cp js =
   let js = List.map js ~f:(fun j -> eval_const m j |> PC.dec) in
   List.sort ~compare:(fun (_, j1) (_, j2) -> PC.compare j1 j2) (List.zip_exn cp js)
-  |> List.mapi ~f:(fun j (i, _) -> dec_push ea m (PC.of_int j) i)
+  |> List.mapi ~f:(fun j (i, _) -> Evm_state.dec_push ea m (PC.of_int j) i)

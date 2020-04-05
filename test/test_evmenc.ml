@@ -18,7 +18,6 @@ open Ebso
 open Z3util
 open Instruction
 open Program
-open Evmenc
 open Enc_consts
 open Evm_state
 
