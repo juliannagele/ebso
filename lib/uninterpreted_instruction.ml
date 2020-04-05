@@ -38,9 +38,10 @@ let enc_const_uninterpreted ea st j i =
   let name = Instruction.unint_name 0 i in
   Evm_stack.enc_push ea.a st j (Pusharg.Word (Const name))
 
-let enc_nonconst_uninterpreted ea sk j i =
+let enc_nonconst_uninterpreted ea (sk : Evm_stack.t) j i =
+  let open Z3Ops in
+  let module SI = Stack_index in
   let rom = Map.find_exn ea.roms i in
-  let open Z3Ops in let open Evm_stack in
   let sc'= sk.ctr (j + one) in
   let ajs = Evm_stack.enc_top_d sk j (Instruction.arity i) in
   (sk.el (j + one) (sc' - SI.enc 1)) == (rom @@ ((forall_vars ea) @ ajs))
