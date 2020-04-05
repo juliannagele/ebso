@@ -53,7 +53,7 @@ let enc_sload str sk j = Evm_stack.enc_unaryop sk j (str.el j)
 
 let enc_sstore str sk j =
   let open Z3Ops in
-  let sc = let open Evm_stack in sk.ctr @@ [j] in
+  let sc = let open Evm_stack in sk.ctr j in
   let sk = let open Evm_stack in sk.el in
   let w = Word.const "w" in
   forall w (str.el (j + one) w ==

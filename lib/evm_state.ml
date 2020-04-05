@@ -41,7 +41,7 @@ let eval_state_func_decl  m j ?(n = []) ?(xs = []) f =
 let eval_stack ?(xs = []) st m i n =
   eval_state_func_decl m i ~n:[SI.enc n] ~xs:xs st.stack.decl
 
-let eval_stack_ctr st m i = eval_state_func_decl m i st.stack.ctr
+let eval_stack_ctr st m i = eval_state_func_decl m i st.stack.ctr_decl
 
 let eval_storage ?(xs = []) st m j k =
   eval_state_func_decl m j ~n:[k] ~xs:xs st.storage.decl

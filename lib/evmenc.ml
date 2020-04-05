@@ -66,14 +66,13 @@ let enc_instruction ea st j is =
       Uninterpreted_instruction.enc ea st j is
     | i -> failwith ("Encoding for " ^ [%show: Instruction.t] i ^ " not implemented.")
   in
-  let (d, a) = delta_alpha is in let diff = (a - d) in
   let open Z3Ops in
-  let sc = st.stack.ctr @@ [j] in
+  let sc = st.stack.ctr j in
   let k = st.stack.el j (sc - SI.enc 1) in
   let v = st.storage.el j k in
   let v' = st.stack.el j (sc - SI.enc 2) in
   let enc_used_gas = Used_gas.enc v v' is st.used_gas j in
-  let enc_stack_ctr = st.stack.ctr @@ [j + one] == (sc + SI.enc diff) in
+  let enc_stack_ctr = Evm_stack.enc_stack_ctr is st.stack j in
   let enc_exc_halt = Exc_halt.enc sc is st.exc_halt j in
   let enc_pres = Evm_stack.pres is st.stack j &&  Evm_storage.pres is st.storage j in
   enc_effect && enc_used_gas && enc_stack_ctr && enc_pres && enc_exc_halt

@@ -38,7 +38,7 @@ let enc_const_uninterpreted ea st j i =
 let enc_nonconst_uninterpreted ea sk j i =
   let rom = Map.find_exn ea.roms i in
   let open Z3Ops in let open Evm_stack in
-  let sc'= sk.ctr @@ [j + one] in
+  let sc'= sk.ctr (j + one) in
   let ajs = Evm_stack.enc_top_d sk j (Instruction.arity i) in
   (sk.el (j + one) (sc' - SI.enc 1)) == (rom @@ ((forall_vars ea) @ ajs))
 
