@@ -23,10 +23,6 @@ module PC = Program_counter
 module GC = Gas_cost
 module SI = Stack_index
 
-let init ea st =
-  let open Z3Ops in
-  Evm_state.init ea st && Uninterpreted_instruction.init ea st
-
 (* effect of instruction on state st after j steps *)
 let enc_instruction ea st j is =
   let enc_effect =
@@ -105,8 +101,9 @@ let enc_equivalence ea sts stt =
   enc_equivalence_at sts stt ks kt
 
 let enc_program ea st =
-  List.foldi ~init:(init ea st)
-    ~f:(fun j enc oc -> enc <&> enc_instruction ea st (PC.enc (PC.of_int j)) oc) ea.p
+  let open Z3Ops in
+  List.foldi ~init:(Evm_state.init ea st && Uninterpreted_instruction.init ea st)
+    ~f:(fun j enc oc -> enc && enc_instruction ea st (PC.enc (PC.of_int j)) oc) ea.p
 
 let enc_super_opt ea =
   let open Z3Ops in
