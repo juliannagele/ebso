@@ -22,7 +22,7 @@ module SI = Stack_index
 type t = {
   stack : Evm_stack.t;
   storage : Evm_storage.t;
-  exc_halt : Z3.FuncDecl.func_decl;
+  exc_halt : Exc_halt.t;
   used_gas : Used_gas.t;
 }
 
@@ -30,7 +30,7 @@ let mk ea idx =
   { stack = Evm_stack.mk ea idx;
     storage = Evm_storage.mk ea idx;
     (* exc_halt(j) is true if exceptional halting occurs after j instructions *)
-    exc_halt = func_decl ("exc_halt" ^ idx) [PC.sort] bool_sort;
+    exc_halt = Exc_halt.mk ea idx;
     (* gas(j) = amount of gas used to execute the first j instructions *)
     used_gas = Used_gas.mk ea idx;
   }
@@ -46,7 +46,7 @@ let eval_stack_ctr st m i = eval_state_func_decl m i st.stack.ctr
 let eval_storage ?(xs = []) st m j k =
   eval_state_func_decl m j ~n:[k] ~xs:xs st.storage.decl
 
-let eval_exc_halt st m i = eval_state_func_decl m i st.exc_halt
+let eval_exc_halt st m i = eval_state_func_decl m i st.exc_halt.decl
 
 let eval_gas ?(xs = []) st m i =
   eval_state_func_decl ~xs:xs m i st.used_gas.decl |> GC.dec
