@@ -30,7 +30,7 @@ let init ea st =
   && Exc_halt.init st.exc_halt
   && Used_gas.init st.used_gas
   && Evm_storage.init st.storage st.stack (poss_of_instr ea.p SLOAD @ poss_of_instr ea.p SSTORE) ea.ss
-  && Map.fold ea.roms ~init:top ~f:(fun ~key:i ~data:f e -> e && Uninterpreted_instruction.init_rom ea st i f)
+  && Uninterpreted_instruction.init ea st
 
 (* effect of instruction on state st after j steps *)
 let enc_instruction ea st j is =

@@ -31,6 +31,10 @@ let init_rom ea st i rom =
         ~f:(fun (aj, uj) enc -> ite (conj (List.map2_exn aj ws ~f:(==))) uj enc)
   )
 
+let init ea st =
+  let open Z3Ops in
+  Map.fold ea.roms ~init:top ~f:(fun ~key:i ~data:f e -> e && init_rom ea st i f)
+
 let enc_const_uninterpreted ea st j i =
   let name = Instruction.unint_name 0 i in
   Evm_stack.enc_push ea.a st j (Pusharg.Word (Const name))
