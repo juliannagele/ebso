@@ -1485,125 +1485,120 @@ let misc =
 
     "ADD does not generate variables">:: (fun _ ->
         let p = [ADD] in
-        let ue = mk_unint_vars p in
-        assert_bool "Some entry for ADD is found" (Option.is_none (Map.find ue ADD))
+        let ea = Enc_consts.mk p `All in
+        assert_bool "Some entry for ADD is found" (Option.is_none (Map.find ea.uis ADD))
       );
 
     "[NUMBER] generates one variable">:: (fun _ ->
         let p = [NUMBER] in
-        let ue = mk_unint_vars p in
+        let ea = Enc_consts.mk p `All in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [(Word.const "x_NUMBER")] (Option.value_exn (Map.find ue NUMBER))
+          [(Word.const "x_NUMBER")] (Option.value_exn (Map.find ea.uis NUMBER))
       );
 
     "[NUMBER; NUMBER] generates one variable">:: (fun _ ->
         let p = [NUMBER; NUMBER] in
-        let ue = mk_unint_vars p in
+        let ea = Enc_consts.mk p `All in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [(Word.const "x_NUMBER")] (Option.value_exn (Map.find ue NUMBER))
+          [(Word.const "x_NUMBER")] (Option.value_exn (Map.find ea.uis NUMBER))
       );
 
     "[BALANCE] generates one variable">:: (fun _ ->
         let p = [BALANCE] in
-        let ue = mk_unint_vars p in
+        let ea = Enc_consts.mk p `All in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [(Word.const "x_BALANCE_0")] (Option.value_exn (Map.find ue BALANCE))
+          [(Word.const "x_BALANCE_0")] (Option.value_exn (Map.find ea.uis BALANCE))
       );
 
     "[BALANCE; BALANCE] generates two variables">:: (fun _ ->
         let p = [BALANCE; BALANCE] in
-        let ue = mk_unint_vars p in
+        let ea = Enc_consts.mk p `All in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [(Word.const "x_BALANCE_0"); (Word.const "x_BALANCE_1")] (Option.value_exn (Map.find ue BALANCE))
+          [(Word.const "x_BALANCE_0"); (Word.const "x_BALANCE_1")] (Option.value_exn (Map.find ea.uis BALANCE))
       );
 
     (* mk_unint_fun *)
 
     "ADD does not generate function">:: (fun _ ->
         let p = [ADD;] in
-        let ue = mk_unint_roms p 0 in
-        assert_bool "Some entry for ADD is found" (Option.is_none (Map.find ue ADD))
+        let ea = Enc_consts.mk p `All in
+        assert_bool "No entry for ADD is found" (Option.is_none (Map.find ea.roms ADD))
       );
 
     "NUMBER does not generate function">:: (fun _ ->
         let p = [ADD;] in
-        let ue = mk_unint_roms p 0 in
-        assert_bool "Some entry for NUMBER is found" (Option.is_none (Map.find ue NUMBER))
+        let ea = Enc_consts.mk p `All in
+        assert_bool "No entry for NUMBER is found" (Option.is_none (Map.find ea.roms NUMBER))
       );
 
     "[BALANCE] generates one function">:: (fun _ ->
         let p = [BALANCE] in
-        let vs = 1 in
-        let ue = mk_unint_roms p vs in
-        let f = Option.value_exn (Map.find ue BALANCE) in
+        let ea = Enc_consts.mk p `All in
+        let f = Option.value_exn (Map.find ea.roms BALANCE) in
         assert_equal ~cmp:[%eq: string * int] ~printer:[%show: string * int]
-          ("f_BALANCE", vs + 1) (Z3.Symbol.to_string (Z3.FuncDecl.get_name f), Z3.FuncDecl.get_arity f)
+          ("f_BALANCE", 3) (Z3.Symbol.to_string (Z3.FuncDecl.get_name f), Z3.FuncDecl.get_arity f)
       );
 
     "[BALANCE; BALANCE] generates one function">:: (fun _ ->
         let p = [BALANCE; BALANCE] in
-        let vs = 1 in
-        let ue = mk_unint_roms p vs in
-        let f = Option.value_exn (Map.find ue BALANCE) in
+        let ea = Enc_consts.mk p `All in
+        let f = Option.value_exn (Map.find ea.roms BALANCE) in
         assert_equal ~cmp:[%eq: string * int] ~printer:[%show: string * int]
-          ("f_BALANCE", vs + 1) (Z3.Symbol.to_string (Z3.FuncDecl.get_name f), Z3.FuncDecl.get_arity f)
+          ("f_BALANCE", 4) (Z3.Symbol.to_string (Z3.FuncDecl.get_name f), Z3.FuncDecl.get_arity f)
       );
 
     "[BALANCE; BLOCKHASH] generate function for BALANCE">:: (fun _ ->
         let p = [BALANCE; BLOCKHASH] in
-        let vs = 1 in
-        let ue = mk_unint_roms p vs in
-        let f = Option.value_exn (Map.find ue BALANCE) in
+        let ea = Enc_consts.mk p `All in
+        let f = Option.value_exn (Map.find ea.roms BALANCE) in
         assert_equal ~cmp:[%eq: string * int] ~printer:[%show: string * int]
-          ("f_BALANCE", vs + 1) (Z3.Symbol.to_string (Z3.FuncDecl.get_name f), Z3.FuncDecl.get_arity f)
+          ("f_BALANCE", 4) (Z3.Symbol.to_string (Z3.FuncDecl.get_name f), Z3.FuncDecl.get_arity f)
       );
 
     "[BALANCE; BLOCKHASH] generate function for BLOCKHASH">:: (fun _ ->
         let p = [BALANCE; BLOCKHASH] in
-        let vs = 1 in
-        let ue = mk_unint_roms p vs in
-        let f = Option.value_exn (Map.find ue BLOCKHASH) in
+        let ea = Enc_consts.mk p `All in
+        let f = Option.value_exn (Map.find ea.roms BLOCKHASH) in
         assert_equal ~cmp:[%eq: string * int] ~printer:[%show: string * int]
-          ("f_BLOCKHASH", vs + 1) (Z3.Symbol.to_string (Z3.FuncDecl.get_name f), Z3.FuncDecl.get_arity f)
+          ("f_BLOCKHASH", 4) (Z3.Symbol.to_string (Z3.FuncDecl.get_name f), Z3.FuncDecl.get_arity f)
       );
 
     "[EXP] generates one function">:: (fun _ ->
         let p = [EXP] in
-        let vs = 1 in
-        let ue = mk_unint_roms p vs in
-        let f = Option.value_exn (Map.find ue EXP) in
+        let ea = Enc_consts.mk p `All in
+        let f = Option.value_exn (Map.find ea.roms EXP) in
         assert_equal ~cmp:[%eq: string * int] ~printer:[%show: string * int]
-          ("f_EXP", vs + 2) (Z3.Symbol.to_string (Z3.FuncDecl.get_name f), Z3.FuncDecl.get_arity f)
+          ("f_EXP", 5) (Z3.Symbol.to_string (Z3.FuncDecl.get_name f), Z3.FuncDecl.get_arity f)
       );
 
     (* mk_store_vars *)
 
     "For ADD no variable is generated">:: (fun _ ->
         let p = [ADD] in
-        let xs = mk_store_vars p in
+        let ea = Enc_consts.mk p `All in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [] xs
+          [] ea.ss
       );
 
     "For SSTORE one variable is generated">:: (fun _ ->
         let p = [SSTORE] in
-        let xs = mk_store_vars p in
+        let ea = Enc_consts.mk p `All in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [(Word.const "x_SSTORE_0")] xs
+          [(Word.const "x_SSTORE_0")] ea.ss
       );
 
     "[SLOAD] generates one variable">:: (fun _ ->
         let p = [PUSH (Word (Val "1")); SLOAD;] in
-        let xs = mk_store_vars p in
+        let ea = Enc_consts.mk p `All in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [(Word.const "x_SLOAD_0")] xs
+          [(Word.const "x_SLOAD_0")] ea.ss
       );
 
     "Two SLOADs generate two variables">:: (fun _ ->
         let p = [PUSH (Word (Val "1")); SLOAD; PUSH (Word (Val "2")); PUSH (Word (Val "1")); SLOAD;] in
-        let xs = mk_store_vars p in
+        let ea = Enc_consts.mk p `All in
         assert_equal ~cmp:[%eq: Z3.Expr.t list] ~printer:(List.to_string ~f:Z3.Expr.to_string)
-          [(Word.const "x_SLOAD_0"); (Word.const "x_SLOAD_1")] xs
+          [(Word.const "x_SLOAD_0"); (Word.const "x_SLOAD_1")] ea.ss
     );
 ]
 
