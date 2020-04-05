@@ -25,12 +25,7 @@ module SI = Stack_index
 
 let init ea st =
   let open Z3Ops in
-  (* careful: if stack_depth is larger than 2^sas, no checks *)
-  Evm_stack.init st.stack (stack_depth ea.p) ea.xs
-  && Exc_halt.init st.exc_halt
-  && Used_gas.init st.used_gas
-  && Evm_storage.init st.storage st.stack (poss_of_instr ea.p SLOAD @ poss_of_instr ea.p SSTORE) ea.ss
-  && Uninterpreted_instruction.init ea st
+  Evm_state.init ea st && Uninterpreted_instruction.init ea st
 
 (* effect of instruction on state st after j steps *)
 let enc_instruction ea st j is =

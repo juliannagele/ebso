@@ -34,6 +34,13 @@ let mk ea idx =
     (* gas(j) = amount of gas used to execute the first j instructions *)
     used_gas = Used_gas.mk ea idx;
   }
+let init (ea : Enc_consts.t) st =
+  let open Z3Ops in
+  (* careful: if stack_depth is larger than 2^sas, no checks *)
+  Evm_stack.init st.stack (Program.stack_depth ea.p) ea.xs
+  && Exc_halt.init st.exc_halt
+  && Used_gas.init st.used_gas
+  && Evm_storage.init st.storage st.stack (Program.poss_of_instr ea.p SLOAD @ Program.poss_of_instr ea.p SSTORE) ea.ss
 
 let eval_state_func_decl  m j ?(n = []) ?(xs = []) f =
   eval_func_decl m f (xs @ [PC.enc j] @ n)
