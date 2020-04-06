@@ -40,10 +40,10 @@ let suite =
         in
         let m = solve_model_exn [c] in
         assert_equal
-          ~cmp:[%eq: Opcode.t]
-          ~printer:[%show: Opcode.t]
-          (Opcode.from_instr ea.opcodes (PUSH (Word (Val "1"))))
-          (eval_fis ea m (PC.of_int 0))
+          ~cmp:[%eq: Instruction.t]
+          ~printer:[%show: Instruction.t]
+          (PUSH (Word (Val "1")))
+          (dec_instr ea m (PC.of_int 0))
       );
 
     "search for 3 instruction program">::(fun _ ->
@@ -58,13 +58,13 @@ let suite =
         in
         let m = solve_model_exn [c] in
         assert_equal
-          ~cmp:[%eq: Opcode.t list]
-          ~printer:[%show: Opcode.t list]
-          [ Opcode.from_instr ea.opcodes (PUSH (Word (Val "1")))
-          ; Opcode.from_instr ea.opcodes (PUSH (Word (Val "1")))
-          ; Opcode.from_instr ea.opcodes ADD
+          ~cmp:[%eq: Instruction.t list]
+          ~printer:[%show: Instruction.t list]
+          [ PUSH (Word (Val "1"))
+          ; PUSH (Word (Val "1"))
+          ; ADD
           ]
-          [eval_fis ea m (PC.of_int 0); eval_fis ea m (PC.of_int 1); eval_fis ea m (PC.of_int 2)]
+          [dec_instr ea m (PC.of_int 0); dec_instr ea m (PC.of_int 1); dec_instr ea m (PC.of_int 2)]
       );
 
     "cis contains unused instructions ">::(fun _ ->
@@ -79,10 +79,10 @@ let suite =
         in
         let m = solve_model_exn [c] in
         assert_equal
-          ~cmp:[%eq: Opcode.t]
-          ~printer:[%show: Opcode.t]
-          (Opcode.from_instr ea.opcodes (PUSH (Word (Val "1"))))
-          (eval_fis ea m (PC.of_int 0))
+          ~cmp:[%eq: Instruction.t]
+          ~printer:[%show: Instruction.t]
+          (PUSH (Word (Val "1")))
+          (dec_instr ea m (PC.of_int 0))
       );
 
     "cis does not contain required instruction">::(fun _ ->
@@ -112,10 +112,10 @@ let suite =
         in
         let m = solve_model_exn [c] in
         assert_equal
-          ~cmp:[%eq: Opcode.t]
-          ~printer:[%show: Opcode.t]
-          (Opcode.from_instr ea.opcodes (PUSH (Word (Val "1"))))
-          (eval_fis ea m (PC.of_int 0))
+          ~cmp:[%eq: Instruction.t]
+          ~printer:[%show: Instruction.t]
+          (PUSH (Word (Val "1")))
+          (dec_instr ea m (PC.of_int 0))
       );
 
     "search for 3 instruction program with equivalence constraint">::(fun _ ->
@@ -130,15 +130,15 @@ let suite =
         in
         let m = solve_model_exn [c] in
         assert_equal
-          ~cmp:[%eq: Opcode.t list]
-          ~printer:[%show: Opcode.t list]
-          [ Opcode.from_instr ea.opcodes (PUSH (Word (Val "1")))
-          ; Opcode.from_instr ea.opcodes (PUSH (Word (Val "1")))
-          ; Opcode.from_instr ea.opcodes ADD
+          ~cmp:[%eq: Instruction.t list]
+          ~printer:[%show: Instruction.t list]
+          [ PUSH (Word (Val "1"))
+          ; PUSH (Word (Val "1"))
+          ; ADD
           ]
-          [eval_fis ea m (PC.of_int 0);
-           eval_fis ea m (PC.of_int 1);
-           eval_fis ea m (PC.of_int 2)]
+          [dec_instr ea m (PC.of_int 0);
+           dec_instr ea m (PC.of_int 1);
+           dec_instr ea m (PC.of_int 2)]
       );
 
     "equivalence constraint forces inital stack for target program">:: (fun _ ->
@@ -169,10 +169,10 @@ let suite =
         in
         let m = solve_model_exn [c] in
         assert_equal
-          ~cmp:[%eq: Opcode.t]
-          ~printer:[%show: Opcode.t]
-          (Opcode.from_instr ea.opcodes (PUSH Tmpl))
-          (eval_fis ea m (PC.of_int 0))
+          ~cmp:[%eq: Instruction.t]
+          ~printer:[%show: Instruction.t]
+          (PUSH Tmpl)
+          (dec_instr ea m (PC.of_int 0))
       );
 
     "search for 1 instruction program with template (a)">::(fun _ ->
@@ -186,8 +186,8 @@ let suite =
           (ea.kt <==> (num (List.length p)))
         in
         let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: string] ~printer:[%show: string]
-          "1" (eval_a ea m (PC.of_int 0))
+        assert_equal ~cmp:[%eq: Instruction.t] ~printer:[%show: Instruction.t]
+          (PUSH (Pusharg.Word (Word.Val "1"))) (dec_instr ea m (PC.of_int 0))
       );
 
     "search for 3 instruction program with template (fis)">::(fun _ ->
@@ -202,15 +202,15 @@ let suite =
         in
         let m = solve_model_exn [c] in
         assert_equal
-          ~cmp:[%eq: Opcode.t list]
-          ~printer:[%show: Opcode.t list]
-          [ Opcode.from_instr ea.opcodes (PUSH Tmpl)
-          ; Opcode.from_instr ea.opcodes (PUSH Tmpl)
-          ; Opcode.from_instr ea.opcodes ADD
+          ~cmp:[%eq: Instruction.t list]
+          ~printer:[%show: Instruction.t list]
+          [ PUSH Tmpl
+          ; PUSH Tmpl
+          ; ADD
           ]
-          [eval_fis ea m (PC.of_int 0);
-           eval_fis ea m (PC.of_int 1);
-           eval_fis ea m (PC.of_int 2)]
+          [dec_instr ea m (PC.of_int 0);
+           dec_instr ea m (PC.of_int 1);
+           dec_instr ea m (PC.of_int 2)]
       );
 
     "search for 3 instruction program with template (a)">::(fun _ ->
@@ -224,9 +224,11 @@ let suite =
           (ea.kt <==> (num (List.length p)))
         in
         let m = solve_model_exn [c] in
-        assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
-          ["1"; "1"] [eval_a ea m (PC.of_int 0);
-                      eval_a ea m (PC.of_int 1)]
+        assert_equal ~cmp:[%eq: Instruction.t list] ~printer:[%show: Instruction.t list]
+          [PUSH (Pusharg.Word (Word.Val "1"));
+           (PUSH (Pusharg.Word (Word.Val "1")))]
+          [dec_instr ea m (PC.of_int 0);
+           dec_instr ea m (PC.of_int 1)]
       );
 
     (* super optimize *)
