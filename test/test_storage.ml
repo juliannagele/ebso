@@ -22,6 +22,10 @@ open Enc_consts
 open Evm_state
 open Superoptimization
 
+module SI = Stack_index
+module PC = Program_counter
+module GC = Gas_cost
+
 let gas_cost =
   [
     "cost of a single SSTORE with value 0, no refund" >:: (fun _ ->
@@ -401,10 +405,10 @@ let superoptimize =
         let p = [PUSH key; SLOAD; PUSH key; SLOAD] in
         let cis = `User [PUSH Tmpl; SLOAD; DUP I] in
         let ea = Enc_consts.mk p cis in
-        let c = enc_super_opt ea in
+        let c = Uso.enc ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [PUSH key; SLOAD; DUP I] (dec_super_opt ea m)
+          [PUSH key; SLOAD; DUP I] (Uso.dec ea m)
       );
 
     "sload from same computed key twice" >:: (fun _ ->
@@ -412,10 +416,10 @@ let superoptimize =
         let p = [PUSH key; SLOAD; PUSH (Word (Val "1")); PUSH (Word (Val "1")); ADD; SLOAD] in
         let cis = `User [PUSH Tmpl; SLOAD; DUP I] in
         let ea = Enc_consts.mk p cis in
-        let c = enc_super_opt ea in
+        let c = Uso.enc ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [PUSH key; SLOAD; DUP I] (dec_super_opt ea m)
+          [PUSH key; SLOAD; DUP I] (Uso.dec ea m)
       );
 
     "sload from two different keys is optimal" >:: (fun _ ->
@@ -424,7 +428,7 @@ let superoptimize =
         let p = [PUSH key1; SLOAD; PUSH key2; SLOAD] in
         let cis = `User [PUSH Tmpl; SLOAD; DUP I] in
         let ea = Enc_consts.mk p cis in
-        let c = enc_super_opt ea in
+        let c = Uso.enc ea in
         assert_bool "not unsat" (is_unsat [c])
       );
 
@@ -434,10 +438,10 @@ let superoptimize =
         let p = [PUSH key1; SLOAD; PUSH (Word (Val "1")); PUSH (Word (Val "1")); ADD; SLOAD] in
         let cis = `User [PUSH Tmpl; SLOAD; ADD] in
         let ea = Enc_consts.mk p cis in
-        let c = enc_super_opt ea in
+        let c = Uso.enc ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [PUSH key1; SLOAD; PUSH key2; SLOAD] (dec_super_opt ea m)
+          [PUSH key1; SLOAD; PUSH key2; SLOAD] (Uso.dec ea m)
       );
 
     "sload sstored value" >:: (fun _ ->
@@ -446,10 +450,10 @@ let superoptimize =
         let p = [PUSH value; PUSH key; SSTORE; PUSH key; SLOAD] in
         let cis = `User [PUSH Tmpl; SSTORE; SLOAD] in
         let ea = Enc_consts.mk p cis in
-        let c = enc_super_opt ea in
+        let c = Uso.enc ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [PUSH value; PUSH key; SSTORE; PUSH value] (dec_super_opt ea m)
+          [PUSH value; PUSH key; SSTORE; PUSH value] (Uso.dec ea m)
       );
 
     "sstore sloaded value" >:: (fun _ ->
@@ -457,10 +461,10 @@ let superoptimize =
         let p = [PUSH key; SLOAD; PUSH key; SSTORE] in
         let cis = `User [PUSH Tmpl; SSTORE; SLOAD] in
         let ea = Enc_consts.mk p cis in
-        let c = enc_super_opt ea in
+        let c = Uso.enc ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [] (dec_super_opt ea m)
+          [] (Uso.dec ea m)
       );
 
     "overwrite sstored value" >:: (fun _ ->
@@ -469,10 +473,10 @@ let superoptimize =
         let p = [PUSH value1; PUSH key; SSTORE; PUSH value2; PUSH key; SSTORE] in
         let cis = `User [PUSH Tmpl; SSTORE] in
         let ea = Enc_consts.mk p cis in
-        let c = enc_super_opt ea in
+        let c = Uso.enc ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [PUSH value2; PUSH key; SSTORE] (dec_super_opt ea m)
+          [PUSH value2; PUSH key; SSTORE] (Uso.dec ea m)
       );
 
     "sstore to two different keys is optimal" >:: (fun _ ->
@@ -482,7 +486,7 @@ let superoptimize =
         let p = [PUSH value; PUSH key1; SSTORE; PUSH value; PUSH key2; SSTORE] in
         let cis = `User [PUSH Tmpl; SSTORE; DUP I] in
         let ea = Enc_consts.mk p cis in
-        let c = enc_super_opt ea in
+        let c = Uso.enc ea in
         assert_bool "not unsat" (is_unsat [c])
       );
 
@@ -491,10 +495,10 @@ let superoptimize =
         let p = [PUSH key; SSTORE; PUSH (Word (Val "2")); POP] in
         let cis = `User [PUSH Tmpl; SSTORE] in
         let ea = Enc_consts.mk p cis in
-        let c = enc_super_opt ea in
+        let c = Uso.enc ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [PUSH key; SSTORE] (dec_super_opt ea m)
+          [PUSH key; SSTORE] (Uso.dec ea m)
       );
 
     "sstore value produced by uninterpreted constant instruction" >:: (fun _ ->
@@ -502,10 +506,10 @@ let superoptimize =
         let p = [PUSH (Word (Val "1")); POP; NUMBER; PUSH key; SSTORE] in
         let cis = `User [PUSH Tmpl; SSTORE; NUMBER] in
         let ea = Enc_consts.mk p cis in
-        let c = enc_super_opt ea in
+        let c = Uso.enc ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [NUMBER; PUSH key; SSTORE] (dec_super_opt ea m)
+          [NUMBER; PUSH key; SSTORE] (Uso.dec ea m)
       );
 
     "sstore value produced by uninterpreted instruction" >:: (fun _ ->
@@ -513,10 +517,10 @@ let superoptimize =
         let p = [PUSH (Word (Val "1")); PUSH (Word (Val "1")); ADD; BLOCKHASH; PUSH key; SSTORE] in
         let cis = `User [PUSH Tmpl; SSTORE; BLOCKHASH] in
         let ea = Enc_consts.mk p cis in
-        let c = enc_super_opt ea in
+        let c = Uso.enc ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [PUSH (Word (Val "2")); BLOCKHASH; PUSH key; SSTORE] (dec_super_opt ea m)
+          [PUSH (Word (Val "2")); BLOCKHASH; PUSH key; SSTORE] (Uso.dec ea m)
       );
 
     "sload as argument for uninterpreted instruction" >:: (fun _ ->
@@ -524,10 +528,10 @@ let superoptimize =
         let p = [PUSH key; SLOAD; BLOCKHASH; PUSH key; POP] in
         let cis = `User [PUSH Tmpl; SLOAD; BLOCKHASH] in
         let ea = Enc_consts.mk p cis in
-        let c = enc_super_opt ea in
+        let c = Uso.enc ea in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [PUSH key; SLOAD; BLOCKHASH;] (dec_super_opt ea m)
+          [PUSH key; SLOAD; BLOCKHASH;] (Uso.dec ea m)
       );
   ]
 

@@ -18,6 +18,8 @@ open Z3util
 open Instruction.T
 open Superoptimization
 
+module SI = Stack_index
+
 let suite =
   (* set to realistic values for validation *)
   Word.set_wsz 256; SI.set_sas 10;
