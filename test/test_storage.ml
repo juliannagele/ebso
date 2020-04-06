@@ -16,7 +16,7 @@ open Core
 open OUnit2
 open Ebso
 open Z3util
-open Instruction
+open Instruction.T
 open Pusharg
 open Enc_consts
 open Evm_state

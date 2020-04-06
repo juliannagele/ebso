@@ -14,6 +14,7 @@
 *)
 open Core
 open Z3util
+open Instruction.T
 
 module PC = Program_counter
 module GC = Gas_cost
@@ -132,7 +133,7 @@ let eval_fis (ea : Enc_consts.t) m j = eval_state_func_decl m j ea.fis |> Opcode
 let eval_a (ea : Enc_consts.t) m j = eval_state_func_decl m j ea.a |> Z3.Arithmetic.Integer.numeral_to_string
 
 let dec_push ea m j = function
-  | Instruction.PUSH Tmpl -> Instruction.PUSH (Word (Word.from_string (eval_a ea m j)))
+  | PUSH Tmpl -> PUSH (Word (Word.from_string (eval_a ea m j)))
   | i -> i
 
 let dec_instr ea m j =

@@ -15,7 +15,7 @@
 open OUnit2
 open Ebso
 open Z3util
-open Instruction
+open Instruction.T
 open Superoptimization
 
 let suite =

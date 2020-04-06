@@ -17,6 +17,7 @@ open OUnit2
 open Ebso
 open Z3util
 open Instruction
+open Instruction.T
 open Program
 open Enc_consts
 open Evm_state

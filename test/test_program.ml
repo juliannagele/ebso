@@ -15,7 +15,7 @@
 open Core
 open OUnit2
 open Ebso
-open Instruction
+open Instruction.T
 open Program
 
 module PC = Program_counter

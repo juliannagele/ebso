@@ -1,4 +1,4 @@
-(*   Copyright 2019 Julian Nagele and Maria A Schett
+(*   Copyright 2020 Julian Nagele and Maria A Schett
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -12,19 +12,24 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 *)
-open OUnit2
-open Ebso
-open Instruction.T
-open Enc_consts
+open Core
 
-let suite =
-  "suite" >:::
-  [
-    "convert between opcode and instruction">:: (fun _ ->
-        let ea = Enc_consts.mk [] (`User [SUB; ADD; POP]) in assert_equal ~cmp:[%eq: Instruction.t] ~printer:[%show: Instruction.t]
-          ADD (Opcode.to_instr ea.opcodes (Opcode.from_instr ea.opcodes ADD))
-      );
-]
+type t = Word of Word.t | Tmpl
 
-let () =
-  run_test_tt_main suite
+val pp : Format.formatter -> t -> unit
+
+val show : t -> string
+
+val t_of_sexp : Sexp.t -> t
+
+val sexp_of_t : t -> Sexp.t
+
+val compare : t -> t -> int
+
+val equal : t -> t -> bool
+
+val all : t list
+
+val show_hex : t -> string
+
+val enc : Z3.FuncDecl.func_decl -> Z3.Expr.expr -> t -> Z3.Expr.expr
