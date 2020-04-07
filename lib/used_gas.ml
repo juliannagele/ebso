@@ -51,7 +51,7 @@ let enc v v' is ug  j =
     and set = GC.enc (GC.of_int 20000)
     and reset = GC.enc (GC.of_int 5000) in
     match is with
-    | Instruction.SSTORE ->
+    | Instruction.T.SSTORE ->
       ite (v == Word.enc_int 0)
         (ite (v' == Word.enc_int 0) reset set)
         (ite (v' == Word.enc_int 0) (reset - refund) reset)

@@ -1,4 +1,4 @@
-(*   Copyright 2019 Julian Nagele and Maria A Schett
+(*   Copyright 2020 Julian Nagele and Maria A Schett
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -12,19 +12,15 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 *)
-open OUnit2
-open Ebso
-open Instruction.T
-open Enc_consts
+module Uso : sig
+  val enc_search_space : Enc_consts.t -> Evm_state.t -> Z3.Expr.expr
+  val enc : Enc_consts.t -> Z3.Expr.expr
+  val dec : Enc_consts.t -> Z3.Model.model -> Program.t
+end
 
-let suite =
-  "suite" >:::
-  [
-    "convert between opcode and instruction">:: (fun _ ->
-        let ea = Enc_consts.mk [] (`User [SUB; ADD; POP]) in assert_equal ~cmp:[%eq: Instruction.t] ~printer:[%show: Instruction.t]
-          ADD (Opcode.to_instr ea.opcodes (Opcode.from_instr ea.opcodes ADD))
-      );
-]
+module Bso : sig
+  val enc : Enc_consts.t -> Program.t -> Z3.Expr.expr list -> Z3.Expr.expr
+  val dec : Enc_consts.t -> Z3.Model.model -> Program.t -> Z3.Expr.expr list -> Program.t
+end
 
-let () =
-  run_test_tt_main suite
+val enc_trans_val : Enc_consts.t -> Program.t -> Z3.Expr.expr

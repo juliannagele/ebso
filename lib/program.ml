@@ -13,7 +13,7 @@
    limitations under the License.
 *)
 open Core
-open Instruction
+open Instruction.T
 
 type t = Instruction.t list [@@deriving eq, sexp]
 
@@ -46,11 +46,11 @@ let cis_of_progr p =
 let stack_depth p =
   Int.abs @@ Tuple.T2.get2 @@ List.fold_left ~init:(0, 0) p
     ~f:(fun (sc, sd) is ->
-        let (d, a) = delta_alpha is in (sc - d + a, min sd (sc - d)))
+        let (d, a) = Instruction.delta_alpha is in (sc - d + a, min sd (sc - d)))
 
 let total_gas_cost =
   let open Gas_cost in
-  List.fold ~init:zero ~f:(fun gc i -> gc + gas_cost i)
+  List.fold ~init:zero ~f:(fun gc i -> gc + Instruction.gas_cost i)
 
 let val_to_const wsz p =
   let fit w = if Word.fits_wsz wsz w then w else Word.to_const w in
@@ -66,8 +66,8 @@ let consts p = List.stable_dedup
 
 let compute_word_size p max_ws =
   let uc =
-    List.filter p ~f:is_uninterpreted
-    |> List.partition_tf ~f:is_const
+    List.filter p ~f:Instruction.is_uninterpreted
+    |> List.partition_tf ~f:Instruction.is_const
     |> Tuple.T2.map_fst ~f:List.stable_dedup
     |> fun (c, nc) -> List.length c + List.length nc
   in
@@ -130,7 +130,7 @@ let split_into_bbs ?(split_non_encodable=true) p =
   let is_encodable i =
     match i with
     | PUSH _ -> true
-    | _ -> List.mem (encodable @ uninterpreted) i ~equal:Instruction.equal
+    | _ -> List.mem (Instruction.encodable @ Instruction.uninterpreted) i ~equal:Instruction.equal
   in
   let rec split bb bbs = function
     | [] -> (if not (List.is_empty bb) then Next bb :: bbs else bbs) |> List.rev
@@ -163,7 +163,7 @@ let rec enumerate g cis m = match Int.Map.find m g with
     let pgs = List.init g ~f:Fn.id in
     let (ps, m') =
       List.fold_left pgs ~init:([], m) ~f:(fun (ps, m) pg ->
-          let is = List.filter cis ~f:(fun i -> gas_cost i = Gas_cost.of_int (g - pg)) in
+          let is = List.filter cis ~f:(fun i -> Instruction.gas_cost i = Gas_cost.of_int (g - pg)) in
           let (pps, m') = enumerate pg cis m in
           let addi pp i = List.sort ~compare:Instruction.compare (i :: pp) in
           (List.concat_map pps ~f:(fun pp -> List.map is ~f:(addi pp)) @ ps, m'))

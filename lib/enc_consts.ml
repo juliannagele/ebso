@@ -14,6 +14,7 @@
 *)
 open Core
 open Z3util
+open Instruction.T
 
 module PC = Program_counter
 
@@ -32,20 +33,22 @@ type t = {
 }
 
 let mk_unint_vars p =
+  let module M = Instruction.Map in
   let add_xi i xs = xs @ [Word.const (Instruction.unint_name (List.length xs) i)]
-  in List.fold p ~init:Instruction.Map.empty ~f:(fun ue i ->
+  in List.fold p ~init:M.empty ~f:(fun ue i ->
       if Instruction.is_uninterpreted i
-      then Map.update ue i ~f:(function | Some xs -> if Instruction.is_const i then xs else add_xi i xs
-                                        | None -> [Word.const (Instruction.unint_name 0 i)])
+      then M.update ue i ~f:(function | Some xs -> if Instruction.is_const i then xs else add_xi i xs
+                                      | None -> [Word.const (Instruction.unint_name 0 i)])
       else ue)
 
 let mk_unint_roms p vc =
-  List.fold p ~init:Instruction.Map.empty ~f:(fun ue i ->
+  let module M = Instruction.Map in
+  List.fold p ~init:M.empty ~f:(fun ue i ->
       if Instruction.is_uninterpreted i && not (Instruction.is_const i)
-      then Map.update ue i ~f:(function | Some f -> f
-                                        | None ->
-                                          let arity = Instruction.arity i + vc in
-                                          func_decl (Instruction.unint_rom_name i) (List.init arity ~f:(fun _ -> !Word.sort)) !Word.sort)
+      then M.update ue i ~f:(function | Some f -> f
+                                      | None ->
+                                        let arity = Instruction.arity i + vc in
+                                        func_decl (Instruction.unint_rom_name i) (List.init arity ~f:(fun _ -> !Word.sort)) !Word.sort)
       else ue)
 
 let mk_store_vars p = List.fold p ~init:[] ~f:(fun vs i ->
@@ -66,12 +69,12 @@ let mk_cis p uis = function
   | `Progr -> Program.cis_of_progr p
   | `User cis -> List.stable_dedup cis
   | `All ->
-    let const_pushs = List.map (Program.consts p) ~f:(fun c -> Instruction.PUSH (Word (Const c))) in
+    let const_pushs = List.map (Program.consts p) ~f:(fun c -> PUSH (Word (Const c))) in
     Instruction.encodable @ const_pushs @ uis
 
 let mk p cis_mde =
   let uis = mk_unint_vars p in
-  let cis = mk_cis p (Map.keys uis) cis_mde in
+  let cis = mk_cis p (Instruction.Map.keys uis) cis_mde in
   let xs = mk_input_vars p in
   let cs = mk_push_const_vars p in
   let ss = mk_store_vars p in
@@ -97,8 +100,8 @@ let mk p cis_mde =
      quantified variables, source and target program use the same
      roms, hence roms cannot be in state without adapting equvivalence
      *)
-  roms = mk_unint_roms p (List.length (xs @ ss @ cs @ List.concat (Map.data uis)));
+  roms = mk_unint_roms p (List.length (xs @ ss @ cs @ List.concat (Instruction.Map.data uis)));
 }
 
 (* project all forall quantified variables *)
-let forall_vars ea = ea.xs @ ea.ss @ ea.cs @ List.concat (Map.data ea.uis)
+let forall_vars ea = ea.xs @ ea.ss @ ea.cs @ List.concat (Instruction.Map.data ea.uis)

@@ -21,7 +21,7 @@ let init_rom (ea : Enc_consts.t) sk i rom =
   let open Z3Ops in
   let d = Instruction.arity i in
   let js = Program.poss_of_instr ea.p i in
-  let us = Map.find_exn ea.uis i in
+  let us = Instruction.Map.find_exn ea.uis i in
   let ajs = List.map js ~f:(fun j -> Evm_stack.enc_top_d sk (PC.enc j) d) in
   let w_dflt = Word.enc_int 0 in
   let ws = List.init d ~f:(fun l -> Word.const ("w" ^ [%show: int] l)) in
@@ -33,7 +33,7 @@ let init_rom (ea : Enc_consts.t) sk i rom =
 
 let init (ea : Enc_consts.t) st =
   let open Z3Ops in
-  Map.fold ea.roms ~init:top ~f:(fun ~key:i ~data:f e -> e && init_rom ea st i f)
+  Instruction.Map.fold ea.roms ~init:top ~f:(fun ~key:i ~data:f e -> e && init_rom ea st i f)
 
 let enc_const_uninterpreted (ea : Enc_consts.t) st j i =
   let name = Instruction.unint_name 0 i in
@@ -42,7 +42,7 @@ let enc_const_uninterpreted (ea : Enc_consts.t) st j i =
 let enc_nonconst_uninterpreted (ea : Enc_consts.t) (sk : Evm_stack.t) j i =
   let open Z3Ops in
   let module SI = Stack_index in
-  let rom = Map.find_exn ea.roms i in
+  let rom = Instruction.Map.find_exn ea.roms i in
   let ajs = Evm_stack.enc_top_d sk j (Instruction.arity i) in
   (sk.el (j + one) (sk.ctr (j + one) - SI.enc 1)) == (rom @@ ((Enc_consts.forall_vars ea) @ ajs))
 

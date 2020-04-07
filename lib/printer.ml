@@ -34,7 +34,7 @@ let show_ebso_snippet s =
   ; Program.show_h s
   ; [%show: int] (List.length s)
   ; [%show: int] (List.length ea.xs)
-  ; [%show: int] (List.length (List.concat (Map.data ea.uis)))
+  ; [%show: int] (List.length (List.concat (Instruction.Map.data ea.uis)))
   ; [%show: int] (List.length ea.ss)
   ]
 

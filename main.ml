@@ -68,11 +68,11 @@ let tvalidate s t sz =
 
 let uso_step p cis tval =
   let ea = Enc_consts.mk p cis in
-  let c = enc_super_opt ea in
+  let c = Uso.enc ea in
   let m = solve_model [c] in
   let step = match m with
     | Some m ->
-      let p' = dec_super_opt ea m in
+      let p' = Uso.dec ea m in
       let tv = Option.map tval ~f:(tvalidate ea.p p') in
       mk_step p p' false tv
     | None -> mk_step p p true None
@@ -99,19 +99,17 @@ let uso_bb cis tval hist_bbs bb = match ebso_snippet bb with
   | Some p -> uso_encbl p cis tval hist_bbs
   | None   -> hist_bbs
 
-let bso_constraint ea cp js = enc_classic_so_test ea cp js
-
 let bso_model c = solve_model [c]
 
 let bso_step p ea cp tval =
   let js = List.init (List.length cp) ~f:(fun i -> intconst ("j" ^ Int.to_string i)) in
-  let c = bso_constraint ea cp js in
+  let c = Bso.enc ea cp js in
   let mo = bso_model c in
   let step =
     match mo with
     | None -> None
     | Some m ->
-      let p' = dec_classic_super_opt ea m cp js in
+      let p' = Bso.dec ea m cp js in
       let tv = Option.map tval ~f:(tvalidate ea.p p') in
       match tv with
       | Some false -> None

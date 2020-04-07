@@ -24,7 +24,7 @@ let equal x y = match (x, y) with
   | Tmpl, Tmpl -> true
   | _, _ -> false
 
-let of_sexp s = match s with
+let t_of_sexp s = match s with
   | Sexp.Atom i -> if String.equal i "Tmpl" then Tmpl else Word (Word.from_string i)
   | Sexp.List _ -> failwith "could not parse argument of PUSH"
 

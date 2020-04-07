@@ -15,7 +15,7 @@
 open Core
 open Sedlexing
 open Pusharg
-open Instruction
+open Instruction.T
 
 exception SyntaxError of int
 
@@ -28,12 +28,12 @@ let white_spaces = [%sedlex.regexp? Star white_space]
 
 let parse_idx prefix s =
   let s = String.chop_prefix_exn ~prefix:prefix s in
-  let idxo = idx_of_enum @@ Int.of_string s in
+  let idxo = Instruction.idx_of_enum @@ Int.of_string s in
   Option.value_exn ~message:("parse " ^ prefix ^ " index failed") idxo
 
 let parse_idxI prefix s =
   let s = String.chop_prefix_exn ~prefix:prefix s in
-  idx_of_sexp (Atom s)
+  Instruction.idx_of_sexp (Atom s)
 
 let rec parse_stackarg buf =
   match%sedlex buf with
@@ -138,7 +138,7 @@ let  parse_instruction buf =
   | _ -> raise (SyntaxError (lexeme_start buf))
 
 let parse_hex_idx s n =
-  let idxo = idx_of_enum @@ Int.of_string ("0x" ^ s) - n in
+  let idxo = Instruction.idx_of_enum @@ Int.of_string ("0x" ^ s) - n in
   Option.value_exn ~message:("parse hex index failed") idxo
 
 let parse_hex_bytes n buf =

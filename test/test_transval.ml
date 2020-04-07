@@ -15,8 +15,10 @@
 open OUnit2
 open Ebso
 open Z3util
-open Instruction
+open Instruction.T
 open Superoptimization
+
+module SI = Stack_index
 
 let suite =
   (* set to realistic values for validation *)

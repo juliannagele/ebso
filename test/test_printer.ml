@@ -16,7 +16,7 @@ open OUnit2
 open Ebso
 open Printer
 open Program
-open Instruction
+open Instruction.T
 
 let suite =
   "suite" >:::

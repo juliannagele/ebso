@@ -62,5 +62,5 @@ let enc_sstore str sk j =
 let pres is str j =
   let open Z3Ops in
   match is with
-  | Instruction.SSTORE -> top
+  | Instruction.T.SSTORE -> top
   | _ -> let w = Word.const "w" in forall w (str.el (j + one) w == str.el j w)
