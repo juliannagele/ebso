@@ -36,7 +36,7 @@ let suite =
         let c =
           enc_program ea st <&>
           enc_search_space ea st <&>
-          (ea.kt <==> (num (List.length p)))
+          ea.kt <==> (num (Z.of_int (List.length p)))
         in
         let m = solve_model_exn [c] in
         assert_equal
@@ -54,7 +54,7 @@ let suite =
         let c =
           enc_program ea st <&>
           enc_search_space ea st <&>
-          (ea.kt <==> (num (List.length p)))
+          (ea.kt <==> (num (Z.of_int (List.length p))))
         in
         let m = solve_model_exn [c] in
         assert_equal
@@ -75,7 +75,7 @@ let suite =
         let c =
           enc_program ea st <&>
           enc_search_space ea st <&>
-          (ea.kt <==> (num (List.length p)))
+          (ea.kt <==> (num (Z.of_int (List.length p))))
         in
         let m = solve_model_exn [c] in
         assert_equal
@@ -93,7 +93,7 @@ let suite =
         let c =
           enc_program ea st <&>
           enc_search_space ea st <&>
-          (ea.kt <==> (num (List.length p)))
+          (ea.kt <==> (num (Z.of_int(List.length p))))
         in
         assert_bool "not unsat" (is_unsat [c])
       );
@@ -165,7 +165,7 @@ let suite =
         let c =
           enc_program ea st <&>
           enc_search_space ea st <&>
-          (ea.kt <==> (num (List.length p)))
+          (ea.kt <==> (num (Z.of_int (List.length p))))
         in
         let m = solve_model_exn [c] in
         assert_equal
@@ -183,7 +183,7 @@ let suite =
         let c =
           enc_program ea st <&>
           enc_search_space ea st <&>
-          (ea.kt <==> (num (List.length p)))
+          (ea.kt <==> (num (Z.of_int (List.length p))))
         in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: string] ~printer:[%show: string]
@@ -198,7 +198,7 @@ let suite =
         let c =
           enc_program ea st <&>
           enc_search_space ea st <&>
-          (ea.kt <==> (num (List.length p)))
+          (ea.kt <==> (num (Z.of_int (List.length p))))
         in
         let m = solve_model_exn [c] in
         assert_equal
@@ -221,7 +221,7 @@ let suite =
         let c =
           enc_program ea st <&>
           enc_search_space ea st <&>
-          (ea.kt <==> (num (List.length p)))
+          (ea.kt <==> (num (Z.of_int (List.length p))))
         in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]

@@ -1311,8 +1311,8 @@ let forced_stack_underflow =
         let st = Evm_state.mk {ea with p = []} "" in
         let c =
           init {ea with p = []} st <&>
-          enc_instruction ea st (num 0) (List.nth_exn p 0) <&>
-          enc_instruction ea st (num 1) (List.nth_exn p 1)
+          enc_instruction ea st (num Z.zero) (List.nth_exn p 0) <&>
+          enc_instruction ea st (num Z.one) (List.nth_exn p 1)
         in
         let m = solve_model_exn [c] in
         assert_equal
@@ -1327,7 +1327,7 @@ let forced_stack_underflow =
         let ea = Enc_consts.mk p (`User []) in
         let st = Evm_state.mk {ea with p = []} "" in
         let c = init {ea with p = []} st <&>
-                enc_instruction ea st (num 0) ADD in
+                enc_instruction ea st (num Z.zero) ADD in
         let m = solve_model_exn [c] in
         assert_equal
           ~cmp:[%eq: Z3.Expr.t]
@@ -1342,8 +1342,8 @@ let forced_stack_underflow =
         let st = Evm_state.mk {ea with p = []} "" in
         let c =
           init {ea with p = []} st <&>
-          enc_instruction ea st (num 0) (List.nth_exn p 0) <&>
-          enc_instruction ea st (num 1) (List.nth_exn p 1)
+          enc_instruction ea st (num Z.zero) (List.nth_exn p 0) <&>
+          enc_instruction ea st (num Z.one) (List.nth_exn p 1)
         in
         let m = solve_model_exn [c] in
         assert_equal
@@ -1359,7 +1359,7 @@ let forced_stack_underflow =
         let st = Evm_state.mk {ea with p = []} "" in
         let c =
           init {ea with p = []} st <&>
-          enc_instruction ea st (num 0) (List.nth_exn p 0)
+          enc_instruction ea st (num Z.zero) (List.nth_exn p 0)
         in
         let m = solve_model_exn [c] in
         assert_equal
@@ -1375,7 +1375,7 @@ let forced_stack_underflow =
         let st = Evm_state.mk {ea with p = []} "" in
         let c =
           init {ea with p = []} st <&>
-          enc_instruction ea st (num 0) (List.nth_exn p 0)
+          enc_instruction ea st (num Z.zero) (List.nth_exn p 0)
         in
         let m = solve_model_exn [c] in
         assert_equal

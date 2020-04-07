@@ -12,7 +12,7 @@ depends: [
   "ocaml"
   "dune"
   "ocamlfind"
-  "z3" {= "4.7.1"}
+  "z3"
   "core"
   "sedlex"
   "csv"

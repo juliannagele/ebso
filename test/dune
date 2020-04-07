@@ -4,6 +4,7 @@
         test_storage test_printer test_instruction test_opcode)
  (libraries core ebso oUnit z3)
  (preprocess (pps ppx_deriving.std))
+ (link_flags -cc g++)
 )
 
 (alias

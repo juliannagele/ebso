@@ -16,13 +16,17 @@
 open Core
 open Z3util
 
-type t = int [@@deriving eq, show]
+type t = Z.t [@@deriving eq]
 
 type instr_map = (Instruction.t * t) list
 
+let show = Z.to_string
+
+let pp fmt n = Format.fprintf fmt "%s" (show n)
+
 let sort = int_sort
 
-let mk_instr_map = List.mapi ~f:(fun i oc -> (oc, i))
+let mk_instr_map = List.mapi ~f:(fun i oc -> (oc, (Z.of_int i)))
 
 let from_instr ops i = List.Assoc.find_exn ops ~equal:[%eq: Instruction.t] i
 
@@ -31,4 +35,4 @@ let to_instr ops i =
 
 let enc = num
 
-let dec = Z3.Arithmetic.Integer.get_int
+let dec = Z3.Arithmetic.Integer.get_big_int

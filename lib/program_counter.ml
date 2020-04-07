@@ -12,10 +12,13 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 *)
-open Core
 open Z3util
 
-type t = int [@@deriving eq, compare, show]
+type t = Z.t [@@deriving eq, compare]
+
+let show = Z.to_string
+
+let pp fmt n = Format.fprintf fmt "%s" (show n)
 
 let sort = int_sort
 
@@ -23,10 +26,10 @@ let const = intconst
 
 let enc = num
 
-let dec = Z3.Arithmetic.Integer.get_int
+let dec = Z3.Arithmetic.Integer.get_big_int
 
-let init = enc 0
+let init = enc Z.zero
 
-let of_int = Fn.id
+let of_int = Z.of_int
 
-let to_int = Fn.id
+let to_int = Z.to_int

@@ -2,6 +2,7 @@
  (modules main)
  (libraries core z3 sedlex csv ebso)
  (preprocess (pps ppx_jane ppx_deriving.std))
+ (link_flags -cc g++)
  (public_name ebso)
 )
 
@@ -9,16 +10,19 @@
  (modules countinstr)
  (libraries core sedlex ebso zarith)
  (preprocess (pps ppx_jane ppx_deriving.std))
+ (link_flags -cc g++)
 )
 
 (executable (name abstract_then_dedup)
  (modules abstract_then_dedup)
  (libraries core sedlex ebso zarith csv)
  (preprocess (pps ppx_jane ppx_deriving.std))
+ (link_flags -cc g++)
 )
 
 (executable (name then_compute_storage_gas_cost)
  (modules then_compute_storage_gas_cost)
  (libraries core sedlex ebso zarith csv z3)
  (preprocess (pps ppx_jane ppx_deriving.std))
+ (link_flags -cc g++)
 )
