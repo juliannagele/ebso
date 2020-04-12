@@ -38,14 +38,17 @@ let show_ebso_snippet s =
   ; [%show: int] (List.length ea.ss)
   ]
 
-let create_ebso_snippets bbs =
+let ebso_snippet_header =
   [ "source bytecode"
   ; "source opcode"
   ; "source instruction count"
   ; "stack depth"
   ; "uninterpreted count"
   ; "storage access count"
-  ] ::
+  ]
+
+let create_ebso_snippets bbs =
+  ebso_snippet_header ::
   List.filter_map bbs ~f:(fun bb -> ebso_snippet bb |> Option.map ~f:(show_ebso_snippet))
 
 let show_step step =
