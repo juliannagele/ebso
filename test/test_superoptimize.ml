@@ -40,7 +40,7 @@ let suite =
         let c =
           enc_program ea st <&>
           Uso.enc_search_space ea st <&>
-          ea.kt <==> (num (Z.of_int (List.length p)))
+          (ea.kt <==> (num (Z.of_int (List.length p))))
         in
         let m = solve_model_exn [c] in
         assert_equal

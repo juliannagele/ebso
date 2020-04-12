@@ -26,7 +26,7 @@ let const = intconst
 
 let enc = num
 
-let dec = Z3.Arithmetic.Integer.get_big_int
+let dec e = Z3.Arithmetic.Integer.get_big_int e |> Big_int.string_of_big_int |> Z.of_string
 
 let init = enc Z.zero
 
