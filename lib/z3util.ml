@@ -20,6 +20,11 @@ exception Z3_Timeout
 (* make context global for now -- if turns out badly wrap in a state monad *)
 let ctxt = ref (mk_context [])
 
+(* cumulative timeout for Z3 calls in milliseconds *)
+let total_timeout = ref None
+
+let set_timeout t = total_timeout := (Option.map t ~f:(fun t -> t * 1000))
+
 let int_sort = Arithmetic.Integer.mk_sort !ctxt
 let bv_sort = BitVector.mk_sort !ctxt
 let bool_sort = Boolean.mk_sort !ctxt
@@ -141,7 +146,18 @@ let solve_model_timeout cs timeout =
   | Solver.UNSATISFIABLE -> None
   | Solver.UNKNOWN -> raise Z3_Timeout
 
-let solve_model cs = solve_model_timeout cs 0
+let solve_model cs =
+  match !total_timeout with
+  | None -> solve_model_timeout cs 0
+  | Some remaining ->
+    let s = Unix.gettimeofday () in
+    let m = solve_model_timeout cs remaining in
+    let e = Unix.gettimeofday () in
+    let time_taken = Int.of_float ((e -. s) *. 1000.0) in
+    (* Int.max to avoid negative timeout in next call leading to no timeout
+       being set *)
+    total_timeout := Some (Int.max 1 (remaining - time_taken));
+    m
 
 let solve_model_exn cs = Option.value_exn (solve_model cs) ~message:"UNSAT"
 

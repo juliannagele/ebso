@@ -29,10 +29,11 @@ type output_options =
 let outputcfg =
   ref {pmodel = false; psmt = false; pinter = false; csv = None}
 
-let set_options wordsize stackas pm psmt pinter csv =
+let set_options timeout wordsize stackas pm psmt pinter csv =
   outputcfg := {pmodel = pm; psmt = psmt; pinter = pinter; csv = csv};
   Option.iter stackas ~f:(fun stackas -> Stack_index.set_sas stackas);
-  Word.set_wsz wordsize
+  Word.set_wsz wordsize;
+  Z3util.set_timeout timeout
 
 let log c m =
   log_benchmark c !outputcfg.psmt;
@@ -69,22 +70,24 @@ let tvalidate s t sz =
 let uso_step p cis tval =
   let ea = Enc_consts.mk p cis in
   let c = Uso.enc ea in
-  let m = solve_model [c] in
-  let step = match m with
-    | Some m ->
-      let p' = Uso.dec ea m in
-      let tv = Option.map tval ~f:(tvalidate ea.p p') in
-      mk_step p p' false tv
-    | None -> mk_step p p true None
-  in (step, c, m)
+  try
+    let m = solve_model [c] in
+    let step = match m with
+      | Some m ->
+        let p' = Uso.dec ea m in
+        let tv = Option.map tval ~f:(tvalidate ea.p p') in
+        mk_step p p' false tv
+      | None -> mk_step p p true None
+    in (step, c, m, false)
+  with Z3_Timeout ->
+    (mk_step p p false None, c, None, true)
 
 let rec uso p hist cis tval hist_bbs =
-  let (stp, c, m) = uso_step p cis tval in
+  let (stp, c, m, timed_out) = uso_step p cis tval in
   let hist = add_step stp hist in
   output_step hist hist_bbs;
   log c m;
-  if (stp.optimal)
-  then hist :: hist_bbs
+  if stp.optimal || timed_out then hist :: hist_bbs
   else
     let p' =
       match stp.tval with
@@ -99,22 +102,24 @@ let uso_bb cis tval hist_bbs bb = match ebso_snippet bb with
   | Some p -> uso_encbl p cis tval hist_bbs
   | None   -> hist_bbs
 
-let bso_model c = solve_model [c]
-
 let bso_step p ea cp tval =
   let js = List.init (List.length cp) ~f:(fun i -> intconst ("j" ^ Int.to_string i)) in
   let c = Bso.enc ea cp js in
-  let mo = bso_model c in
-  let step =
-    match mo with
-    | None -> None
-    | Some m ->
-      let p' = Bso.dec ea m cp js in
-      let tv = Option.map tval ~f:(tvalidate ea.p p') in
-      match tv with
-      | Some false -> None
-      | _ -> Some (mk_step p p' true tv)
-  in (step, c, mo)
+  try
+    let mo = solve_model [c] in
+    let step =
+      match mo with
+      | None -> None
+      | Some m ->
+        let p' = Bso.dec ea m cp js in
+        let tv = Option.map tval ~f:(tvalidate ea.p p') in
+        match tv with
+        | Some false -> None
+        | _ -> Some (mk_step p p' true tv)
+    in (step, c, mo)
+  with Z3_Timeout ->
+    (Some (mk_step p p false None), c, None)
+
 
 let rec bso p ea g gm cps cis tval hist_bbs =
   match cps with
@@ -157,6 +162,8 @@ let () =
       let direct = flag "direct" no_arg
           ~doc:"do not read program from file, but interpret input as program \
                 directly"
+      and timeout = flag "timeout" (optional int)
+          ~doc:"to cumulative timeout for all Z3 call in seconds"
       and p_model = flag "print-model" no_arg
           ~doc:"print model found by solver"
       and p_smt = flag "print-smt" no_arg
@@ -187,7 +194,7 @@ let () =
           | Some wsz -> wsz
           | None -> Program.compute_word_size p 256
         in
-        set_options wordsize stackas p_model p_smt p_inter csv;
+        set_options timeout wordsize stackas p_model p_smt p_inter csv;
         let p = Program.val_to_const !Word.size p in
         let bbs = Program.split_into_bbs p in
         match opt_mode with
