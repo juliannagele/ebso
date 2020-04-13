@@ -151,7 +151,7 @@ let parse_hex_bytes n buf =
   in
   parse_hex_bytes n "0x"
 
-let parse_hex buf =
+let parse_hex ?(ignore_data_section=false) buf =
   let rec parse_token acc =
     match%sedlex buf with
     (* solc adds hash of contract metadata behin conract like so:
@@ -257,11 +257,15 @@ let parse_hex buf =
     | "fe" -> parse_token (INVALID :: acc)
     | "ff" -> parse_token (SELFDESTRUCT :: acc)
     | white_spaces, eof -> acc
-    | _ -> raise (SyntaxError (lexeme_start buf))
+    | _ ->
+      if ignore_data_section then
+        List.drop_while acc ~f:(fun i -> not (i = STOP))
+      else
+        raise (SyntaxError (lexeme_start buf))
   in
   parse_token [] |> List.rev
 
-let parse buf =
+let parse ?(ignore_data_section=false) buf =
   let rec parse_wslist acc =
     match%sedlex buf with
     | white_spaces, eof -> List.rev acc
@@ -283,8 +287,8 @@ let parse buf =
     | _ -> raise (SyntaxError (lexeme_start buf))
   in
   match%sedlex buf with
-  | "0x" -> parse_hex buf
-  | hexdigit -> rollback buf; parse_hex buf
+  | "0x" -> parse_hex ~ignore_data_section:ignore_data_section buf
+  | hexdigit -> rollback buf; parse_hex ~ignore_data_section:ignore_data_section buf
   | white_spaces, eof -> []
   | white_spaces, '[', white_spaces, ']', white_spaces, eof -> []
   | white_spaces, '[', white_spaces -> parse_ocamllist ([parse_instruction buf])

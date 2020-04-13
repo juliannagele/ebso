@@ -273,6 +273,16 @@ let suite =
           (Program.show_hex @@ parse buf)
       );
 
+    "parse contract from bytecode with trailing data section" >:: (fun _ ->
+        let code = "608060405600"
+        and data = "54cdd3"
+        in
+        let buf = Latin1.from_string (code ^ data) in
+        assert_equal ~cmp:[%eq: string] ~printer:[%show: string]
+          code
+          (Program.show_hex @@ parse ~ignore_data_section:true buf)
+      );
+
   ]
 
 let () =
