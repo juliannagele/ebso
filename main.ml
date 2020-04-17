@@ -56,7 +56,7 @@ let add_step step = function
 
 let is_translation_valid s t =
   let s' = Program.const_to_val s and t' = Program.const_to_val t in
-  let c = enc_trans_val (Enc_consts.mk s' (`User [])) t' in
+  let c = enc_trans_val (Enc_consts.mk_trans_val s' t' (`User [])) in
   match solve_model [c] with
     | None -> true
     | Some _ -> false

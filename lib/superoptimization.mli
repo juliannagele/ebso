@@ -23,4 +23,4 @@ module Bso : sig
   val dec : Enc_consts.t -> Z3.Model.model -> Program.t -> Z3.Expr.expr list -> Program.t
 end
 
-val enc_trans_val : Enc_consts.t -> Program.t -> Z3.Expr.expr
+val enc_trans_val : Enc_consts.t -> Z3.Expr.expr

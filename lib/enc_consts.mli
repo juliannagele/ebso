@@ -14,6 +14,7 @@
 *)
 type t = {
   p : Program.t;
+  tp : Program.t option;
   cis : Instruction.t list;
   kt : Z3.Expr.expr;
   fis : Z3.FuncDecl.func_decl;
@@ -26,8 +27,8 @@ type t = {
   roms : Z3.FuncDecl.func_decl Instruction.Map.t;
 }
 
-val mk :
-    Instruction.t list ->
-    [< `All | `Progr | `User of Instruction.t list ] -> t
+val mk : Program.t -> ?tp:Program.t option -> [ `All | `Progr | `User of Instruction.t list ] -> t
+
+val mk_trans_val : Program.t -> Program.t -> [ `All | `Progr | `User of Instruction.t list ] -> t
 
 val forall_vars : t -> Z3.Expr.expr list

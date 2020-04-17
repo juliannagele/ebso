@@ -86,8 +86,12 @@ module Bso = struct
 
 end
 
-let enc_trans_val ea tp =
+let enc_trans_val ea =
   let open Z3Ops in
+  let tp =
+    Option.value_exn ea.tp
+      ~message:"Translation validation: no target program given"
+  in
   let sts = Evm_state.mk ea "_s" in
   let stt = Evm_state.mk ea "_t" in
   let kt = PC.enc (Program.length tp) and ks = PC.enc (Program.length ea.p) in

@@ -20,7 +20,9 @@ module PC = Program_counter
 let init_rom (ea : Enc_consts.t) sk i rom =
   let open Z3Ops in
   let d = Instruction.arity i in
-  let js = Program.poss_of_instr ea.p i in
+  let sjs = Program.poss_of_instr ea.p i in
+  let tjs = Program.poss_of_instr (Option.value ~default:[] ea.tp) i in
+  let js = sjs @ List.drop tjs (List.length sjs) in
   let us = Instruction.Map.find_exn ea.uis i in
   let ajs = List.map js ~f:(fun j -> Evm_stack.enc_top_d sk (PC.enc j) d) in
   let w_dflt = Word.enc_int 0 in

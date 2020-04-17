@@ -132,4 +132,5 @@ module Map : sig
   val find_exn : 'a t -> T.t -> 'a
   val find : 'a t -> T.t -> 'a option
   val fold : 'a t -> init:'b -> f:(key:T.t -> data:'a -> 'b -> 'b) -> 'b
+  val merge : 'a t -> 'b t -> f:(key:T.t -> [ `Both of 'a * 'b | `Left of 'a | `Right of 'b ] -> 'c option) -> 'c t
 end

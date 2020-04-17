@@ -20,6 +20,7 @@ module PC = Program_counter
 
 type t = {
   p : Program.t;
+  tp : Program.t option;
   cis : Instruction.t list;
   kt : Z3.Expr.expr;
   fis : Z3.FuncDecl.func_decl;
@@ -72,14 +73,23 @@ let mk_cis p uis = function
     let const_pushs = List.map (Program.consts p) ~f:(fun c -> PUSH (Word (Const c))) in
     Instruction.encodable @ const_pushs @ uis
 
-let mk p cis_mde =
-  let uis = mk_unint_vars p in
+let mk p ?(tp=None) cis_mde =
+  let tpl = Option.value ~default:[] tp in
+  let uis =
+    Instruction.Map.merge ~f:(fun ~key:_ -> function
+          `Left uis -> Some uis
+        | `Right uis -> Some uis
+        | `Both (uis1, uis2) -> Some (List.stable_dedup (uis1 @ uis2)))
+      (mk_unint_vars p) (mk_unint_vars tpl)
+  in
   let cis = mk_cis p (Instruction.Map.keys uis) cis_mde in
   let xs = mk_input_vars p in
-  let cs = mk_push_const_vars p in
-  let ss = mk_store_vars p in
+  let cs = mk_push_const_vars (p @ tpl) in
+  let ss = List.stable_dedup (mk_store_vars p @ mk_store_vars tpl) in
 { (* source program *)
   p = p;
+  (* optional target program -- set when using translation validation *)
+  tp = tp;
   (* candidate instruction set: instructions to choose from in target program *)
   cis = cis;
   (* number of instructions in target program *)
@@ -100,8 +110,11 @@ let mk p cis_mde =
      quantified variables, source and target program use the same
      roms, hence roms cannot be in state without adapting equvivalence
      *)
-  roms = mk_unint_roms p (List.length (xs @ ss @ cs @ List.concat (Instruction.Map.data uis)));
+  roms = mk_unint_roms (p @ tpl)
+      (List.length (xs @ ss @ cs @ List.concat (Instruction.Map.data uis)));
 }
+
+let mk_trans_val p tp = mk p ~tp:(Some tp)
 
 (* project all forall quantified variables *)
 let forall_vars ea = ea.xs @ ea.ss @ ea.cs @ List.concat (Instruction.Map.data ea.uis)
