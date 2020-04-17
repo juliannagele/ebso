@@ -92,7 +92,7 @@ let enc_trans_val ea tp =
   let stt = Evm_state.mk ea "_t" in
   let kt = PC.enc (Program.length tp) and ks = PC.enc (Program.length ea.p) in
   (* we're asking for inputs that distinguish the programs *)
-  existss (ea.xs @ List.concat (Instruction.Map.data ea.uis))
+  existss (ea.xs @ ea.ss @ List.concat (Instruction.Map.data ea.uis))
     (* encode source and target program *)
     ((List.foldi tp ~init:(Evm_state.enc_program ea sts)
         ~f:(fun j enc oc -> enc <&> Evm_state.enc_instruction ea stt (PC.enc (PC.of_int j)) oc)) &&
