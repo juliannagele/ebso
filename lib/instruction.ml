@@ -286,7 +286,7 @@ let gas_cost i =
     | DIFFICULTY -> 2
     | GASLIMIT -> 2
     | POP -> 2
-    | MLOAD -> 2
+    | MLOAD -> 3
     | SLOAD -> 200
     (* fix to 20000 as upper bound *)
     | SSTORE -> 20000
