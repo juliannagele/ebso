@@ -15,7 +15,7 @@
 open Core
 open Z3
 
-exception Z3_Timeout
+exception Z3_Timeout of int
 
 (* make context global for now -- if turns out badly wrap in a state monad *)
 let ctxt = ref (mk_context [])
@@ -139,25 +139,29 @@ let solve_model_timeout cs timeout =
   Z3.Params.add_int ps (Z3.Symbol.mk_string !ctxt "timeout") timeout;
   Solver.set_parameters slvr ps;
   Solver.add slvr cs;
-  match Solver.check slvr [] with
-  | Solver.SATISFIABLE ->
-    (* make sure there is a model *)
-    Some (Option.value_exn (Solver.get_model slvr) ~message:"SAT but no model")
-  | Solver.UNSATISFIABLE -> None
-  | Solver.UNKNOWN -> raise Z3_Timeout
+  let s = Unix.gettimeofday () in
+  let rslt = Solver.check slvr [] in
+  let e = Unix.gettimeofday () in
+  let time_taken = Int.of_float ((e -. s) *. 1000.0) in
+  let m = match rslt with
+    | Solver.SATISFIABLE ->
+      (* make sure there is a model *)
+      Some (Option.value_exn (Solver.get_model slvr) ~message:"SAT but no model")
+    | Solver.UNSATISFIABLE -> None
+    | Solver.UNKNOWN -> raise (Z3_Timeout time_taken)
+  in
+  (m, time_taken)
 
-let solve_model cs =
-  match !total_timeout with
-  | None -> solve_model_timeout cs 0
-  | Some remaining ->
-    let s = Unix.gettimeofday () in
-    let m = solve_model_timeout cs remaining in
-    let e = Unix.gettimeofday () in
-    let time_taken = Int.of_float ((e -. s) *. 1000.0) in
-    (* Int.max to avoid negative timeout in next call leading to no timeout
-       being set *)
-    total_timeout := Some (Int.max 1 (remaining - time_taken));
-    m
+let solve_model_time cs =
+  let timeout = Option.value ~default:0 !total_timeout in
+  let m, time_taken = solve_model_timeout cs timeout in
+  (* Int.max to avoid negative timeout in next call leading to no timeout
+     being set *)
+  Option.iter !total_timeout
+    ~f:(fun rem -> total_timeout := Some (Int.max 1 (rem - time_taken)));
+  (m, time_taken)
+
+let solve_model cs = Tuple2.get1 (solve_model_time cs)
 
 let solve_model_exn cs = Option.value_exn (solve_model cs) ~message:"UNSAT"
 

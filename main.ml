@@ -51,7 +51,7 @@ let add_step step = function
       if Option.is_some step.tval then step.tval
       else if step.input = s.opt then s.tval else None
     in
-    {step with input = s.input; tval = tv} :: ss
+    {step with input = s.input; tval = tv; solver_time = step.solver_time + s.solver_time} :: ss
   | [] -> [step]
 
 let is_translation_valid s t =
@@ -71,16 +71,16 @@ let uso_step p cis tval =
   let ea = Enc_consts.mk p cis in
   let c = Uso.enc ea in
   try
-    let m = solve_model [c] in
+    let m, time = solve_model_time [c] in
     let step = match m with
       | Some m ->
         let p' = Uso.dec ea m in
         let tv = Option.map tval ~f:(tvalidate ea.p p') in
-        mk_step p p' false tv
-      | None -> mk_step p p true None
+        mk_step p p' false tv time
+      | None -> mk_step p p true None time
     in (step, c, m, false)
-  with Z3_Timeout ->
-    (mk_step p p false None, c, None, true)
+  with Z3_Timeout time ->
+    (mk_step p p false None time, c, None, true)
 
 let rec uso p hist cis tval hist_bbs =
   let (stp, c, m, timed_out) = uso_step p cis tval in
@@ -106,19 +106,18 @@ let bso_step p ea cp tval =
   let js = List.init (List.length cp) ~f:(fun i -> intconst ("j" ^ Int.to_string i)) in
   let c = Bso.enc ea cp js in
   try
-    let mo = solve_model [c] in
-    let step =
-      match mo with
+    let m, time = solve_model_time [c] in
+    let step = match m with
       | None -> None
       | Some m ->
         let p' = Bso.dec ea m cp js in
         let tv = Option.map tval ~f:(tvalidate ea.p p') in
         match tv with
         | Some false -> None
-        | _ -> Some (mk_step p p' true tv)
-    in (step, c, mo)
-  with Z3_Timeout ->
-    (Some (mk_step p p false None), c, None)
+        | _ -> Some (mk_step p p' true tv time)
+    in (step, c, m)
+  with Z3_Timeout time ->
+    (Some (mk_step p p false None time), c, None)
 
 
 let rec bso p ea g gm cps cis tval hist_bbs =

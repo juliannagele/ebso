@@ -19,13 +19,20 @@ open Z3util
 
 module GC = Gas_cost
 
-type step = {input: Program.t; opt: Program.t; optimal: bool; tval: bool option}
+type step =
+  { input: Program.t
+  ; opt: Program.t
+  ; optimal: bool
+  ; tval: bool option
+  ; solver_time: int;
+  }
 
-let mk_step input opt optimal tval =
+let mk_step input opt optimal tval solver_time =
   { input = Program.const_to_val input
   ; opt = Program.const_to_val opt
   ; optimal = optimal
   ; tval = tval
+  ; solver_time = solver_time
   }
 
 let show_ebso_snippet s =
@@ -51,6 +58,9 @@ let create_ebso_snippets bbs =
   ebso_snippet_header ::
   List.filter_map bbs ~f:(fun bb -> ebso_snippet bb |> Option.map ~f:(show_ebso_snippet))
 
+let show_time step =
+  Float.to_string_hum ~decimals:2 (Float.of_int step.solver_time /. 1000.0)
+
 let show_step step =
   let g = (GC.to_int (total_gas_cost step.input) - GC.to_int (total_gas_cost step.opt)) in
   String.concat
@@ -65,7 +75,9 @@ let show_step step =
       ^ (if Option.value_exn step.tval then "successful" else "failed")
       else ""
     ; if step.optimal then ", this instruction sequence is optimal" else ""
-    ; ".\n"
+    ; "; took "
+    ; show_time step
+    ; " seconds.\n"
     ]
 
 let print_step step pi =
@@ -91,8 +103,8 @@ let show_result step =
   ]
   @ show_gas step @
   [ [%show: bool] step.optimal]
-  @ Option.to_list (Option.map step.tval ~f:Bool.to_string)
-
+  @ Option.to_list (Option.map step.tval ~f:Bool.to_string) @
+  [ show_time step ]
 
 let create_result steps =
   [ "source bytecode"
@@ -104,6 +116,7 @@ let create_result steps =
   ; "gas saved"
   ; "known optimal"
   ; "translation validation"
+  ; "solver time"
   ] ::
   List.rev_map ~f:show_result steps
 
