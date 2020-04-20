@@ -63,7 +63,9 @@ let to_const w = match w with
   | Val x -> Const (to_dec (Val x))
   | _ -> w
 
-let from_string x = Val x
+let from_string x = match String.chop_prefix x ~prefix:"c" with
+  | Some c ->  Const c
+  | None -> Val x
 
 let numbits x = Z.numbits (Z.of_string (to_dec x))
 

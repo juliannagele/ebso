@@ -35,14 +35,14 @@ let parse_idxI prefix s =
   let s = String.chop_prefix_exn ~prefix:prefix s in
   Instruction.idx_of_sexp (Atom s)
 
-let rec parse_stackarg buf =
+let rec parse_pusharg buf =
   match%sedlex buf with
-  | white_space -> parse_stackarg buf
+  | white_space -> parse_pusharg buf
   | "Tmpl" -> Tmpl
   | "0x", Plus hexdigit | Plus digit -> Word (Word.from_string (Latin1.lexeme buf))
   | _ -> raise (SyntaxError (lexeme_start buf))
 
-let  parse_instruction buf =
+let parse_instruction parse_pusharg buf =
   match%sedlex buf with
   | "STOP" -> STOP
   | "ADD" -> ADD
@@ -105,7 +105,7 @@ let  parse_instruction buf =
   | "MSIZE" -> MSIZE
   | "GAS" -> GAS
   | "JUMPDEST" -> JUMPDEST
-  | "PUSH", Opt re32 -> PUSH (parse_stackarg buf)
+  | "PUSH", Opt re32 -> PUSH (parse_pusharg buf)
   | "DUP", re16 -> DUP (parse_idx "DUP" (Latin1.lexeme buf))
   | "DUP ", reXVI -> DUP (parse_idxI "DUP " (Latin1.lexeme buf))
   | "SWAP", re16 -> SWAP (parse_idx "SWAP" (Latin1.lexeme buf))
@@ -265,13 +265,18 @@ let parse_hex ?(ignore_data_section=false) buf =
   in
   parse_token [] |> List.rev
 
-let parse ?(ignore_data_section=false) buf =
+let parse_wslist parse_pusharg buf =
+  let parse_instruction = parse_instruction parse_pusharg in
   let rec parse_wslist acc =
     match%sedlex buf with
     | white_spaces, eof -> List.rev acc
     | white_spaces -> parse_wslist (parse_instruction buf :: acc)
     | _ -> raise (SyntaxError (lexeme_start buf))
   in
+  parse_wslist []
+
+let parse ?(ignore_data_section=false) buf =
+  let parse_instruction = parse_instruction parse_pusharg in
   let rec parse_ocamllist acc =
     match%sedlex buf with
     | white_spaces, ';', white_spaces ->
@@ -294,6 +299,6 @@ let parse ?(ignore_data_section=false) buf =
   | white_spaces, '[', white_spaces -> parse_ocamllist ([parse_instruction buf])
   | white_spaces, '(', white_spaces, ')', white_spaces, eof -> []
   | white_spaces, '(', white_spaces -> parse_sexplist ([])
-  | white_spaces -> parse_wslist []
+  | white_spaces -> parse_wslist parse_pusharg buf
   | _ -> raise (SyntaxError (lexeme_start buf))
 
