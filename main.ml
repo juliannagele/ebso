@@ -79,7 +79,7 @@ let uso_step p cis tval =
         mk_step p p' false tv time
       | None -> mk_step p p true None time
     in (step, c, m, false)
-  with Z3_Timeout time ->
+  with Z3_Resource_Out time ->
     (mk_step p p false None time, c, None, true)
 
 let rec uso p hist cis tval hist_bbs =
@@ -116,7 +116,7 @@ let bso_step p ea cp tval =
         | Some false -> None
         | _ -> Some (mk_step p p' true tv time)
     in (step, c, m)
-  with Z3_Timeout time ->
+  with Z3_Resource_Out time ->
     (Some (mk_step p p false None time), c, None)
 
 

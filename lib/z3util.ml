@@ -15,7 +15,8 @@
 open Core
 open Z3
 
-exception Z3_Timeout of int
+(* Either time taken or -1 for out of memory *)
+exception Z3_Resource_Out of int
 
 (* make context global for now -- if turns out badly wrap in a state monad *)
 let ctxt = ref (mk_context [])
@@ -133,6 +134,11 @@ let exists ?(weight = None) ?(patterns = []) ?(nopatterns = [])
 
 let select a i = Z3Array.mk_select !ctxt a i
 
+let solve_catch_mem_out slvr =
+  try
+    Solver.check slvr []
+  with Z3.Error "out of memory" -> raise (Z3_Resource_Out (-1))
+
 let solve_model_timeout cs timeout =
   let slvr = Solver.mk_solver !ctxt None in
   let ps = Z3.Params.mk_params !ctxt in
@@ -140,7 +146,7 @@ let solve_model_timeout cs timeout =
   Solver.set_parameters slvr ps;
   Solver.add slvr cs;
   let s = Unix.gettimeofday () in
-  let rslt = Solver.check slvr [] in
+  let rslt = solve_catch_mem_out slvr in
   let e = Unix.gettimeofday () in
   let time_taken = Int.of_float ((e -. s) *. 1000.0) in
   let m = match rslt with
@@ -148,7 +154,7 @@ let solve_model_timeout cs timeout =
       (* make sure there is a model *)
       Some (Option.value_exn (Solver.get_model slvr) ~message:"SAT but no model")
     | Solver.UNSATISFIABLE -> None
-    | Solver.UNKNOWN -> raise (Z3_Timeout time_taken)
+    | Solver.UNKNOWN -> raise (Z3_Resource_Out time_taken)
   in
   (m, time_taken)
 
