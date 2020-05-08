@@ -102,9 +102,10 @@ let show_result step =
   ; [%show: int] (List.length step.opt)
   ]
   @ show_gas step @
-  [ [%show: bool] step.optimal]
-  @ Option.to_list (Option.map step.tval ~f:Bool.to_string) @
-  [ show_time step ]
+  [ [%show: bool] step.optimal
+  ; Option.value ~default:"" (Option.map step.tval ~f:Bool.to_string)
+  ; show_time step
+  ]
 
 let create_result steps =
   [ "source bytecode"

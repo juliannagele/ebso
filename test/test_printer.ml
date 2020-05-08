@@ -77,7 +77,7 @@ let suite =
         let t = [] in
         let step = mk_step s t true None 2500 in
         assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
-          ["600150"; ""; ""; "0"; "5"; "0"; "5"; "true"; "2.50"]
+          ["600150"; ""; ""; "0"; "5"; "0"; "5"; "true"; ""; "2.50"]
           (show_result step)
       );
 
@@ -86,16 +86,16 @@ let suite =
         let t = [PUSH (Word (Const "1"))] in
         let step = mk_step s t true None 2500 in
         assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
-          ["6001"; "6001"; "PUSH 1"; "1"; "3"; "3"; "0"; "true"; "2.50"]
+          ["6001"; "6001"; "PUSH 1"; "1"; "3"; "3"; "0"; "true"; ""; "2.50"]
           (show_result step)
       );
 
     "Show a result with failed translation validation" >:: (fun _ ->
         let s = [NOT; ADD] in
         let t = [EQ] in
-        let step = mk_step s t true (Some false) 2500 in
+        let step = mk_step s t false (Some false) 2500 in
         assert_equal ~cmp:[%eq: string list] ~printer:[%show: string list]
-          ["1901"; "14"; "EQ"; "1"; "6"; "3"; "3"; "true"; "false"; "2.50"]
+          ["1901"; "14"; "EQ"; "1"; "6"; "3"; "3"; "false"; "false"; "2.50"]
           (show_result step)
       );
 
