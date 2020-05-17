@@ -296,7 +296,29 @@ let gas_cost i =
     | PUSH _ -> 3
     | SWAP _ -> 3
     | DUP _ -> 3
-    | i -> failwith ("gas_cost not implemented for instruction " ^ [%show: t] i)
+    | SHL | SHR | SAR -> 3
+    | MSTORE -> 3
+    | MSTORE8 -> 3
+    | JUMPI -> 10
+    | JUMP -> 8
+    | JUMPDEST -> 1
+    | JUMPV | JUMPSUBV -> 8
+    | JUMPSUB | JUMPIF -> 5
+    | JUMPTO -> 3
+    | BEGINSUB | BEGINDATA | RETURNSUB | PUTLOCAL | GETLOCAL -> 3
+    | STOP -> 0
+    | INVALID -> 0
+    | RETURN -> 0
+    | REVERT -> 0
+    | CALL | CALLCODE | DELEGATECALL | STATICCALL -> 700
+    (* lower bound *)
+    | CODECOPY | CALLDATACOPY | RETURNDATACOPY -> 3
+    | EXTCODECOPY -> 700
+    | SELFDESTRUCT -> 5000
+    | CREATE | CREATE2 -> 32000
+    (* lower bound *)
+    | LOG0 | LOG1 | LOG2 | LOG3 | LOG4 -> 375
+    | EXTCODEHASH -> 400
   in
   Gas_cost.of_int (gas_cost i)
 
