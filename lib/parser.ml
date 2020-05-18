@@ -18,6 +18,7 @@ open Pusharg
 open Instruction.T
 
 exception SyntaxError of int
+exception Eof
 
 let digit = [%sedlex.regexp? '0'..'9']
 let hexdigit = [%sedlex.regexp? digit | 'a' .. 'f']
@@ -147,6 +148,7 @@ let parse_hex_bytes n buf =
     else
       match%sedlex buf with
       | Rep (hexdigit, 2) -> parse_hex_bytes (n - 1) (acc ^ Latin1.lexeme buf)
+      | eof -> raise Eof
       | _ -> raise (SyntaxError (lexeme_start buf))
   in
   parse_hex_bytes n "0x"
@@ -219,10 +221,17 @@ let parse_hex ?(ignore_data_section=false) buf =
     | "5a" -> parse_token (GAS :: acc)
     | "5b" -> parse_token (JUMPDEST :: acc)
     | ('6' | '7'), hexdigit ->
-      (* 0x60 = 96, so x in PUSHx is 0x<lexeme> - 95 *)
-      let n = Int.of_string ("0x" ^ Latin1.lexeme buf) - 95 in
-      let i = parse_hex_bytes n buf in
-      parse_token (PUSH (Word (Word.from_string i)) :: acc)
+      begin
+        (* 0x60 = 96, so x in PUSHx is 0x<lexeme> - 95 *)
+        let n = Int.of_string ("0x" ^ Latin1.lexeme buf) - 95 in
+        try
+          let i = parse_hex_bytes n buf in
+          parse_token (PUSH (Word (Word.from_string i)) :: acc)
+        with Eof ->
+          if ignore_data_section then
+            List.drop_while acc ~f:(fun i -> not (i = STOP))
+          else raise (SyntaxError (lexeme_start buf))
+      end
     | '8', hexdigit ->
       (* 0x80 = 128, so x in DUPx is 0x<lexeme> - 127 *)
       let idx = parse_hex_idx (Latin1.lexeme buf) 127 in
