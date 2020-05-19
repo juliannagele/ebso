@@ -14,10 +14,11 @@
 *)
 open Core
 open Sedlexing
-open Stackarg
-open Instruction
+open Pusharg
+open Instruction.T
 
 exception SyntaxError of int
+exception Eof
 
 let digit = [%sedlex.regexp? '0'..'9']
 let hexdigit = [%sedlex.regexp? digit | 'a' .. 'f']
@@ -28,21 +29,21 @@ let white_spaces = [%sedlex.regexp? Star white_space]
 
 let parse_idx prefix s =
   let s = String.chop_prefix_exn ~prefix:prefix s in
-  let idxo = idx_of_enum @@ Int.of_string s in
+  let idxo = Instruction.idx_of_enum @@ Int.of_string s in
   Option.value_exn ~message:("parse " ^ prefix ^ " index failed") idxo
 
 let parse_idxI prefix s =
   let s = String.chop_prefix_exn ~prefix:prefix s in
-  idx_of_sexp (Atom s)
+  Instruction.idx_of_sexp (Atom s)
 
-let rec parse_stackarg buf =
+let rec parse_pusharg buf =
   match%sedlex buf with
-  | white_space -> parse_stackarg buf
+  | white_space -> parse_pusharg buf
   | "Tmpl" -> Tmpl
-  | "0x", Plus hexdigit | Plus digit -> Val (Latin1.lexeme buf)
+  | "0x", Plus hexdigit | Plus digit -> Word (Word.from_string (Latin1.lexeme buf))
   | _ -> raise (SyntaxError (lexeme_start buf))
 
-let  parse_instruction buf =
+let parse_instruction parse_pusharg buf =
   match%sedlex buf with
   | "STOP" -> STOP
   | "ADD" -> ADD
@@ -105,7 +106,7 @@ let  parse_instruction buf =
   | "MSIZE" -> MSIZE
   | "GAS" -> GAS
   | "JUMPDEST" -> JUMPDEST
-  | "PUSH", Opt re32 -> PUSH (parse_stackarg buf)
+  | "PUSH", Opt re32 -> PUSH (parse_pusharg buf)
   | "DUP", re16 -> DUP (parse_idx "DUP" (Latin1.lexeme buf))
   | "DUP ", reXVI -> DUP (parse_idxI "DUP " (Latin1.lexeme buf))
   | "SWAP", re16 -> SWAP (parse_idx "SWAP" (Latin1.lexeme buf))
@@ -138,7 +139,7 @@ let  parse_instruction buf =
   | _ -> raise (SyntaxError (lexeme_start buf))
 
 let parse_hex_idx s n =
-  let idxo = idx_of_enum @@ Int.of_string ("0x" ^ s) - n in
+  let idxo = Instruction.idx_of_enum @@ Int.of_string ("0x" ^ s) - n in
   Option.value_exn ~message:("parse hex index failed") idxo
 
 let parse_hex_bytes n buf =
@@ -147,11 +148,12 @@ let parse_hex_bytes n buf =
     else
       match%sedlex buf with
       | Rep (hexdigit, 2) -> parse_hex_bytes (n - 1) (acc ^ Latin1.lexeme buf)
+      | eof -> raise Eof
       | _ -> raise (SyntaxError (lexeme_start buf))
   in
   parse_hex_bytes n "0x"
 
-let parse_hex buf =
+let parse_hex ?(ignore_data_section=false) buf =
   let rec parse_token acc =
     match%sedlex buf with
     (* solc adds hash of contract metadata behin conract like so:
@@ -219,10 +221,17 @@ let parse_hex buf =
     | "5a" -> parse_token (GAS :: acc)
     | "5b" -> parse_token (JUMPDEST :: acc)
     | ('6' | '7'), hexdigit ->
-      (* 0x60 = 96, so x in PUSHx is 0x<lexeme> - 95 *)
-      let n = Int.of_string ("0x" ^ Latin1.lexeme buf) - 95 in
-      let i = parse_hex_bytes n buf in
-      parse_token (PUSH (Val i) :: acc)
+      begin
+        (* 0x60 = 96, so x in PUSHx is 0x<lexeme> - 95 *)
+        let n = Int.of_string ("0x" ^ Latin1.lexeme buf) - 95 in
+        try
+          let i = parse_hex_bytes n buf in
+          parse_token (PUSH (Word (Word.from_string i)) :: acc)
+        with Eof ->
+          if ignore_data_section then
+            List.drop_while acc ~f:(fun i -> not (i = STOP))
+          else raise (SyntaxError (lexeme_start buf))
+      end
     | '8', hexdigit ->
       (* 0x80 = 128, so x in DUPx is 0x<lexeme> - 127 *)
       let idx = parse_hex_idx (Latin1.lexeme buf) 127 in
@@ -257,17 +266,26 @@ let parse_hex buf =
     | "fe" -> parse_token (INVALID :: acc)
     | "ff" -> parse_token (SELFDESTRUCT :: acc)
     | white_spaces, eof -> acc
-    | _ -> raise (SyntaxError (lexeme_start buf))
+    | _ ->
+      if ignore_data_section then
+        List.drop_while acc ~f:(fun i -> not (i = STOP))
+      else
+        raise (SyntaxError (lexeme_start buf))
   in
   parse_token [] |> List.rev
 
-let parse buf =
+let parse_wslist parse_pusharg buf =
+  let parse_instruction = parse_instruction parse_pusharg in
   let rec parse_wslist acc =
     match%sedlex buf with
     | white_spaces, eof -> List.rev acc
     | white_spaces -> parse_wslist (parse_instruction buf :: acc)
     | _ -> raise (SyntaxError (lexeme_start buf))
   in
+  parse_wslist []
+
+let parse ?(ignore_data_section=false) buf =
+  let parse_instruction = parse_instruction parse_pusharg in
   let rec parse_ocamllist acc =
     match%sedlex buf with
     | white_spaces, ';', white_spaces ->
@@ -283,13 +301,13 @@ let parse buf =
     | _ -> raise (SyntaxError (lexeme_start buf))
   in
   match%sedlex buf with
-  | "0x" -> parse_hex buf
-  | hexdigit -> rollback buf; parse_hex buf
+  | "0x" -> parse_hex ~ignore_data_section:ignore_data_section buf
+  | hexdigit -> rollback buf; parse_hex ~ignore_data_section:ignore_data_section buf
   | white_spaces, eof -> []
   | white_spaces, '[', white_spaces, ']', white_spaces, eof -> []
   | white_spaces, '[', white_spaces -> parse_ocamllist ([parse_instruction buf])
   | white_spaces, '(', white_spaces, ')', white_spaces, eof -> []
   | white_spaces, '(', white_spaces -> parse_sexplist ([])
-  | white_spaces -> parse_wslist []
+  | white_spaces -> parse_wslist parse_pusharg buf
   | _ -> raise (SyntaxError (lexeme_start buf))
 

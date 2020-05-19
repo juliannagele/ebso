@@ -15,40 +15,54 @@
 
 open Core
 open Program
-open Evmenc
 open Z3util
 
-type step = {input: Program.t; opt: Program.t; optimal: bool; tval: bool option}
+module GC = Gas_cost
 
-let mk_step input opt optimal tval =
+type step =
+  { input: Program.t
+  ; opt: Program.t
+  ; optimal: bool
+  ; tval: bool option
+  ; solver_time: int;
+  }
+
+let mk_step input opt optimal tval solver_time =
   { input = Program.const_to_val input
   ; opt = Program.const_to_val opt
   ; optimal = optimal
   ; tval = tval
+  ; solver_time = solver_time
   }
 
 let show_ebso_snippet s =
-  let ea = mk_enc_consts s `All in
+  let ea = Enc_consts.mk s `All in
   [ Program.show_hex s
   ; Program.show_h s
   ; [%show: int] (List.length s)
   ; [%show: int] (List.length ea.xs)
-  ; [%show: int] (List.length (List.concat (Map.data ea.uis)))
+  ; [%show: int] (List.length (List.concat (Instruction.Map.data ea.uis)))
   ; [%show: int] (List.length ea.ss)
   ]
 
-let create_ebso_snippets bbs =
+let ebso_snippet_header =
   [ "source bytecode"
   ; "source opcode"
   ; "source instruction count"
   ; "stack depth"
   ; "uninterpreted count"
   ; "storage access count"
-  ] ::
+  ]
+
+let create_ebso_snippets bbs =
+  ebso_snippet_header ::
   List.filter_map bbs ~f:(fun bb -> ebso_snippet bb |> Option.map ~f:(show_ebso_snippet))
 
+let show_time step =
+  Float.to_string_hum ~decimals:2 (Float.of_int step.solver_time /. 1000.0)
+
 let show_step step =
-  let g = (total_gas_cost step.input - total_gas_cost step.opt) in
+  let g = (GC.to_int (total_gas_cost step.input) - GC.to_int (total_gas_cost step.opt)) in
   String.concat
     [ "Optimized\n"
     ;  Program.show step.input
@@ -61,7 +75,9 @@ let show_step step =
       ^ (if Option.value_exn step.tval then "successful" else "failed")
       else ""
     ; if step.optimal then ", this instruction sequence is optimal" else ""
-    ; ".\n"
+    ; "; took "
+    ; show_time step
+    ; " seconds.\n"
     ]
 
 let print_step step pi =
@@ -75,9 +91,9 @@ let show_gas step =
   else
     let gas_source = total_gas_cost step.input
     and gas_target = total_gas_cost step.opt in
-    [ [%show: int] gas_source
-    ; [%show: int] gas_target
-    ; [%show: int] (gas_source - gas_target) ]
+    [ [%show: GC.t] gas_source
+    ; [%show: GC.t] gas_target
+    ; [%show: int] (GC.to_int gas_source - GC.to_int gas_target) ]
 
 let show_result step =
   [ show_hex step.input
@@ -86,9 +102,10 @@ let show_result step =
   ; [%show: int] (List.length step.opt)
   ]
   @ show_gas step @
-  [ [%show: bool] step.optimal]
-  @ Option.to_list (Option.map step.tval ~f:Bool.to_string)
-
+  [ [%show: bool] step.optimal
+  ; Option.value ~default:"" (Option.map step.tval ~f:Bool.to_string)
+  ; show_time step
+  ]
 
 let create_result steps =
   [ "source bytecode"
@@ -100,6 +117,7 @@ let create_result steps =
   ; "gas saved"
   ; "known optimal"
   ; "translation validation"
+  ; "solver time"
   ] ::
   List.rev_map ~f:show_result steps
 

@@ -15,84 +15,125 @@
 open OUnit2
 open Ebso
 open Z3util
-open Instruction
-open Evmenc
+open Instruction.T
+open Superoptimization
+
+module SI = Stack_index
 
 let suite =
   (* set to realistic values for validation *)
-  set_wsz 256; set_sas 10;
+  Word.set_wsz 256; SI.set_sas 10;
   "suite" >:::
   [
     (* translation validation *)
 
     "show equivalence of 3 + (0 - x) and (3 - x)" >::(fun _ ->
-        let sp = [PUSH (Val "0"); SUB; PUSH (Val "3"); ADD;] in
-        let tp =  [PUSH (Val "3"); SUB] in
-        let ea = mk_enc_consts sp `All in
-        let c = enc_trans_val ea tp in
+        let sp = [PUSH (Word (Val "0")); SUB; PUSH (Word (Val "3")); ADD;] in
+        let tp =  [PUSH (Word (Val "3")); SUB] in
+        let ea = Enc_consts.mk_trans_val sp tp `All in
+        let c = enc_trans_val ea in
         assert_bool "not unsat" (is_unsat [c])
       );
 
     "show difference of 3 + (0 - x) and (4 - x)" >::(fun _ ->
-        let sp = [PUSH (Val "0"); SUB; PUSH (Val "3"); ADD;] in
-        let tp =  [PUSH (Val "4"); SUB] in
-        let ea = mk_enc_consts sp `All in
-        let c = enc_trans_val ea tp in
+        let sp = [PUSH (Word (Val "0")); SUB; PUSH (Word (Val "3")); ADD;] in
+        let tp =  [PUSH (Word (Val "4")); SUB] in
+        let ea = Enc_consts.mk_trans_val sp tp `All in
+        let c = enc_trans_val ea in
         assert_bool "no model found" (is_sat [c])
       );
 
     "show equivalence with long source program" >::(fun _ ->
         let sp =
-          [PUSH (Val "0"); DUP I; PUSH (Val "0"); DUP I; PUSH (Val "0");
-           PUSH (Val "0"); PUSH (Val "0"); ADD; ADD; ADD; ADD; ADD; ADD; DUP II]
+          [PUSH (Word (Val "0")); DUP I; PUSH (Word (Val "0")); DUP I; PUSH (Word (Val "0"));
+           PUSH (Word (Val "0")); PUSH (Word (Val "0")); ADD; ADD; ADD; ADD; ADD; ADD; DUP II]
         in
-        let tp =  [PUSH (Val "0"); DUP II] in
-        let ea = mk_enc_consts sp `All in
-        let c = enc_trans_val ea tp in
+        let tp =  [PUSH (Word (Val "0")); DUP II] in
+        let ea = Enc_consts.mk_trans_val sp tp `All in
+        let c = enc_trans_val ea in
         assert_bool "not unsat" (is_unsat [c])
       );
 
     "disprove equivalence that would be valid with 2 bit words" >::(fun _ ->
-        let sp = [PUSH (Val "0"); SUB; PUSH (Val "3"); ADD;] in
+        let sp = [PUSH (Word (Val "0")); SUB; PUSH (Word (Val "3")); ADD;] in
         let tp =  [NOT] in
-        let ea = mk_enc_consts sp `All in
-        let c = enc_trans_val ea tp in
+        let ea = Enc_consts.mk_trans_val sp tp `All in
+        let c = enc_trans_val ea in
         assert_bool "no model found" (is_sat [c])
       );
 
     "disprove equivalence that holds for 4 bit" >::(fun _ ->
-        let sp = [PUSH (Val "15"); NOT; ADD] in
+        let sp = [PUSH (Word (Val "15")); NOT; ADD] in
         let tp = [] in
-        let ea = mk_enc_consts sp `All in
-        let c = enc_trans_val ea tp in
+        let ea = Enc_consts.mk_trans_val sp tp `All in
+        let c = enc_trans_val ea in
         assert_bool "no model found" (is_sat [c])
       );
 
     "validation with uninterpreted instruction" >::(fun _ ->
-        let sp = [PC; PUSH (Val "0"); ADD;] in
+        let sp = [PC; PUSH (Word (Val "0")); ADD;] in
         let tp = [PC] in
-        let ea = mk_enc_consts sp `All in
-        let c = enc_trans_val ea tp in
+        let ea = Enc_consts.mk_trans_val sp tp `All in
+        let c = enc_trans_val ea in
         assert_bool "not unsat" (is_unsat [c])
       );
 
+    "validation with const uninterpreted instruction only in target" >::(fun _ ->
+        let sp = [PUSH (Word (Val "0")); ADD;] in
+        let tp = [PC; POP] in
+        let ea = Enc_consts.mk_trans_val sp tp `All in
+        let c = enc_trans_val ea in
+        assert_bool "not unsat" (is_unsat [c])
+      );
+
+    "difference with const uninterpreted instruction only in target" >::(fun _ ->
+        let sp = [PUSH (Word (Val "0")); ADD;] in
+        let tp = [PC] in
+        let ea = Enc_consts.mk_trans_val sp tp `All in
+        let c = enc_trans_val ea in
+        assert_bool "no model found" (is_sat [c])
+      );
+
+    "validation with non-const uninterpreted instruction only in target" >::(fun _ ->
+        let sp = [POP; PUSH (Word (Val "0")); ADD;] in
+        let tp = [BLOCKHASH; POP] in
+        let ea = Enc_consts.mk_trans_val sp tp `All in
+        let c = enc_trans_val ea in
+        assert_bool "not unsat" (is_unsat [c])
+      );
+
+    "difference with non-const uninterpreted instruction only in target" >::(fun _ ->
+        let sp = [PUSH (Word (Val "0")); ADD;] in
+        let tp = [BLOCKHASH] in
+        let ea = Enc_consts.mk_trans_val sp tp `All in
+        let c = enc_trans_val ea in
+        assert_bool "no model found" (is_sat [c])
+      );
+
     "validation with storage: sload from same key twice" >:: (fun _ ->
-        let key = Stackarg.Val "1" in
+        let key = Pusharg.Word (Val "1") in
         let sp = [PUSH key; SLOAD; PUSH key; SLOAD] in
         let tp = [PUSH key; SLOAD; DUP I] in
-        let ea = mk_enc_consts sp `All in
-        let c = enc_trans_val ea tp in
+        let ea = Enc_consts.mk_trans_val sp tp `All in
+        let c = enc_trans_val ea in
         assert_bool "not unsat" (is_unsat [c])
       );
 
     "validation with storage: overwrite sstored value" >:: (fun _ ->
-        let value1 = Stackarg.Val "1" and value2 = Stackarg.Val "2" in
-        let key = Stackarg.Val "3" in
+        let value1 = Pusharg.Word (Val "1") and value2 = Pusharg.Word (Val "2") in
+        let key = Pusharg.Word (Val "3") in
         let sp = [PUSH value1; PUSH key; SSTORE; PUSH value2; PUSH key; SSTORE] in
         let tp = [PUSH value2; PUSH key; SSTORE] in
-        let ea = mk_enc_consts sp `All in
-        let c = enc_trans_val ea tp in
+        let ea = Enc_consts.mk_trans_val sp tp `All in
+        let c = enc_trans_val ea in
         assert_bool "not unsat" (is_unsat [c])
+      );
+
+    "validation with no target program throws exception" >:: (fun _ ->
+        let sp = [POP] in
+        let ea = Enc_consts.mk sp `All in
+        assert_raises (Base.Error.to_exn (Base.Error.of_string "Translation validation: no target program given"))
+          (fun () -> is_unsat [enc_trans_val ea])
       );
   ]
 

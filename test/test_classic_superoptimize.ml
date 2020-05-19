@@ -16,104 +16,106 @@ open Core
 open OUnit2
 open Ebso
 open Z3util
-open Instruction
-open Evmenc
+open Instruction.T
+open Superoptimization
+
+module SI = Stack_index
 
 let suite =
   (* set low for fast testing *)
-  set_wsz 3; set_sas 10;
+  Word.set_wsz 3; SI.set_sas 10;
   "suite" >:::
   [
     "correct candidate program" >::(fun _ ->
         let p = [ADD;] in
         let pc = [ADD;] in
         let cis = `User [] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let js = List.init (List.length pc) ~f:(fun i -> intconst ("j" ^ Int.to_string i)) in
-        let c = enc_classic_so_test ea pc js in
+        let c = Bso.enc ea pc js in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [ADD;] (dec_classic_super_opt ea m pc js)
+          [ADD;] (Bso.dec ea m pc js)
       );
 
     "correct candidate program with one PUSH" >::(fun _ ->
-        let p = [PUSH (Val "1");] in
+        let p = [PUSH (Word (Val "1"));] in
         let pc = [PUSH Tmpl] in
         let cis = `User [] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let js = List.init (List.length pc) ~f:(fun i -> intconst ("j" ^ Int.to_string i)) in
-        let c = enc_classic_so_test ea pc js in
+        let c = Bso.enc ea pc js in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [PUSH (Val "1")] (dec_classic_super_opt ea m pc js)
+          [PUSH (Word (Val "1"))] (Bso.dec ea m pc js)
       );
 
     "incorrect candidate program with one PUSH" >::(fun _ ->
-        let p = [PUSH (Val "1");] in
+        let p = [PUSH (Word (Val "1"));] in
         let pc = [ADD] in
         let cis = `User [] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let js = List.init (List.length pc) ~f:(fun i -> intconst ("j" ^ Int.to_string i)) in
-        let c = enc_classic_so_test ea pc js in
+        let c = Bso.enc ea pc js in
         assert_bool "not unsat" (is_unsat [c])
       );
 
     "correct candidate program with two PUSHs" >::(fun _ ->
-        let p = [PUSH (Val "2"); PUSH (Val "1")] in
+        let p = [PUSH (Word (Val "2")); PUSH (Word (Val "1"))] in
         let pc = [PUSH Tmpl; PUSH Tmpl] in
         let cis = `User [] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let js = List.init (List.length pc) ~f:(fun i -> intconst ("j" ^ Int.to_string i)) in
-        let c = enc_classic_so_test ea pc js in
+        let c = Bso.enc ea pc js in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [PUSH (Val "2"); PUSH (Val "1")] (dec_classic_super_opt ea m pc js)
+          [PUSH (Word (Val "2")); PUSH (Word (Val "1"))] (Bso.dec ea m pc js)
       );
 
     "incorrect candidate program with two PUSHs" >::(fun _ ->
-        let p = [PUSH (Val "2"); PUSH (Val "1")] in
+        let p = [PUSH (Word (Val "2")); PUSH (Word (Val "1"))] in
         let pc = [PUSH Tmpl] in
         let cis = `User [] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let js = List.init (List.length pc) ~f:(fun i -> intconst ("j" ^ Int.to_string i)) in
-        let c = enc_classic_so_test ea pc js in
+        let c = Bso.enc ea pc js in
         assert_bool "not unsat" (is_unsat [c])
       );
 
     "correct candidate program with two PUSHs and optimization" >::(fun _ ->
-        let p = [PUSH (Val "2"); PUSH (Val "1"); ADD] in
+        let p = [PUSH (Word (Val "2")); PUSH (Word (Val "1")); ADD] in
         let pc = [PUSH Tmpl;] in
         let cis = `User [] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let js = List.init (List.length pc) ~f:(fun i -> intconst ("j" ^ Int.to_string i)) in
-        let c = enc_classic_so_test ea pc js in
+        let c = Bso.enc ea pc js in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [PUSH (Val "3")] (dec_classic_super_opt ea m pc js)
+          [PUSH (Word (Val "3"))] (Bso.dec ea m pc js)
       );
 
     "correct candidate program with three PUSHs and optimization" >::(fun _ ->
-        let p = [PUSH (Val "2"); PUSH (Val "1"); PUSH (Val "1"); ADD] in
+        let p = [PUSH (Word (Val "2")); PUSH (Word (Val "1")); PUSH (Word (Val "1")); ADD] in
         let pc = [PUSH Tmpl; DUP I] in
         let cis = `User [] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let js = List.init (List.length pc) ~f:(fun i -> intconst ("j" ^ Int.to_string i)) in
-        let c = enc_classic_so_test ea pc js in
+        let c = Bso.enc ea pc js in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [PUSH (Val "2"); DUP I] (dec_classic_super_opt ea m pc js)
+          [PUSH (Word (Val "2")); DUP I] (Bso.dec ea m pc js)
       );
 
     "correct candidate program which requires reordering" >::(fun _ ->
-        let p = [PUSH (Val "2"); PUSH (Val "1"); PUSH (Val "1"); ADD] in
+        let p = [PUSH (Word (Val "2")); PUSH (Word (Val "1")); PUSH (Word (Val "1")); ADD] in
         let pc = [DUP I; PUSH Tmpl] in
         let cis = `User [] in
-        let ea = mk_enc_consts p cis in
+        let ea = Enc_consts.mk p cis in
         let js = List.init (List.length pc) ~f:(fun i -> intconst ("j" ^ Int.to_string i)) in
-        let c = enc_classic_so_test ea pc js in
+        let c = Bso.enc ea pc js in
         let m = solve_model_exn [c] in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [PUSH (Val "2"); DUP I] (dec_classic_super_opt ea m pc js)
+          [PUSH (Word (Val "2")); DUP I] (Bso.dec ea m pc js)
       );
 
   ]

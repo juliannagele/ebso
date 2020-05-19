@@ -16,7 +16,7 @@ open Core
 open Ebso
 open Z3util
 open Program
-open Evmenc
+open Superoptimization
 open Printer
 
 type output_options =
@@ -29,10 +29,11 @@ type output_options =
 let outputcfg =
   ref {pmodel = false; psmt = false; pinter = false; csv = None}
 
-let set_options wordsize stackas pm psmt pinter csv =
+let set_options timeout wordsize stackas pm psmt pinter csv =
   outputcfg := {pmodel = pm; psmt = psmt; pinter = pinter; csv = csv};
-  Option.iter stackas ~f:(fun stackas -> set_sas stackas);
-  set_wsz wordsize
+  Option.iter stackas ~f:(fun stackas -> Stack_index.set_sas stackas);
+  Word.set_wsz wordsize;
+  Z3util.set_timeout timeout
 
 let log c m =
   log_benchmark c !outputcfg.psmt;
@@ -50,46 +51,48 @@ let add_step step = function
       if Option.is_some step.tval then step.tval
       else if step.input = s.opt then s.tval else None
     in
-    {step with input = s.input; tval = tv} :: ss
+    {step with input = s.input; tval = tv; solver_time = step.solver_time + s.solver_time} :: ss
   | [] -> [step]
 
 let is_translation_valid s t =
   let s' = Program.const_to_val s and t' = Program.const_to_val t in
-  let c = enc_trans_val (mk_enc_consts s' (`User [])) t' in
+  let c = enc_trans_val (Enc_consts.mk_trans_val s' t' (`User [])) in
   match solve_model [c] with
     | None -> true
     | Some _ -> false
 
 let tvalidate s t sz =
-  let oldwsz = !wsz in
-  set_wsz sz;
+  let oldwsz = !Word.size in
+  Word.set_wsz sz;
   let tv = is_translation_valid s t in
-  set_wsz oldwsz; tv
+  Word.set_wsz oldwsz; tv
 
 let uso_step p cis tval =
-  let ea = mk_enc_consts p cis in
-  let c = enc_super_opt ea in
-  let m = solve_model [c] in
-  let step = match m with
-    | Some m ->
-      let p' = dec_super_opt ea m in
-      let tv = Option.map tval ~f:(tvalidate ea.p p') in
-      mk_step p p' false tv
-    | None -> mk_step p p true None
-  in (step, c, m)
+  let ea = Enc_consts.mk p cis in
+  let c = Uso.enc ea in
+  try
+    let m, time = solve_model_time [c] in
+    let step = match m with
+      | Some m ->
+        let p' = Uso.dec ea m in
+        let tv = Option.map tval ~f:(tvalidate ea.p p') in
+        mk_step p p' false tv time
+      | None -> mk_step p p true None time
+    in (step, c, m, false)
+  with Z3_Resource_Out time ->
+    (mk_step p p false None time, c, None, true)
 
 let rec uso p hist cis tval hist_bbs =
-  let (stp, c, m) = uso_step p cis tval in
+  let (stp, c, m, timed_out) = uso_step p cis tval in
   let hist = add_step stp hist in
   output_step hist hist_bbs;
   log c m;
-  if (stp.optimal)
-  then hist :: hist_bbs
+  if stp.optimal || timed_out then hist :: hist_bbs
   else
     let p' =
       match stp.tval with
       | Some false ->
-        set_wsz (!wsz + 1); Program.val_to_const !wsz (Program.const_to_val p)
+        Word.set_wsz (!Word.size + 1); Program.val_to_const !Word.size (Program.const_to_val p)
       | _ -> stp.opt
     in uso p' hist cis tval hist_bbs
 
@@ -99,28 +102,28 @@ let uso_bb cis tval hist_bbs bb = match ebso_snippet bb with
   | Some p -> uso_encbl p cis tval hist_bbs
   | None   -> hist_bbs
 
-let bso_constraint ea cp js = enc_classic_so_test ea cp js
-
-let bso_model c = solve_model [c]
-
 let bso_step p ea cp tval =
   let js = List.init (List.length cp) ~f:(fun i -> intconst ("j" ^ Int.to_string i)) in
-  let c = bso_constraint ea cp js in
-  let mo = bso_model c in
-  let step =
-    match mo with
-    | None -> None
-    | Some m ->
-      let p' = dec_classic_super_opt ea m cp js in
-      let tv = Option.map tval ~f:(tvalidate ea.p p') in
-      match tv with
-      | Some false -> None
-      | _ -> Some (mk_step p p' true tv)
-  in (step, c, mo)
+  let c = Bso.enc ea cp js in
+  try
+    let m, time = solve_model_time [c] in
+    let step = match m with
+      | None -> None
+      | Some m ->
+        let p' = Bso.dec ea m cp js in
+        let tv = Option.map tval ~f:(tvalidate ea.p p') in
+        match tv with
+        | Some false -> None
+        | _ -> Some (mk_step p p' true tv time)
+    in (step, c, m)
+  with Z3_Resource_Out time ->
+    (Some (mk_step p p false None time), c, None)
+
 
 let rec bso p ea g gm cps cis tval hist_bbs =
   match cps with
   | [] ->
+    let open Enc_consts in
     let (cps, m') = Program.enumerate g ea.cis gm in
     bso p ea (g + 1) m' cps cis tval hist_bbs
   | cp :: cps ->
@@ -135,7 +138,7 @@ let bso_encbl p ea tval hist_bbs =
 
 let bso_bb cis tval hist_bbs bb = match ebso_snippet bb with
   | Some p ->
-    let ea = mk_enc_consts p cis in
+    let ea = Enc_consts.mk p cis in
     bso_encbl p ea tval hist_bbs
   | None -> hist_bbs
 
@@ -158,6 +161,8 @@ let () =
       let direct = flag "direct" no_arg
           ~doc:"do not read program from file, but interpret input as program \
                 directly"
+      and timeout = flag "timeout" (optional int)
+          ~doc:"to cumulative timeout for all Z3 call in seconds"
       and p_model = flag "print-model" no_arg
           ~doc:"print model found by solver"
       and p_smt = flag "print-smt" no_arg
@@ -188,8 +193,8 @@ let () =
           | Some wsz -> wsz
           | None -> Program.compute_word_size p 256
         in
-        set_options wordsize stackas p_model p_smt p_inter csv;
-        let p = Program.val_to_const !wsz p in
+        set_options timeout wordsize stackas p_model p_smt p_inter csv;
+        let p = Program.val_to_const !Word.size p in
         let bbs = Program.split_into_bbs p in
         match opt_mode with
         | NO ->
@@ -203,4 +208,4 @@ let () =
         | BASIC ->
           List.fold_left bbs ~init:[] ~f:(bso_bb `All tval) |> ignore
     ]
-  |> Command.run ~version:"2.0"
+  |> Command.run ~version:"2.1"

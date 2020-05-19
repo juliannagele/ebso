@@ -124,7 +124,7 @@ let suite =
     "parse program starting with PUSH in sexplist format" >:: (fun _ ->
         let buf = Latin1.from_string "((PUSH 1) (PUSH 1) ADD)" in
         assert_equal ~cmp:[%eq: Instruction.t list] ~printer:[%show: Instruction.t list]
-          [PUSH (Val "1"); PUSH (Val "1"); ADD]
+          [PUSH (Word (Val "1")); PUSH (Word (Val "1")); ADD]
           (parse buf)
       );
 
@@ -156,14 +156,14 @@ let suite =
     "parse PUSH1 from bytexode" >:: (fun _ ->
         let buf = Latin1.from_string "6080" in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [PUSH (Val "128")] (parse_hex buf)
+          [PUSH (Word (Val "128"))] (parse_hex buf)
       );
 
     "parse PUSH32 from bytexode" >:: (fun _ ->
         let s = "7f0000000000000000000000000000000000000000000000000000000000000010" in
         let buf = Latin1.from_string s in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [PUSH (Val "16")] (parse_hex buf)
+          [PUSH (Word (Val "16"))] (parse_hex buf)
       );
 
     "parse DUP1 from bytexode" >:: (fun _ ->
@@ -203,20 +203,20 @@ let suite =
         in
         let buf = Latin1.from_string s in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [PUSH (Val "128"); PUSH (Val "64"); MSTORE; CALLVALUE; DUP I; ISZERO;
-           PUSH (Val "16"); JUMPI; PUSH (Val "0"); DUP I; REVERT; JUMPDEST; POP;
-           PUSH (Val "166"); DUP I; PUSH (Val "31"); PUSH (Val "0"); CODECOPY;
-           PUSH (Val "0"); RETURN; STOP; PUSH (Val "128"); PUSH (Val "64"); MSTORE;
-           PUSH (Val "4"); CALLDATASIZE; LT; PUSH (Val "62"); JUMPI;
-           PUSH (Val "4294967295"); PUSH (Val "0"); CALLDATALOAD; DIV; AND;
-           PUSH (Val "824235060"); DUP II; EQ; PUSH (Val "67"); JUMPI; JUMPDEST;
-           PUSH (Val "0"); DUP I; REVERT; JUMPDEST; CALLVALUE; DUP I; ISZERO;
-           PUSH (Val "78"); JUMPI; PUSH (Val "0"); DUP I; REVERT; JUMPDEST; POP;
-           PUSH (Val "91"); PUSH (Val "255"); PUSH (Val "4"); CALLDATALOAD; AND;
-           PUSH (Val "113"); JUMP; JUMPDEST; PUSH (Val "64"); DUP I; MLOAD;
-           PUSH (Val "255"); SWAP I; SWAP III; AND; DUP III; MSTORE; MLOAD; SWAP I;
-           DUP II; SWAP I; SUB; PUSH (Val "32"); ADD; SWAP I; RETURN; JUMPDEST;
-           PUSH (Val "0"); SUB; PUSH (Val "42"); ADD; SWAP I; JUMP; STOP]
+          [PUSH (Word (Val "128")); PUSH (Word (Val "64")); MSTORE; CALLVALUE; DUP I; ISZERO;
+           PUSH (Word (Val "16")); JUMPI; PUSH (Word (Val "0")); DUP I; REVERT; JUMPDEST; POP;
+           PUSH (Word (Val "166")); DUP I; PUSH (Word (Val "31")); PUSH (Word (Val "0")); CODECOPY;
+           PUSH (Word (Val "0")); RETURN; STOP; PUSH (Word (Val "128")); PUSH (Word (Val "64")); MSTORE;
+           PUSH (Word (Val "4")); CALLDATASIZE; LT; PUSH (Word (Val "62")); JUMPI;
+           PUSH (Word (Val "4294967295")); PUSH (Word (Val "0")); CALLDATALOAD; DIV; AND;
+           PUSH (Word (Val "824235060")); DUP II; EQ; PUSH (Word (Val "67")); JUMPI; JUMPDEST;
+           PUSH (Word (Val "0")); DUP I; REVERT; JUMPDEST; CALLVALUE; DUP I; ISZERO;
+           PUSH (Word (Val "78")); JUMPI; PUSH (Word (Val "0")); DUP I; REVERT; JUMPDEST; POP;
+           PUSH (Word (Val "91")); PUSH (Word (Val "255")); PUSH (Word (Val "4")); CALLDATALOAD; AND;
+           PUSH (Word (Val "113")); JUMP; JUMPDEST; PUSH (Word (Val "64")); DUP I; MLOAD;
+           PUSH (Word (Val "255")); SWAP I; SWAP III; AND; DUP III; MSTORE; MLOAD; SWAP I;
+           DUP II; SWAP I; SUB; PUSH (Word (Val "32")); ADD; SWAP I; RETURN; JUMPDEST;
+           PUSH (Word (Val "0")); SUB; PUSH (Word (Val "42")); ADD; SWAP I; JUMP; STOP]
           (parse_hex buf)
       );
 
@@ -230,20 +230,20 @@ let suite =
         in
         let buf = Latin1.from_string s in
         assert_equal ~cmp:[%eq: Program.t] ~printer:[%show: Program.t]
-          [PUSH (Val "128"); PUSH (Val "64"); MSTORE; CALLVALUE; DUP I; ISZERO;
-           PUSH (Val "16"); JUMPI; PUSH (Val "0"); DUP I; REVERT; JUMPDEST; POP;
-           PUSH (Val "166"); DUP I; PUSH (Val "31"); PUSH (Val "0"); CODECOPY;
-           PUSH (Val "0"); RETURN; STOP; PUSH (Val "128"); PUSH (Val "64"); MSTORE;
-           PUSH (Val "4"); CALLDATASIZE; LT; PUSH (Val "62"); JUMPI;
-           PUSH (Val "4294967295"); PUSH (Val "0"); CALLDATALOAD; DIV; AND;
-           PUSH (Val "824235060"); DUP II; EQ; PUSH (Val "67"); JUMPI; JUMPDEST;
-           PUSH (Val "0"); DUP I; REVERT; JUMPDEST; CALLVALUE; DUP I; ISZERO;
-           PUSH (Val "78"); JUMPI; PUSH (Val "0"); DUP I; REVERT; JUMPDEST; POP;
-           PUSH (Val "91"); PUSH (Val "255"); PUSH (Val "4"); CALLDATALOAD; AND;
-           PUSH (Val "113"); JUMP; JUMPDEST; PUSH (Val "64"); DUP I; MLOAD;
-           PUSH (Val "255"); SWAP I; SWAP III; AND; DUP III; MSTORE; MLOAD; SWAP I;
-           DUP II; SWAP I; SUB; PUSH (Val "32"); ADD; SWAP I; RETURN; JUMPDEST;
-           PUSH (Val "0"); SUB; PUSH (Val "42"); ADD; SWAP I; JUMP; STOP]
+          [PUSH (Word (Val "128")); PUSH (Word (Val "64")); MSTORE; CALLVALUE; DUP I; ISZERO;
+           PUSH (Word (Val "16")); JUMPI; PUSH (Word (Val "0")); DUP I; REVERT; JUMPDEST; POP;
+           PUSH (Word (Val "166")); DUP I; PUSH (Word (Val "31")); PUSH (Word (Val "0")); CODECOPY;
+           PUSH (Word (Val "0")); RETURN; STOP; PUSH (Word (Val "128")); PUSH (Word (Val "64")); MSTORE;
+           PUSH (Word (Val "4")); CALLDATASIZE; LT; PUSH (Word (Val "62")); JUMPI;
+           PUSH (Word (Val "4294967295")); PUSH (Word (Val "0")); CALLDATALOAD; DIV; AND;
+           PUSH (Word (Val "824235060")); DUP II; EQ; PUSH (Word (Val "67")); JUMPI; JUMPDEST;
+           PUSH (Word (Val "0")); DUP I; REVERT; JUMPDEST; CALLVALUE; DUP I; ISZERO;
+           PUSH (Word (Val "78")); JUMPI; PUSH (Word (Val "0")); DUP I; REVERT; JUMPDEST; POP;
+           PUSH (Word (Val "91")); PUSH (Word (Val "255")); PUSH (Word (Val "4")); CALLDATALOAD; AND;
+           PUSH (Word (Val "113")); JUMP; JUMPDEST; PUSH (Word (Val "64")); DUP I; MLOAD;
+           PUSH (Word (Val "255")); SWAP I; SWAP III; AND; DUP III; MSTORE; MLOAD; SWAP I;
+           DUP II; SWAP I; SUB; PUSH (Word (Val "32")); ADD; SWAP I; RETURN; JUMPDEST;
+           PUSH (Word (Val "0")); SUB; PUSH (Word (Val "42")); ADD; SWAP I; JUMP; STOP]
           (parse_hex buf)
       );
 
@@ -271,6 +271,16 @@ let suite =
         assert_equal ~cmp:[%eq: string] ~printer:[%show: string]
           s
           (Program.show_hex @@ parse buf)
+      );
+
+    "parse contract from bytecode with trailing data section" >:: (fun _ ->
+        let code = "608060405600"
+        and data = "54cdd3"
+        in
+        let buf = Latin1.from_string (code ^ data) in
+        assert_equal ~cmp:[%eq: string] ~printer:[%show: string]
+          code
+          (Program.show_hex @@ parse ~ignore_data_section:true buf)
       );
 
   ]

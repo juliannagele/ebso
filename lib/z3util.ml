@@ -15,17 +15,23 @@
 open Core
 open Z3
 
-exception Z3_Timeout
+(* Either time taken or -1 for out of memory *)
+exception Z3_Resource_Out of int
 
 (* make context global for now -- if turns out badly wrap in a state monad *)
 let ctxt = ref (mk_context [])
+
+(* cumulative timeout for Z3 calls in milliseconds *)
+let total_timeout = ref None
+
+let set_timeout t = total_timeout := (Option.map t ~f:(fun t -> t * 1000))
 
 let int_sort = Arithmetic.Integer.mk_sort !ctxt
 let bv_sort = BitVector.mk_sort !ctxt
 let bool_sort = Boolean.mk_sort !ctxt
 
-let num n = Expr.mk_numeral_int !ctxt n int_sort
-let one = num 1
+let num n = Expr.mk_numeral_int !ctxt (Z.to_int n) int_sort
+let one = num Z.one
 let bvnum n size = Expr.mk_numeral_int !ctxt n (bv_sort size)
 let bvconst = BitVector.mk_const_s !ctxt
 let intconst = Arithmetic.Integer.mk_const_s !ctxt
@@ -128,20 +134,40 @@ let exists ?(weight = None) ?(patterns = []) ?(nopatterns = [])
 
 let select a i = Z3Array.mk_select !ctxt a i
 
+let solve_catch_mem_out slvr =
+  try
+    Solver.check slvr []
+  with Z3.Error "out of memory" -> raise (Z3_Resource_Out (-1))
+
 let solve_model_timeout cs timeout =
   let slvr = Solver.mk_solver !ctxt None in
   let ps = Z3.Params.mk_params !ctxt in
   Z3.Params.add_int ps (Z3.Symbol.mk_string !ctxt "timeout") timeout;
   Solver.set_parameters slvr ps;
   Solver.add slvr cs;
-  match Solver.check slvr [] with
-  | Solver.SATISFIABLE ->
-    (* make sure there is a model *)
-    Some (Option.value_exn (Solver.get_model slvr) ~message:"SAT but no model")
-  | Solver.UNSATISFIABLE -> None
-  | Solver.UNKNOWN -> raise Z3_Timeout
+  let s = Unix.gettimeofday () in
+  let rslt = solve_catch_mem_out slvr in
+  let e = Unix.gettimeofday () in
+  let time_taken = Int.of_float ((e -. s) *. 1000.0) in
+  let m = match rslt with
+    | Solver.SATISFIABLE ->
+      (* make sure there is a model *)
+      Some (Option.value_exn (Solver.get_model slvr) ~message:"SAT but no model")
+    | Solver.UNSATISFIABLE -> None
+    | Solver.UNKNOWN -> raise (Z3_Resource_Out time_taken)
+  in
+  (m, time_taken)
 
-let solve_model cs = solve_model_timeout cs 0
+let solve_model_time cs =
+  let timeout = Option.value ~default:0 !total_timeout in
+  let m, time_taken = solve_model_timeout cs timeout in
+  (* Int.max to avoid negative timeout in next call leading to no timeout
+     being set *)
+  Option.iter !total_timeout
+    ~f:(fun rem -> total_timeout := Some (Int.max 1 (rem - time_taken)));
+  (m, time_taken)
+
+let solve_model cs = Tuple2.get1 (solve_model_time cs)
 
 let solve_model_exn cs = Option.value_exn (solve_model cs) ~message:"UNSAT"
 
