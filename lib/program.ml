@@ -163,7 +163,10 @@ let rec enumerate g cis m = match Int.Map.find m g with
     let pgs = List.init g ~f:Fn.id in
     let (ps, m') =
       List.fold_left pgs ~init:([], m) ~f:(fun (ps, m) pg ->
-          let is = List.filter cis ~f:(fun i -> Instruction.gas_cost i = Gas_cost.of_int (g - pg)) in
+          let is =
+            List.filter cis ~f:(fun i ->
+                Gas_cost.equal (Instruction.gas_cost i) (Gas_cost.of_int (g - pg)))
+          in
           let (pps, m') = enumerate pg cis m in
           let addi pp i = List.sort ~compare:Instruction.compare (i :: pp) in
           (List.concat_map pps ~f:(fun pp -> List.map is ~f:(addi pp)) @ ps, m'))
@@ -173,7 +176,7 @@ let rec enumerate g cis m = match Int.Map.find m g with
 
 let poss_of_instr p i =
   List.filter_mapi p ~f:(fun pos i' ->
-      if i = i'
+      if Instruction.equal i i'
       then Some (Program_counter.of_int pos)
       else None)
 

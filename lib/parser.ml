@@ -229,7 +229,7 @@ let parse_hex ?(ignore_data_section=false) buf =
           parse_token (PUSH (Word (Word.from_string i)) :: acc)
         with Eof ->
           if ignore_data_section then
-            List.drop_while acc ~f:(fun i -> not (i = STOP))
+            List.drop_while acc ~f:(fun i -> not (Instruction.equal i STOP))
           else raise (SyntaxError (lexeme_start buf))
       end
     | '8', hexdigit ->
@@ -268,7 +268,7 @@ let parse_hex ?(ignore_data_section=false) buf =
     | white_spaces, eof -> acc
     | _ ->
       if ignore_data_section then
-        List.drop_while acc ~f:(fun i -> not (i = STOP))
+        List.drop_while acc ~f:(fun i -> not (Instruction.equal i STOP))
       else
         raise (SyntaxError (lexeme_start buf))
   in

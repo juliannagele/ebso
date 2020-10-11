@@ -70,7 +70,7 @@ val concat_bbs : bb list -> t
 
 val enumerate : int -> Instruction.t list -> t list Int.Map.t -> t list * t list Int.Map.t
 
-val poss_of_instr : 'a list -> 'a -> Program_counter.t list
+val poss_of_instr : t -> Instruction.t -> Program_counter.t list
 
 val length : t -> Program_counter.t
 

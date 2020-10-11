@@ -127,8 +127,8 @@ module Map : sig
   type 'a t
   val empty : 'a t
   val update : 'a t -> T.t -> f:('a option -> 'a) -> 'a t
-  val keys : 'a t -> T.t sexp_list
-  val data : 'a t -> 'a sexp_list
+  val keys : 'a t ->  T.t list
+  val data : 'a t -> 'a list
   val find_exn : 'a t -> T.t -> 'a
   val find : 'a t -> T.t -> 'a option
   val fold : 'a t -> init:'b -> f:(key:T.t -> data:'a -> 'b -> 'b) -> 'b

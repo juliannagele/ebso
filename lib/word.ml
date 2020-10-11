@@ -73,7 +73,7 @@ let fits_wsz wsz = function
   | Const _ -> true
   | w ->
     let max_repr = Z.pow (Z.of_int 2) wsz in
-    Z.of_string (to_dec w) < max_repr
+    Z.lt (Z.of_string (to_dec w)) max_repr
 
 let enc_add = (<+>)
 let enc_sub = (<->)

@@ -49,7 +49,7 @@ let add_step step = function
   | s :: ss ->
     let tv =
       if Option.is_some step.tval then step.tval
-      else if step.input = s.opt then s.tval else None
+      else if Program.equal step.input s.opt then s.tval else None
     in
     {step with input = s.input; tval = tv; solver_time = step.solver_time + s.solver_time} :: ss
   | [] -> [step]
@@ -204,8 +204,8 @@ let () =
             | None -> Program.pp Format.std_formatter (concat_bbs bbs);
           end
         | UNBOUNDED ->
-          List.fold_left bbs ~init:[] ~f:(uso_bb `All tval) |> ignore
+          (List.fold_left bbs ~init:[] ~f:(uso_bb `All tval) : step list list) |> ignore
         | BASIC ->
-          List.fold_left bbs ~init:[] ~f:(bso_bb `All tval) |> ignore
+          (List.fold_left bbs ~init:[] ~f:(bso_bb `All tval) : step list list) |> ignore
     ]
   |> Command.run ~version:"2.1"
