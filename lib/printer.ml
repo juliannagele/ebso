@@ -135,3 +135,13 @@ let show_smt_benchmark c =
 
 let log_benchmark b lb =
   if lb then Out_channel.prerr_endline (show_smt_benchmark b) else ()
+
+let log_benchmark_bbs bbs enc lb =
+  let log_bb bb = match (ebso_snippet bb) with
+    | Some p ->
+      let ea = Enc_consts.mk p `All in
+      let c = enc ea in
+      log_benchmark c lb
+    | None -> ()
+  in
+  List.iter bbs ~f:log_bb

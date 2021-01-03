@@ -199,6 +199,7 @@ let () =
         match opt_mode with
         | NO ->
           begin
+            log_benchmark_bbs bbs Uso.enc !outputcfg.psmt;
             match csv with
             | Some fn -> Csv.save fn (Printer.create_ebso_snippets bbs)
             | None -> Program.pp Format.std_formatter (concat_bbs bbs);
